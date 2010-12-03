@@ -37,13 +37,14 @@ channel fiberline extends ned.DatarateChannel
 {
     parameters:
         delay = 1us;
-        datarate = 512*1000000;
+        datarate = 512Mbps;
 }
 
 channel ethernetline extends ned.DatarateChannel
 {
     parameters:
         delay = 0.1us;
+        datarate = 100Mbps;
 }
 
 network mIPv6Network
