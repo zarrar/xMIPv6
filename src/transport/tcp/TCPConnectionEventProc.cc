@@ -34,7 +34,7 @@ void TCPConnection::process_OPEN_ACTIVE(TCPEventCode& event, TCPCommand *tcpComm
 {
     TCPOpenCommand *openCmd = check_and_cast<TCPOpenCommand *>(tcpCommand);
     IPvXAddress localAddr, remoteAddr;
-    short localPort, remotePort;
+    int localPort, remotePort;
 
     switch(fsm.getState())
     {
@@ -80,7 +80,7 @@ void TCPConnection::process_OPEN_PASSIVE(TCPEventCode& event, TCPCommand *tcpCom
 {
     TCPOpenCommand *openCmd = check_and_cast<TCPOpenCommand *>(tcpCommand);
     IPvXAddress localAddr;
-    short localPort;
+    int localPort;
 
     switch(fsm.getState())
     {
@@ -191,6 +191,7 @@ void TCPConnection::process_CLOSE(TCPEventCode& event, TCPCommand *tcpCommand, c
                 tcpEV << "No outstanding SENDs, sending FIN right away, advancing snd_nxt over the FIN\n";
                 state->snd_nxt = state->snd_max;
                 sendFin();
+                tcpAlgorithm->restartRexmitTimer();
                 state->snd_max = ++state->snd_nxt;
                 if (unackedVector) unackedVector->record(state->snd_max - state->snd_una);
 

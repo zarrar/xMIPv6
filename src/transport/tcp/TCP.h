@@ -23,14 +23,18 @@
 #include <omnetpp.h>
 #include "IPvXAddress.h"
 
+#include "TCPCommand_m.h"
 
+// Forward declarations:
 class TCPConnection;
 class TCPSegment;
+class TCPSendQueue;
+class TCPReceiveQueue;
 
-// macro for normal ev<< logging (note: deliberately no parens in macro def)
+// macro for normal ev<< logging (Note: deliberately no parens in macro def)
 #define tcpEV (ev.disable_tracing||TCP::testing)?ev:ev
 
-// macro for more verbose ev<< logging (note: deliberately no parens in macro def)
+// macro for more verbose ev<< logging (Note: deliberately no parens in macro def)
 #define tcpEV2 (ev.disable_tracing||TCP::testing||!TCP::logverbose)?ev:ev
 
 // testingEV writes log that automated test cases can check (*.test files)
@@ -57,7 +61,7 @@ class TCPSegment;
  *  - TCPVirtualDataSendQueue and TCPVirtualDataRcvQueue which implement
  *    queues with "virtual" bytes (byte counts only)
  *  - TCPAlgorithm: abstract base class for TCP algorithms, and subclasses:
- *    DumbTCP, TCPBaseAlg, TCPTahoeRenoFamily, TCPTahoe, TCPReno.
+ *    DumbTCP, TCPBaseAlg, TCPTahoeRenoFamily, TCPTahoe, TCPReno, TCPNewReno.
  *
  * TCP subclassed from cSimpleModule. It manages socketpair-to-connection
  * mapping, and dispatches segments and user commands to the appropriate
@@ -87,7 +91,8 @@ class TCPSegment;
  * design of TCPConnection and makes it a lot easier to implement new TCP
  * variations such as NewReno, Vegas or LinuxTCP as TCPAlgorithm subclasses.
  *
- * Currently implemented TCPAlgorithm classes are DumbTCP, TCPTahoe, TCPReno, etc.
+ * Currently implemented TCPAlgorithm classes are TCPReno, TCPTahoe, TCPNewReno,
+ * TCPNoCongestionControl and DumbTCP.
  *
  * The concrete TCPAlgorithm class to use can be chosen per connection (in OPEN)
  * or in a module parameter.
@@ -113,8 +118,8 @@ class INET_API TCP : public cSimpleModule
     {
         IPvXAddress localAddr;
         IPvXAddress remoteAddr;
-        short localPort;
-        short remotePort;
+        int localPort;   // -1: unspec
+        int remotePort;  // -1: unspec
 
         inline bool operator<(const SockPair& b) const
         {
@@ -136,8 +141,8 @@ class INET_API TCP : public cSimpleModule
     TcpAppConnMap tcpAppConnMap;
     TcpConnMap tcpConnMap;
 
-    short lastEphemeralPort;
-    std::multiset<short> usedEphemeralPorts;
+    ushort lastEphemeralPort;
+    std::multiset<ushort> usedEphemeralPorts;
 
   protected:
     /** Factory method; may be overriden for customizing TCP */
@@ -187,7 +192,17 @@ class INET_API TCP : public cSimpleModule
     /**
      * To be called from TCPConnection: reserves an ephemeral port for the connection.
      */
-    virtual short getEphemeralPort();
+    virtual ushort getEphemeralPort();
+
+    /**
+     * To be called from TCPConnection: create a new send queue.
+     */
+    virtual TCPSendQueue* createSendQueue(TCPDataTransferMode transferModeP);
+
+    /**
+     * To be called from TCPConnection: create a new receive queue.
+     */
+    virtual TCPReceiveQueue* createReceiveQueue(TCPDataTransferMode transferModeP);
 };
 
 #endif

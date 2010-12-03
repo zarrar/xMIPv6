@@ -101,6 +101,16 @@ class TCPErrorInfo extends TCPCommand
     string messageText;
 }
 
+//
+// Defines what to transmit as payload in TCP segments
+//
+enum TCPDataTransferMode
+{
+    TCP_TRANSFER_UNDEFINED = 0;         // Invalid value
+    TCP_TRANSFER_BYTECOUNT = 1;         // Transmit byte counts only
+    TCP_TRANSFER_OBJECT = 2;            // Transmit the application packet C++ objects
+    TCP_TRANSFER_BYTESTREAM = 3;        // Transmit actual bytes
+}
 
 //
 // Control info to be used for active or passive TCP open.
@@ -134,10 +144,8 @@ class TCPOpenCommand extends TCPCommand
     int localPort = -1;       // required for passive open
     int remotePort = -1;      // required for active open
     bool fork = false;        // used only for passive open
-    string sendQueueClass;    // may be left empty
-    string rexmitQueueClass;  // may be left empty  // added 2009-08-05 by T.R.
-    string receiveQueueClass; // may be left empty
-    string tcpAlgorithmClass; // may be left empty
+    int dataTransferMode enum(TCPDataTransferMode); // whether to transmit C++ objects, real bytes or just byte counts
+    string tcpAlgorithmClass; // TCP congestion control algorithm; leave empty for default
 }
 
 
@@ -183,7 +191,7 @@ class TCPStatusInfo extends TCPCommand
     int localPort;
     int remotePort;
 
-    unsigned int snd_mss;       // changed from int to uint 2009-08-05 by T.R.
+    unsigned int snd_mss;
 
     unsigned int snd_una;
     unsigned int snd_nxt;

@@ -27,7 +27,12 @@ void TCPGenericSrvApp::initialize()
     delay = par("replyDelay");
     maxMsgDelay = 0;
 
+    //statistics
     msgsRcvd = msgsSent = bytesRcvd = bytesSent = 0;
+    rcvdPkBytesSignal = registerSignal("rcvdPkBytes");
+    sentPkBytesSignal = registerSignal("sentPkBytes");
+
+
     WATCH(msgsRcvd);
     WATCH(msgsSent);
     WATCH(bytesRcvd);
@@ -35,6 +40,7 @@ void TCPGenericSrvApp::initialize()
 
     TCPSocket socket;
     socket.setOutputGate(gate("tcpOut"));
+    socket.setDataTransferMode(TCP_TRANSFER_OBJECT);
     socket.bind(address[0] ? IPvXAddress(address) : IPvXAddress(), port);
     socket.listen();
 }
@@ -55,6 +61,7 @@ void TCPGenericSrvApp::sendBack(cMessage *msg)
 	{
 		msgsSent++;
 		bytesSent += appmsg->getByteLength();
+		emit(sentPkBytesSignal, (long)(appmsg->getByteLength()));
 
 		EV << "sending \"" << appmsg->getName() << "\" to TCP, " << appmsg->getByteLength() << " bytes\n";
 	}
@@ -86,12 +93,13 @@ void TCPGenericSrvApp::handleMessage(cMessage *msg)
         if (!appmsg)
             error("Message (%s)%s is not a GenericAppMsg -- "
                   "probably wrong client app, or wrong setting of TCP's "
-                  "sendQueueClass/receiveQueueClass parameters "
-                  "(try \"TCPMsgBasedSendQueue\" and \"TCPMsgBasedRcvQueue\")",
+                  "dataTransferMode parameters "
+                  "(try \"object\")",
                   msg->getClassName(), msg->getName());
 
         msgsRcvd++;
         bytesRcvd += appmsg->getByteLength();
+        emit(rcvdPkBytesSignal, (long)(appmsg->getByteLength()));
 
         long requestedBytes = appmsg->getExpectedReplyLength();
 
@@ -132,6 +140,7 @@ void TCPGenericSrvApp::handleMessage(cMessage *msg)
     else
     {
         // some indication -- ignore
+    	EV << "drop msg: " << msg->getName() << ", kind:"<< msg->getKind() << endl;
         delete msg;
     }
 
@@ -147,9 +156,4 @@ void TCPGenericSrvApp::finish()
 {
     EV << getFullPath() << ": sent " << bytesSent << " bytes in " << msgsSent << " packets\n";
     EV << getFullPath() << ": received " << bytesRcvd << " bytes in " << msgsRcvd << " packets\n";
-
-    recordScalar("packets sent", msgsSent);
-    recordScalar("packets rcvd", msgsRcvd);
-    recordScalar("bytes sent", bytesSent);
-    recordScalar("bytes rcvd", bytesRcvd);
 }

@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2004 Andras Varga
-//               2009 Thomas Reschka
+// Copyright (C) 2009-2010 Thomas Reschka
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -37,11 +37,11 @@
 // segments there SHOULD be an ACK for at least every second
 // segment."
 
-#define DELAYED_ACK_TIMEOUT   0.2   // 200ms (RFC1122: MUST be less than 0.5 seconds)
+#define DELAYED_ACK_TIMEOUT   0.2   // 200ms (RFC 1122: MUST be less than 0.5 seconds)
 #define MAX_REXMIT_COUNT       12   // 12 retries
 #define MIN_REXMIT_TIMEOUT    1.0   // 1s
 //#define MIN_REXMIT_TIMEOUT    0.6   // 600ms (3 ticks)
-#define MAX_REXMIT_TIMEOUT    240   // 2*MSL (RFC1122)
+#define MAX_REXMIT_TIMEOUT    240   // 2*MSL (RFC 1122)
 #define MIN_PERSIST_TIMEOUT     5   //  5s
 #define MAX_PERSIST_TIMEOUT    60   // 60s
 
@@ -184,8 +184,8 @@ void TCPBaseAlg::established(bool active)
     // transmitted SYN MUST be one segment consisting of MSS bytes."
     if (state->increased_IW_enabled && state->syn_rexmit_count==0)
     {
-        state->snd_cwnd = std::min (4*(int)state->snd_mss, std::max(2*(int)state->snd_mss, 4380));
-        tcpEV << "Enabled increased initial window, CWND is set to: " << state->snd_cwnd << "\n";
+        state->snd_cwnd = std::min(4 * state->snd_mss, std::max(2 * state->snd_mss, (uint32)4380));
+        tcpEV << "Enabled Increased Initial Window, CWND is set to: " << state->snd_cwnd << "\n";
     }
     // RFC 2001, page 3:
     // " 1.  Initialization for a given connection sets cwnd to one segment
@@ -197,7 +197,7 @@ void TCPBaseAlg::established(bool active)
     {
         // finish connection setup with ACK (possibly piggybacked on data)
         tcpEV << "Completing connection setup by sending ACK (possibly piggybacked on data)\n";
-        if (!sendData())
+        if (!sendData()) // FIXME TODO - This condition is never true because the buffer is empty (at this time) therefore the first ACK is never piggyback on data
             conn->sendAck();
     }
 }
@@ -292,6 +292,8 @@ void TCPBaseAlg::processRexmitTimer(TCPEventCode& event)
         }
     }
 
+    state->time_last_data_sent = simTime();
+
     //
     // Leave congestion window management and actual retransmission to
     // subclasses (e.g. TCPTahoe, TCPReno).
@@ -303,10 +305,10 @@ void TCPBaseAlg::processRexmitTimer(TCPEventCode& event)
 
 void TCPBaseAlg::processPersistTimer(TCPEventCode& event)
 {
-    // setup and restart the persist timer
-    // FIXME Calculation of persist timer is not as simple as done here!
+    // setup and restart the PERSIST timer
+    // FIXME Calculation of PERSIST timer is not as simple as done here!
     // It depends on RTT calculations and is bounded to 5-60 seconds.
-    // This simplified persist timer calculation generates values
+    // This simplified PERSIST timer calculation generates values
     // as presented in [Stevens, W.R.: TCP/IP Illustrated, Volume 1, chapter 22.2]
     // (5, 5, 6, 12, 24, 48, 60, 60, 60...)
     if (state->persist_factor == 0)
@@ -315,7 +317,7 @@ void TCPBaseAlg::processPersistTimer(TCPEventCode& event)
         state->persist_factor = state->persist_factor*2;
     state->persist_timeout = state->persist_factor * 1.5; // 1.5 is a factor for typical LAN connection [Stevens, W.R.: TCP/IP Ill. Vol. 1, chapter 22.2]
 
-    // persist timer is bounded to 5-60 seconds
+    // PERSIST timer is bounded to 5-60 seconds
     if (state->persist_timeout < MIN_PERSIST_TIMEOUT)
         state->rexmit_timeout = MIN_PERSIST_TIMEOUT;
     if (state->persist_timeout > MAX_PERSIST_TIMEOUT)
@@ -334,7 +336,18 @@ void TCPBaseAlg::processDelayedAckTimer(TCPEventCode& event)
 
 void TCPBaseAlg::processKeepAliveTimer(TCPEventCode& event)
 {
-    // FIXME TBD
+    // TBD
+    // RFC 1122, page 102:
+    // "A "keep-alive" mechanism periodically probes the other
+    // end of a connection when the connection is otherwise
+    // idle, even when there is no data to be sent.  The TCP
+    // specification does not include a keep-alive mechanism
+    // because it could:  (1) cause perfectly good connections
+    // to break during transient Internet failures; (2)
+    // consume unnecessary bandwidth ("if no one is using the
+    // connection, who cares if it is still good?"); and (3)
+    // cost money for an Internet path that charges for
+    // packets."
 }
 
 void TCPBaseAlg::startRexmitTimer()
@@ -357,7 +370,7 @@ void TCPBaseAlg::rttMeasurementComplete(simtime_t tSent, simtime_t tAcked)
     //
 
     // update smoothed RTT estimate (srtt) and variance (rttvar)
-    const double g = 0.125;   // 1/8; (1-alpha) where alpha=7/8;
+    const double g = 0.125; // 1/8; (1-alpha) where alpha=7/8;
     simtime_t newRTT = tAcked-tSent;
 
     simtime_t& srtt = state->srtt;
@@ -386,6 +399,17 @@ void TCPBaseAlg::rttMeasurementComplete(simtime_t tSent, simtime_t tAcked)
     if (rtoVector) rtoVector->record(rto);
 }
 
+void TCPBaseAlg::rttMeasurementCompleteUsingTS(uint32 echoedTS)
+{
+    ASSERT (state->ts_enabled);
+    // Note: The TS option is using uint32 values (ms precision) therefore we convert the current simTime also to a uint32 value (ms precision)
+    // and then convert back to simtime_t to use rttMeasurementComplete() to update srtt and rttvar
+    uint32 now = conn->convertSimtimeToTS(simTime());
+    simtime_t tSent = conn->convertTSToSimtime(echoedTS);
+    simtime_t tAcked = conn->convertTSToSimtime(now);
+    rttMeasurementComplete(tSent, tAcked);
+}
+
 bool TCPBaseAlg::sendData()
 {
     //
@@ -401,6 +425,31 @@ bool TCPBaseAlg::sendData()
     bool fullSegmentsOnly = state->nagle_enabled && state->snd_una!=state->snd_max;
     if (fullSegmentsOnly)
         tcpEV << "Nagle is enabled and there's unacked data: only full segments will be sent\n";
+
+    // RFC 2581, pages 7 and 8: "When TCP has not received a segment for
+    // more than one retransmission timeout, cwnd is reduced to the value
+    // of the restart window (RW) before transmission begins.
+    // For the purposes of this standard, we define RW = IW.
+    // (...)
+    // Using the last time a segment was received to determine whether or
+    // not to decrease cwnd fails to deflate cwnd in the common case of
+    // persistent HTTP connections [HTH98].
+    // (...)
+    // Therefore, a TCP SHOULD set cwnd to no more than RW before beginning
+    // transmission if the TCP has not sent data in an interval exceeding
+    // the retransmission timeout."
+    if (!conn->isSendQueueEmpty())  // do we have any data to send?
+    {
+        if ((simTime() - state->time_last_data_sent) > state->rexmit_timeout)
+        {
+            // RFC 5681, page 11: "For the purposes of this standard, we define RW = min(IW,cwnd)."
+            if (state->increased_IW_enabled)
+                state->snd_cwnd = std::min (std::min (4 * state->snd_mss, std::max(2 * state->snd_mss, (uint32)4380)), state->snd_cwnd);
+            else
+                state->snd_cwnd = state->snd_mss;
+            tcpEV << "Restarting idle connection, CWND is set to: " << state->snd_cwnd << "\n";
+        }
+    }
 
     //
     // Send window is effectively the minimum of the congestion window (cwnd)
@@ -424,56 +473,66 @@ void TCPBaseAlg::receivedOutOfOrderSegment()
 
 void TCPBaseAlg::receiveSeqChanged()
 {
-    // RFC 2581, page 6:
-    // "3.2 Fast Retransmit/Fast Recovery
-    // (...)
-    // In addition, a TCP receiver SHOULD send an immediate ACK
-    // when the incoming segment fills in all or part of a gap in the
-    // sequence space."
-    if (state->lossRecovery)
-        state->ack_now = true; // although not mentioned in [Stevens, W.R.: TCP/IP Illustrated, Volume 2, page 861] seems like we have to set ack_now
-
-    if (!state->delayed_acks_enabled)
+    // If we send a data segment already (with the updated seqNo) there is no need to send an additional ACK
+    if (state->full_sized_segment_counter == 0 && !state->ack_now && state->last_ack_sent == state->rcv_nxt && !delayedAckTimer->isScheduled()) // ackSent?
     {
-        tcpEV << "rcv_nxt changed to " << state->rcv_nxt << ", sending ACK now (delayed ACKs are disabled)\n";
-        conn->sendAck();
-    }
-    else if (state->ack_now)
-    {
-        tcpEV << "rcv_nxt changed to " << state->rcv_nxt << ", sending ACK now (delayed ACKs are enabled, but ack_now is set)\n";
-        conn->sendAck();
+        // tcpEV << "ACK has already been sent (possibly piggybacked on data)\n";
     }
     else
     {
-        // ACK should be generated for at least every second SMSS-sized segment!
-        if (state->full_sized_segment_counter >= 2)
-        {
-            conn->sendAck();
-            tcpEV << "rcv_nxt changed to " << state->rcv_nxt << ", scheduling ACK\n";
-            if (delayedAckTimer->isScheduled()) // cancel delayed ACK timer
-                cancelEvent(delayedAckTimer);
-        }
+        // RFC 2581, page 6:
+        // "3.2 Fast Retransmit/Fast Recovery
+        // (...)
+        // In addition, a TCP receiver SHOULD send an immediate ACK
+        // when the incoming segment fills in all or part of a gap in the
+        // sequence space."
+        if (state->lossRecovery)
+            state->ack_now = true; // although not mentioned in [Stevens, W.R.: TCP/IP Illustrated, Volume 2, page 861] seems like we have to set ack_now
 
-        // schedule delayed ACK timer if not already running
-        if (!delayedAckTimer->isScheduled())
-            conn->scheduleTimeout(delayedAckTimer, DELAYED_ACK_TIMEOUT);
+        if (!state->delayed_acks_enabled) // delayed ACK disabled
+        {
+            tcpEV << "rcv_nxt changed to " << state->rcv_nxt << ", (delayed ACK disabled) sending ACK now\n";
+            conn->sendAck();
+        }
+        else // delayed ACK enabled
+        {
+            if (state->ack_now)
+            {
+                tcpEV << "rcv_nxt changed to " << state->rcv_nxt << ", (delayed ACK enabled, but ack_now is set) sending ACK now\n";
+                conn->sendAck();
+            }
+            // RFC 1122, page 96: "in a stream of full-sized segments there SHOULD be an ACK for at least every second segment."
+            else if (state->full_sized_segment_counter >= 2)
+            {
+                tcpEV << "rcv_nxt changed to " << state->rcv_nxt << ", (delayed ACK enabled, but full_sized_segment_counter=" << state->full_sized_segment_counter << ") sending ACK now\n";
+                conn->sendAck();
+            }
+            else
+            {
+                tcpEV << "rcv_nxt changed to " << state->rcv_nxt << ", (delayed ACK enabled and full_sized_segment_counter=" << state->full_sized_segment_counter << ") scheduling ACK\n";
+                if (!delayedAckTimer->isScheduled()) // schedule delayed ACK timer if not already running
+                    conn->scheduleTimeout(delayedAckTimer, DELAYED_ACK_TIMEOUT);
+            }
+        }
     }
 }
 
 void TCPBaseAlg::receivedDataAck(uint32 firstSeqAcked)
 {
-    // if round-trip time measurement is running, check if rtseq has been acked
-    if (state->rtseq_sendtime!=0 && seqLess(state->rtseq, state->snd_una))
+    if (!state->ts_enabled)
     {
-        // print value
-        tcpEV << "Round-trip time measured on rtseq=" << state->rtseq << ": "
-              << floor((simTime() - state->rtseq_sendtime)*1000+0.5) << "ms\n";
+        // if round-trip time measurement is running, check if rtseq has been acked
+        if (state->rtseq_sendtime!=0 && seqLess(state->rtseq, state->snd_una))
+        {
+            // print value
+            tcpEV << "Round-trip time measured on rtseq=" << state->rtseq << ": "
+                  << floor((simTime() - state->rtseq_sendtime)*1000+0.5) << "ms\n";
 
-        // update RTT variables with new value
-        rttMeasurementComplete(state->rtseq_sendtime, simTime());
+            rttMeasurementComplete(state->rtseq_sendtime, simTime()); // update RTT variables with new value
 
-        // measurement finished
-        state->rtseq_sendtime = 0;
+            // measurement finished
+            state->rtseq_sendtime = 0;
+        }
     }
 
     //
@@ -501,7 +560,7 @@ void TCPBaseAlg::receivedDataAck(uint32 firstSeqAcked)
     }
 
     //
-    // handling of persist timer:
+    // handling of PERSIST timer:
     // If data sender received a zero-sized window, check retransmission timer.
     //  If retransmission timer is not scheduled, start PERSIST timer if not already
     //  running.
@@ -584,6 +643,7 @@ void TCPBaseAlg::ackSent()
 {
     state->full_sized_segment_counter = 0; // reset counter
     state->ack_now = false; // reset flag
+    state->last_ack_sent = state->rcv_nxt; // update last_ack_sent, needed for TS option
     // if delayed ACK timer is running, cancel it
     if (delayedAckTimer->isScheduled())
         cancelEvent(delayedAckTimer);
@@ -598,14 +658,19 @@ void TCPBaseAlg::dataSent(uint32 fromseq)
         startRexmitTimer();
     }
 
-    // start round-trip time measurement (if not already running)
-    if (state->rtseq_sendtime==0)
+    if (!state->ts_enabled)
     {
-        // remember this sequence number and when it was sent
-        state->rtseq = fromseq;
-        state->rtseq_sendtime = simTime();
-        tcpEV << "Starting rtt measurement on seq=" << state->rtseq << "\n";
+        // start round-trip time measurement (if not already running)
+        if (state->rtseq_sendtime==0)
+        {
+            // remember this sequence number and when it was sent
+            state->rtseq = fromseq;
+            state->rtseq_sendtime = simTime();
+            tcpEV << "Starting rtt measurement on seq=" << state->rtseq << "\n";
+        }
     }
+
+    state->time_last_data_sent = simTime();
 }
 
 void TCPBaseAlg::restartRexmitTimer()

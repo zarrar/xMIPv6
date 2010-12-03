@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2004 Andras Varga
-//               2009 Thomas Reschka
+// Copyright (C) 2009-2010 Thomas Reschka
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -116,7 +116,30 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
     //
     // RFC 793: first check sequence number
     //
-    bool acceptable = isSegmentAcceptable(tcpseg);
+
+    bool acceptable = true;
+
+    if (tcpseg->getHeaderLength() > TCP_HEADER_OCTETS) // Header options present? TCP_HEADER_OCTETS = 20
+    {
+        // PAWS
+        if (state->ts_enabled)
+        {
+            uint32 tsval = getTSval(tcpseg);
+            // FIXME check TS rounding on all other code
+            if (tsval != 0 && seqLess(tsval, state->ts_recent) &&
+                    (simTime() - state->time_last_data_sent) > PAWS_IDLE_TIME_THRESH) // PAWS_IDLE_TIME_THRESH = 24 days
+            {
+                tcpEV << "PAWS: Segment is not acceptable, TSval=" << tsval << " in " <<
+                        stateName(fsm.getState()) << " state received: dropping segment\n";
+                acceptable = false;
+            }
+        }
+        readHeaderOptions(tcpseg);
+    }
+
+    if (acceptable)
+        acceptable = isSegmentAcceptable(tcpseg);
+
     if (!acceptable)
     {
         //"
@@ -132,7 +155,11 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
         }
         else
         {
-            if (state->sack_enabled && seqLess((tcpseg->getSequenceNo()+tcpseg->getPayloadLength()), state->rcv_nxt))
+            if (tcpseg->getSynBit())
+            {
+                tcpEV << "SYN with unacceptable seqNum in " <<  stateName(fsm.getState()) << " state received (SYN duplicat?)\n";
+            }
+            else if (state->sack_enabled && seqLess((tcpseg->getSequenceNo()+tcpseg->getPayloadLength()), state->rcv_nxt))
             {
                 state->start_seqno = tcpseg->getSequenceNo();
                 state->end_seqno = tcpseg->getSequenceNo() + tcpseg->getPayloadLength();
@@ -148,7 +175,6 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
             //
             // The received segment is not "valid" therefore the ACK will not bear a SACK option, if snd_dsack (D-SACK) is not set.
             sendAck();
-
         }
         return TCP_E_IGNORE;
     }
@@ -242,6 +268,8 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
         return TCP_E_IGNORE;
     }
 
+    uint32 old_snd_una = state->snd_una;
+
     TCPEventCode event = TCP_E_IGNORE;
 
     if (fsm.getState()==TCP_S_SYN_RCVD)
@@ -273,9 +301,15 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
     }
 
     uint32 old_snd_nxt = state->snd_nxt; // later we'll need to see if snd_nxt changed
+    // Note: If one of the last data segments is lost while already in LAST-ACK state (e.g. if using TCPEchoApps)
+    // TCP must be able to process acceptable acknowledgments, however please note RFC 793, page 73:
+	// "LAST-ACK STATE
+    //    The only thing that can arrive in this state is an
+    //    acknowledgment of our FIN.  If our FIN is now acknowledged,
+    //    delete the TCB, enter the CLOSED state, and return."
     if (fsm.getState()==TCP_S_SYN_RCVD || fsm.getState()==TCP_S_ESTABLISHED ||
         fsm.getState()==TCP_S_FIN_WAIT_1 || fsm.getState()==TCP_S_FIN_WAIT_2 ||
-        fsm.getState()==TCP_S_CLOSE_WAIT || fsm.getState()==TCP_S_CLOSING)
+        fsm.getState()==TCP_S_CLOSE_WAIT || fsm.getState()==TCP_S_CLOSING || fsm.getState()==TCP_S_LAST_ACK)
     {
         //
         // ESTABLISHED processing:
@@ -380,8 +414,8 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
     //
     // RFC 793: sixth, check the URG bit,
     //
-    if (tcpseg->getUrgBit() && (fsm.getState()==TCP_S_ESTABLISHED || fsm.getState()==TCP_S_FIN_WAIT_1 ||
-        fsm.getState()==TCP_S_FIN_WAIT_2))
+    if (tcpseg->getUrgBit() && (fsm.getState()==TCP_S_ESTABLISHED ||
+            fsm.getState()==TCP_S_FIN_WAIT_1 || fsm.getState()==TCP_S_FIN_WAIT_2))
     {
         //"
         // If the URG bit is set, RCV.UP <- max(RCV.UP,SEG.UP), and signal
@@ -399,7 +433,8 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
     // RFC 793: seventh, process the segment text,
     //
     uint32 old_rcv_nxt = state->rcv_nxt; // if rcv_nxt changes, we need to send/schedule an ACK
-    if (fsm.getState()==TCP_S_SYN_RCVD || fsm.getState()==TCP_S_ESTABLISHED || fsm.getState()==TCP_S_FIN_WAIT_1 || fsm.getState()==TCP_S_FIN_WAIT_2)
+    if (fsm.getState()==TCP_S_SYN_RCVD || fsm.getState()==TCP_S_ESTABLISHED ||
+            fsm.getState()==TCP_S_FIN_WAIT_1 || fsm.getState()==TCP_S_FIN_WAIT_2)
     {
         //"
         // Once in the ESTABLISHED state, it is possible to deliver segment
@@ -426,10 +461,13 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
         // This acknowledgment should be piggybacked on a segment being
         // transmitted if possible without incurring undue delay.
         //"
+
+        tcpseg->truncateSegment(state->rcv_nxt, state->rcv_nxt + state->rcv_wnd);
+
         if (tcpseg->getPayloadLength()>0)
         {
             // check for full sized segment
-            if (tcpseg->getPayloadLength() == state->snd_mss)
+            if (tcpseg->getPayloadLength() == state->snd_mss || tcpseg->getPayloadLength() + tcpseg->getHeaderLength() - TCP_HEADER_OCTETS == state->snd_mss)
                 state->full_sized_segment_counter++;
             // check for persist probe
             if (tcpseg->getPayloadLength() == 1)
@@ -438,21 +476,31 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
             updateRcvQueueVars();
             if (state->freeRcvBuffer >= tcpseg->getPayloadLength()) // enough freeRcvBuffer in rcvQueue for new segment?
             {
-            tcpEV2 << "Processing segment text in a data transfer state\n";
+                tcpEV2 << "Processing segment text in a data transfer state\n";
 
-            // insert into receive buffers. If this segment is contiguous with
-            // previously received ones (seqNo==rcv_nxt), rcv_nxt can be increased;
-            // otherwise it stays the same but the data must be cached nevertheless
-            // (to avoid "Failure to retain above-sequence data" problem, RFC 2525
-            // section 2.5).
-                // uint32 old_rcv_nxt = state->rcv_nxt; // The same has already be done in line 401 - FIXED 2009-08-05 by T.R.
+                // insert into receive buffers. If this segment is contiguous with
+                // previously received ones (seqNo==rcv_nxt), rcv_nxt can be increased;
+                // otherwise it stays the same but the data must be cached nevertheless
+                // (to avoid "Failure to retain above-sequence data" problem, RFC 2525
+                // section 2.5).
 
                 uint32 old_usedRcvBuffer = state->usedRcvBuffer;
-            state->rcv_nxt = receiveQueue->insertBytesFromSegment(tcpseg);
+                state->rcv_nxt = receiveQueue->insertBytesFromSegment(tcpseg);
 
-            // out-of-order segment?
-            if (old_rcv_nxt==state->rcv_nxt)
-            {
+                if (seqGreater(state->snd_una, old_snd_una))
+                {
+                    // notify
+                    tcpAlgorithm->receivedDataAck(old_snd_una);
+
+                    // in the receivedDataAck we need the old value
+                    state->dupacks = 0;
+                    if (dupAcksVector)
+                        dupAcksVector->record(state->dupacks);
+                }
+
+                // out-of-order segment?
+                if (old_rcv_nxt==state->rcv_nxt)
+                {
                     state->rcv_oooseg++;
                     if (rcvOooSegVector)
                         rcvOooSegVector->record(state->rcv_oooseg);
@@ -478,39 +526,73 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
                             tcpEV << "SND_SACK SET (old_rcv_nxt==rcv_nxt oooseg rcvd)\n";
                         }
                     }
-                tcpAlgorithm->receivedOutOfOrderSegment();
-            }
-            else
-            {
-                // forward data to app
-                //
-                // FIXME observe PSH bit
-                //
-                // FIXME we should implement socket READ command, and pass up only
-                // as many bytes as requested. rcv_wnd should be decreased
-                // accordingly!
-                //
-                cPacket *msg;
-                while ((msg=receiveQueue->extractBytesUpTo(state->rcv_nxt))!=NULL)
-                {
-                    msg->setKind(TCP_I_DATA);  // TBD currently we never send TCP_I_URGENT_DATA
-                    TCPCommand *cmd = new TCPCommand();
-                    cmd->setConnId(connId);
-                    msg->setControlInfo(cmd);
-                    sendToApp(msg);
+                    tcpAlgorithm->receivedOutOfOrderSegment();
                 }
+                else
+                {
+                    // forward data to app
+                    //
+                    // FIXME observe PSH bit
+                    //
+                    // FIXME we should implement socket READ command, and pass up only
+                    // as many bytes as requested. rcv_wnd should be decreased
+                    // accordingly!
+                    //
+                    cPacket *msg;
+                    while ((msg=receiveQueue->extractBytesUpTo(state->rcv_nxt))!=NULL)
+                    {
+                        msg->setKind(TCP_I_DATA);  // TBD currently we never send TCP_I_URGENT_DATA
+                        TCPCommand *cmd = new TCPCommand();
+                        cmd->setConnId(connId);
+                        msg->setControlInfo(cmd);
+                        sendToApp(msg);
+                    }
 
-                // if this segment "filled the gap" until the previously arrived segment
-                // that carried a FIN (i.e.rcv_nxt==rcv_fin_seq), we have to advance
-                // rcv_nxt over the FIN.
-                if (state->fin_rcvd && state->rcv_nxt==state->rcv_fin_seq)
-                {
-                    tcpEV << "All segments arrived up to the FIN segment, advancing rcv_nxt over the FIN\n";
-                    state->rcv_nxt = state->rcv_fin_seq+1;
-                    sendIndicationToApp(TCP_I_PEER_CLOSED);
+                    // if this segment "filled the gap" until the previously arrived segment
+                    // that carried a FIN (i.e.rcv_nxt==rcv_fin_seq), we have to advance
+                    // rcv_nxt over the FIN.
+                    if (state->fin_rcvd && state->rcv_nxt==state->rcv_fin_seq)
+                    {
+                        state->ack_now = true; // although not mentioned in [Stevens, W.R.: TCP/IP Illustrated, Volume 2, page 861] seems like we have to set ack_now
+                        tcpEV << "All segments arrived up to the FIN segment, advancing rcv_nxt over the FIN\n";
+                        state->rcv_nxt = state->rcv_fin_seq+1;
+                        // state transitions will be done in the state machine, here we just set
+                        // the proper event code (TCP_E_RCV_FIN or TCP_E_RCV_FIN_ACK)
+                        event = TCP_E_RCV_FIN;
+                        switch (fsm.getState())
+                        {
+                            case TCP_S_FIN_WAIT_1:
+                                if (state->fin_ack_rcvd)
+                                {
+                                    event = TCP_E_RCV_FIN_ACK;
+                                    // start the time-wait timer, turn off the other timers
+                                    cancelEvent(finWait2Timer);
+                                    scheduleTimeout(the2MSLTimer, TCP_TIMEOUT_2MSL);
+
+                                    // we're entering TIME_WAIT, so we can signal CLOSED the user
+                                    // (the only thing left to do is wait until the 2MSL timer expires)
+                                    sendIndicationToApp(TCP_I_CLOSED);
+                                }
+                                break;
+                            case TCP_S_FIN_WAIT_2:
+                                // Start the time-wait timer, turn off the other timers.
+                                cancelEvent(finWait2Timer);
+                                scheduleTimeout(the2MSLTimer, TCP_TIMEOUT_2MSL);
+
+                                // we're entering TIME_WAIT, so we can signal CLOSED the user
+                                // (the only thing left to do is wait until the 2MSL timer expires)
+                                sendIndicationToApp(TCP_I_CLOSED);
+                                break;
+                            case TCP_S_TIME_WAIT:
+                                // Restart the 2 MSL time-wait timeout.
+                                cancelEvent(the2MSLTimer);
+                                scheduleTimeout(the2MSLTimer, TCP_TIMEOUT_2MSL);
+                                break;
+                        }
+                        sendIndicationToApp(TCP_I_PEER_CLOSED);
+                    }
                 }
             }
-        }
             else    // not enough freeRcvBuffer in rcvQueue for new segment
             {
                 state->tcpRcvQueueDrops++; // update current number of tcp receive queue drops
@@ -549,6 +631,39 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
             // advance rcv_nxt over FIN now
             tcpEV << "FIN arrived, advancing rcv_nxt over the FIN\n";
             state->rcv_nxt++;
+            // state transitions will be done in the state machine, here we just set
+            // the proper event code (TCP_E_RCV_FIN or TCP_E_RCV_FIN_ACK)
+            event = TCP_E_RCV_FIN;
+            switch (fsm.getState())
+            {
+                case TCP_S_FIN_WAIT_1:
+                    if (state->fin_ack_rcvd)
+                    {
+                        event = TCP_E_RCV_FIN_ACK;
+                        // start the time-wait timer, turn off the other timers
+                        cancelEvent(finWait2Timer);
+                        scheduleTimeout(the2MSLTimer, TCP_TIMEOUT_2MSL);
+
+                        // we're entering TIME_WAIT, so we can signal CLOSED the user
+                        // (the only thing left to do is wait until the 2MSL timer expires)
+                        sendIndicationToApp(TCP_I_CLOSED);
+                    }
+                    break;
+                case TCP_S_FIN_WAIT_2:
+                    // Start the time-wait timer, turn off the other timers.
+                    cancelEvent(finWait2Timer);
+                    scheduleTimeout(the2MSLTimer, TCP_TIMEOUT_2MSL);
+
+                    // we're entering TIME_WAIT, so we can signal CLOSED the user
+                    // (the only thing left to do is wait until the 2MSL timer expires)
+                    sendIndicationToApp(TCP_I_CLOSED);
+                    break;
+                case TCP_S_TIME_WAIT:
+                    // Restart the 2 MSL time-wait timeout.
+                    cancelEvent(the2MSLTimer);
+                    scheduleTimeout(the2MSLTimer, TCP_TIMEOUT_2MSL);
+                    break;
+            }
             sendIndicationToApp(TCP_I_PEER_CLOSED);
         }
         else
@@ -560,40 +675,6 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
         }
 
         // TBD do PUSH stuff
-
-        // state transitions will be done in the state machine, here we just set
-        // the proper event code (TCP_E_RCV_FIN or TCP_E_RCV_FIN_ACK)
-        event = TCP_E_RCV_FIN;
-        switch (fsm.getState())
-        {
-            case TCP_S_FIN_WAIT_1:
-                if (state->fin_ack_rcvd)
-                {
-                    event = TCP_E_RCV_FIN_ACK;
-                    // start the time-wait timer, turn off the other timers
-                    cancelEvent(finWait2Timer);
-                    scheduleTimeout(the2MSLTimer, TCP_TIMEOUT_2MSL);
-
-                    // we're entering TIME_WAIT, so we can signal CLOSED the user
-                    // (the only thing left to do is wait until the 2MSL timer expires)
-                    sendIndicationToApp(TCP_I_CLOSED);
-                }
-                break;
-            case TCP_S_FIN_WAIT_2:
-                // Start the time-wait timer, turn off the other timers.
-                cancelEvent(finWait2Timer);
-                scheduleTimeout(the2MSLTimer, TCP_TIMEOUT_2MSL);
-
-                // we're entering TIME_WAIT, so we can signal CLOSED the user
-                // (the only thing left to do is wait until the 2MSL timer expires)
-                sendIndicationToApp(TCP_I_CLOSED);
-                break;
-            case TCP_S_TIME_WAIT:
-                // Restart the 2 MSL time-wait timeout.
-                cancelEvent(the2MSLTimer);
-                scheduleTimeout(the2MSLTimer, TCP_TIMEOUT_2MSL);
-                break;
-        }
     }
 
     if (old_rcv_nxt!=state->rcv_nxt)
@@ -708,7 +789,7 @@ TCPEventCode TCPConnection::processSegmentInListen(TCPSegment *tcpseg, IPvXAddre
             TCPConnection *conn = cloneListeningConnection(); // "conn" is the clone which will stay LISTENing, while "this" gets updated with the remote address
             tcpMain->addForkedConnection(this, conn, destAddr, srcAddr, tcpseg->getDestPort(), tcpseg->getSrcPort());
             tcpEV << "Connection forked: this connection got new connId=" << connId << ", "
-                     "spinoff keeps LISTENing with connId=" << conn->connId << "\n";
+                "spinoff keeps LISTENing with connId=" << conn->connId << "\n";
         }
         else
         {
@@ -726,14 +807,15 @@ TCPEventCode TCPConnection::processSegmentInListen(TCPSegment *tcpseg, IPvXAddre
         //  state should be changed to SYN-RECEIVED.
         //"
         state->rcv_nxt = tcpseg->getSequenceNo()+1;
-        state->rcv_adv = state->rcv_nxt + state->rcv_wnd; // TODO is it good?
+        state->rcv_adv = state->rcv_nxt + state->rcv_wnd;
+        if (rcvAdvVector) rcvAdvVector->record(state->rcv_adv);
         state->irs = tcpseg->getSequenceNo();
         receiveQueue->init(state->rcv_nxt);   // FIXME may init twice...
         selectInitialSeqNum();
 
         // although not mentioned in RFC 793, seems like we have to pick up
         // initial snd_wnd from the segment here.
-        updateWndInfo(tcpseg);
+        updateWndInfo(tcpseg, true);
 
         if (tcpseg->getHeaderLength() > TCP_HEADER_OCTETS) // Header options present? TCP_HEADER_OCTETS = 20
             readHeaderOptions(tcpseg);
@@ -758,7 +840,7 @@ TCPEventCode TCPConnection::processSegmentInListen(TCPSegment *tcpseg, IPvXAddre
             updateRcvQueueVars();
             if (state->freeRcvBuffer >= tcpseg->getPayloadLength()) // enough freeRcvBuffer in rcvQueue for new segment?
             {
-            receiveQueue->insertBytesFromSegment(tcpseg);
+                receiveQueue->insertBytesFromSegment(tcpseg);
             }
             else    // not enough freeRcvBuffer in rcvQueue for new segment
             {
@@ -858,7 +940,8 @@ TCPEventCode TCPConnection::processSegmentInSynSent(TCPSegment *tcpseg, IPvXAddr
         //   are thereby acknowledged should be removed.
         //
         state->rcv_nxt = tcpseg->getSequenceNo()+1;
-        state->rcv_adv = state->rcv_nxt + state->rcv_wnd; // TODO is it good?
+        state->rcv_adv = state->rcv_nxt + state->rcv_wnd;
+        if (rcvAdvVector) rcvAdvVector->record(state->rcv_adv);
         state->irs = tcpseg->getSequenceNo();
         receiveQueue->init(state->rcv_nxt);
 
@@ -871,7 +954,7 @@ TCPEventCode TCPConnection::processSegmentInSynSent(TCPSegment *tcpseg, IPvXAddr
 
             // although not mentioned in RFC 793, seems like we have to pick up
             // initial snd_wnd from the segment here.
-            updateWndInfo(tcpseg);
+            updateWndInfo(tcpseg, true);
         }
 
         // this also seems to be a good time to learn our local IP address
@@ -1066,11 +1149,9 @@ bool TCPConnection::processAckInEstabEtc(TCPSegment *tcpseg)
             if (dupAcksVector)
                 dupAcksVector->record(state->dupacks);
 
-            // we need to update send window even if the ACK is a dupACK, because rcv win could have been changed if faulty data receiver is not respecting the "do not shrink window" rule
+            // we need to update send window even if the ACK is a dupACK, because rcv win
+            // could have been changed if faulty data receiver is not respecting the "do not shrink window" rule
             updateWndInfo(tcpseg);
-
-            if (tcpseg->getHeaderLength() > TCP_HEADER_OCTETS) // Header options present? TCP_HEADER_OCTETS = 20
-                readHeaderOptions(tcpseg);
 
             tcpAlgorithm->receivedDuplicateAck();
         }
@@ -1102,6 +1183,17 @@ bool TCPConnection::processAckInEstabEtc(TCPSegment *tcpseg)
         if (seqLess(state->snd_nxt, state->snd_una))
             state->snd_nxt = state->snd_una;
 
+        // RFC 1323, page 36:
+        // "If SND.UNA < SEG.ACK =< SND.NXT then, set SND.UNA <- SEG.ACK.
+        // Also compute a new estimate of round-trip time.  If Snd.TS.OK
+        // bit is on, use my.TSclock - SEG.TSecr; otherwise use the
+        // elapsed time since the first segment in the retransmission
+        // queue was sent.  Any segments on the retransmission queue
+        // which are thereby entirely acknowledged."
+        if (state->ts_enabled)
+            tcpAlgorithm->rttMeasurementCompleteUsingTS(getTSecr(tcpseg));
+        // Note: If TS is disabled the RTT measurement is complete in TCPBaseAlg::receivedDataAck()
+
         uint32 discardUpToSeq = state->snd_una;
 
         // our FIN acked?
@@ -1121,16 +1213,18 @@ bool TCPConnection::processAckInEstabEtc(TCPSegment *tcpseg)
 
         updateWndInfo(tcpseg);
 
-        if (tcpseg->getHeaderLength() > TCP_HEADER_OCTETS) // Header options present? TCP_HEADER_OCTETS = 20
-            readHeaderOptions(tcpseg);
+        // if segment contains data, wait until data has been forwarded to app before sending ACK,
+        // otherwise we would use an old ACKNo
+        if (tcpseg->getPayloadLength() == 0 && fsm.getState()!=TCP_S_SYN_RCVD)
+        {
+            // notify
+            tcpAlgorithm->receivedDataAck(old_snd_una);
 
-        // notify
-        tcpAlgorithm->receivedDataAck(old_snd_una);
-
-        // in the receivedDataAck we need the old value
-        state->dupacks = 0;
-        if (dupAcksVector)
-            dupAcksVector->record(state->dupacks);
+            // in the receivedDataAck we need the old value
+            state->dupacks = 0;
+            if (dupAcksVector)
+                dupAcksVector->record(state->dupacks);
+        }
     }
     else
     {
@@ -1187,7 +1281,6 @@ void TCPConnection::process_TIMEOUT_2MSL()
             // We should not receive this timeout in this state.
             opp_error("Internal error: received time-wait (2MSL) timeout in state %s", stateName(fsm.getState()));
     }
-
 }
 
 void TCPConnection::process_TIMEOUT_FIN_WAIT_2()

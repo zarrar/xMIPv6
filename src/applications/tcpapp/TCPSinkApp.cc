@@ -21,14 +21,17 @@ Define_Module(TCPSinkApp);
 
 void TCPSinkApp::initialize()
 {
+    cSimpleModule::initialize();
     const char *address = par("address");
     int port = par("port");
 
     bytesRcvd = 0;
     WATCH(bytesRcvd);
+    rcvdPkBytesSignal = registerSignal("rcvdPkBytes");
 
     TCPSocket socket;
     socket.setOutputGate(gate("tcpOut"));
+    socket.readDataTransferModePar(*this);
     socket.bind(address[0] ? IPvXAddress(address) : IPvXAddress(), port);
     socket.listen();
 }
@@ -43,7 +46,9 @@ void TCPSinkApp::handleMessage(cMessage *msg)
     }
     else if (msg->getKind()==TCP_I_DATA || msg->getKind()==TCP_I_URGENT_DATA)
     {
-        bytesRcvd += PK(msg)->getByteLength();
+        long packetLength = PK(msg)->getByteLength();
+        bytesRcvd += packetLength;
+        emit(rcvdPkBytesSignal, packetLength);
         delete msg;
 
         if (ev.isGUI())
@@ -62,6 +67,5 @@ void TCPSinkApp::handleMessage(cMessage *msg)
 
 void TCPSinkApp::finish()
 {
-    recordScalar("bytesRcvd", bytesRcvd);
 }
 

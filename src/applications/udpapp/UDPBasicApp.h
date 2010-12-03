@@ -37,8 +37,12 @@ class INET_API UDPBasicApp : public UDPAppBase
 
     static int counter; // counter for generating a global number for each packet
 
+    //statistics
     int numSent;
     int numReceived;
+
+    simsignal_t sentPkBytesSignal;
+    simsignal_t rcvdPkBytesSignal;
 
     // chooses random destination address
     virtual IPvXAddress chooseDestAddr();
@@ -50,8 +54,7 @@ class INET_API UDPBasicApp : public UDPAppBase
     virtual int numInitStages() const {return 4;}
     virtual void initialize(int stage);
     virtual void handleMessage(cMessage *msg);
+	virtual void finish();
 };
 
 #endif
-
-

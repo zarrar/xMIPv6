@@ -21,6 +21,7 @@ Define_Module(TCPEchoApp);
 
 void TCPEchoApp::initialize()
 {
+    cSimpleModule::initialize();
     const char *address = par("address");
     int port = par("port");
     delay = par("echoDelay");
@@ -30,8 +31,12 @@ void TCPEchoApp::initialize()
     WATCH(bytesRcvd);
     WATCH(bytesSent);
 
+    rcvdPkBytesSignal = registerSignal("rcvdPkBytes");
+    sentPkBytesSignal = registerSignal("sentPkBytes");
+
     TCPSocket socket;
     socket.setOutputGate(gate("tcpOut"));
+    socket.readDataTransferModePar(*this);
     socket.bind(address[0] ? IPvXAddress(address) : IPvXAddress(), port);
     socket.listen();
 }
@@ -39,7 +44,10 @@ void TCPEchoApp::initialize()
 void TCPEchoApp::sendDown(cMessage *msg)
 {
     if (msg->isPacket())
+    {
         bytesSent += ((cPacket *)msg)->getByteLength();
+        emit(sentPkBytesSignal, (long)(((cPacket *)msg)->getByteLength()));
+    }
     send(msg, "tcpOut");
 }
 
@@ -62,6 +70,7 @@ void TCPEchoApp::handleMessage(cMessage *msg)
     {
         cPacket *pkt = check_and_cast<cPacket *>(msg);
         bytesRcvd += pkt->getByteLength();
+        emit(rcvdPkBytesSignal, (long)(pkt->getByteLength()));
 
         if (echoFactor==0)
         {
@@ -103,5 +112,6 @@ void TCPEchoApp::handleMessage(cMessage *msg)
 
 void TCPEchoApp::finish()
 {
+    recordScalar("bytesRcvd", bytesRcvd);
+    recordScalar("bytesSent", bytesSent);
 }
-

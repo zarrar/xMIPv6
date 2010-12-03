@@ -282,17 +282,13 @@ void TCPConnection::sendToApp(cMessage *msg)
 
 void TCPConnection::initConnection(TCPOpenCommand *openCmd)
 {
-    // create send/receive queues
-    const char *sendQueueClass = openCmd->getSendQueueClass();
-    if (!sendQueueClass || !sendQueueClass[0])
-        sendQueueClass = tcpMain->par("sendQueueClass");
-    sendQueue = check_and_cast<TCPSendQueue *>(createOne(sendQueueClass));
+    TCPDataTransferMode transferMode = (TCPDataTransferMode)(openCmd->getDataTransferMode());
+    // create send queue
+    sendQueue = tcpMain->createSendQueue(transferMode);
     sendQueue->setConnection(this);
 
-    const char *receiveQueueClass = openCmd->getReceiveQueueClass();
-    if (!receiveQueueClass || !receiveQueueClass[0])
-        receiveQueueClass = tcpMain->par("receiveQueueClass");
-    receiveQueue = check_and_cast<TCPReceiveQueue *>(createOne(receiveQueueClass));
+    // create receive queue
+    receiveQueue = tcpMain->createReceiveQueue(transferMode);
     receiveQueue->setConnection(this);
 
     // create algorithm
@@ -368,6 +364,9 @@ void TCPConnection::sendSynAck()
 
     // send it
     sendToIP(tcpseg);
+
+    // notify
+    tcpAlgorithm->ackSent();
 }
 
 void TCPConnection::sendRst(uint32 seqNo)
@@ -403,6 +402,9 @@ void TCPConnection::sendRstAck(uint32 seq, uint32 ack, IPvXAddress src, IPvXAddr
 
     // send it
     sendToIP(tcpseg, src, dest);
+
+    // notify
+    tcpAlgorithm->ackSent();
 }
 
 void TCPConnection::sendAck()
@@ -440,8 +442,12 @@ void TCPConnection::sendFin()
     tcpAlgorithm->ackSent();
 }
 
-void TCPConnection::sendSegment(int bytes)
+void TCPConnection::sendSegment(uint32 bytes)
 {
+    ulong buffered = sendQueue->getBytesAvailable(state->snd_nxt);
+    if (bytes > buffered) // last segment?
+        bytes = buffered;
+
     // send one segment of 'bytes' bytes from snd_nxt, and advance snd_nxt
     TCPSegment *tcpseg = sendQueue->createSegmentWithBytes(state->snd_nxt, bytes);
     tcpseg->setAckNo(state->rcv_nxt);
@@ -452,6 +458,10 @@ void TCPConnection::sendSegment(int bytes)
     ASSERT(bytes==tcpseg->getPayloadLength());
 
     state->snd_nxt += bytes;
+
+    // check if afterRto bit can be reset
+    if (state->afterRto && seqGE(state->snd_nxt, state->snd_max))
+        state->afterRto = false;
 
     if (state->send_fin && state->snd_nxt==state->snd_fin_seq)
     {
@@ -465,8 +475,11 @@ void TCPConnection::sendSegment(int bytes)
 
 bool TCPConnection::sendData(bool fullSegmentsOnly, int congestionWindow)
 {
-    // we'll start sending from snd_max
-    state->snd_nxt = state->snd_max;
+    if (!state->afterRto)
+    {
+        // we'll start sending from snd_max
+        state->snd_nxt = state->snd_max;
+    }
 
     // check how many bytes we have
     ulong buffered = sendQueue->getBytesAvailable(state->snd_nxt);
@@ -492,16 +505,16 @@ bool TCPConnection::sendData(bool fullSegmentsOnly, int congestionWindow)
     if (bytesToSend > buffered)
         bytesToSend = buffered;
 
-    if (fullSegmentsOnly && bytesToSend < state->snd_mss)
+    if (fullSegmentsOnly && bytesToSend < state->snd_mss && buffered > (ulong) effectiveWin) // last segment could be less than state->snd_mss
     {
-        tcpEV << "Cannot send, not enough data for a full segment (MSS=" << state->snd_mss
-              << ", in buffer " << buffered << ")\n";
+        tcpEV << "Cannot send, not enough data for a full segment (SMSS=" << state->snd_mss
+            << ", in buffer " << buffered << ")\n";
         return false;
     }
 
     // start sending 'bytesToSend' bytes
     tcpEV << "Will send " << bytesToSend << " bytes (effectiveWindow " << effectiveWin
-          << ", in buffer " << buffered << " bytes)\n";
+        << ", in buffer " << buffered << " bytes)\n";
 
     uint32 old_snd_nxt = state->snd_nxt;
     ASSERT(bytesToSend>0);
@@ -523,21 +536,26 @@ bool TCPConnection::sendData(bool fullSegmentsOnly, int congestionWindow)
     }
     else
     {
-        // send whole segments only
+        // send whole segments only (nagle_enabled)
         while (bytesToSend>=state->snd_mss)
         {
             sendSegment(state->snd_mss);
             bytesToSend -= state->snd_mss;
         }
-        if (bytesToSend>0)
-           tcpEV << bytesToSend << " bytes of space left in effectiveWindow\n";
+        // check how many bytes we have - last segment could be less than state->snd_mss
+        buffered = sendQueue->getBytesAvailable(state->snd_nxt);
+        if (bytesToSend==buffered && buffered!=0) // last segment?
+            sendSegment(bytesToSend);
+        else if (bytesToSend>0)
+            tcpEV << bytesToSend << " bytes of space left in effectiveWindow\n";
     }
 #endif
 
     // remember highest seq sent (snd_nxt may be set back on retransmission,
     // but we'll need snd_max to check validity of ACKs -- they must ack
     // something we really sent)
-    state->snd_max = state->snd_nxt;
+    if (seqGreater(state->snd_nxt, state->snd_max))
+        state->snd_max = state->snd_nxt;
     if (unackedVector) unackedVector->record(state->snd_max - state->snd_una);
 
     // notify (once is enough)
@@ -577,9 +595,11 @@ bool TCPConnection::sendProbe()
     return true;
 }
 
-void TCPConnection::retransmitOneSegment()
+void TCPConnection::retransmitOneSegment(bool called_at_rto)
 {
-    // retransmit one segment at snd_una, and set snd_nxt accordingly
+    // retransmit one segment at snd_una, and set snd_nxt accordingly (if not called at RTO)
+    uint32 old_snd_nxt = state->snd_nxt;
+
     state->snd_nxt = state->snd_una;
 
     ulong bytes = std::min(state->snd_mss, state->snd_max - state->snd_nxt);
@@ -587,6 +607,11 @@ void TCPConnection::retransmitOneSegment()
 
     sendSegment(bytes);
 
+    if (!called_at_rto)
+    {
+        if (seqGreater(old_snd_nxt, state->snd_nxt))
+            state->snd_nxt = old_snd_nxt;
+    }
     // notify
     tcpAlgorithm->ackSent();
 }
@@ -596,13 +621,14 @@ void TCPConnection::retransmitData()
     // retransmit everything from snd_una
     state->snd_nxt = state->snd_una;
 
-    ulong bytesToSend = state->snd_max - state->snd_nxt;
+    uint32 bytesToSend = state->snd_max - state->snd_nxt;
     ASSERT(bytesToSend!=0);
 
+    // TBD - avoid to send more than allowed - check cwnd and rwnd before retransmitting data!
     while (bytesToSend>0)
     {
-        ulong bytes = std::min(bytesToSend, (ulong)state->snd_mss);
-        bytes = std::min(bytes, sendQueue->getBytesAvailable(state->snd_nxt));
+        uint32 bytes = std::min(bytesToSend, state->snd_mss);
+        bytes = std::min(bytes, (uint32)(sendQueue->getBytesAvailable(state->snd_nxt)));
         sendSegment(bytes);
         // Do not send packets after the FIN.
         // fixes bug that occurs in examples/inet/bulktransfer at event #64043  T=13.861159213744

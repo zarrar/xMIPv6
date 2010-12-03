@@ -1,5 +1,6 @@
 //
 // Copyright (C) 2004 Andras Varga
+// Copyright (C) 2009-2010 Thomas Reschka
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -59,7 +60,7 @@ class INET_API TCPAlgorithm : public cPolymorphic
      * Assign this object to a TCPConnection. Its sendQueue and receiveQueue
      * must be set already at this time, because we cache their pointers here.
      */
-    void setConnection(TCPConnection *_conn)  {conn = _conn;}
+    void setConnection(TCPConnection *_conn) {conn = _conn;}
 
     /**
      * Creates and returns the TCP state variables.
@@ -109,7 +110,7 @@ class INET_API TCPAlgorithm : public cPolymorphic
     /**
      * Called after receiving data which are in the window, but not at its
      * left edge (seq!=rcv_nxt). This indicates that either segments got
-     * re-ordered in the way, or one segment was lost. RFC1122 and RFC2001
+     * re-ordered in the way, or one segment was lost. RFC 1122 and RFC 2001
      * recommend sending an immediate ACK here (Fast Retransmit relies on
      * that).
      */
@@ -164,6 +165,12 @@ class INET_API TCPAlgorithm : public cPolymorphic
      * Restart REXMIT timer.
      */
     virtual void restartRexmitTimer() = 0;
+
+    /**
+     * Converting uint32 echoedTS to simtime_t and calling rttMeasurementComplete()
+     * to update state vars with new measured RTT value.
+     */
+    virtual void rttMeasurementCompleteUsingTS(uint32 echoedTS) = 0;
 
 };
 

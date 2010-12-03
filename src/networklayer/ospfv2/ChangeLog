@@ -1,3 +1,11 @@
+2010-08-13  Andras Varga
+
+	* coding style made more consistent with the rest of the INET:
+	- changed method names to start with lower-case letter
+	- changed enum constants to all-capitals with underscores
+	- removed excessive in-line spaces
+	- removed superfluous "void" keywords from arg-less methods
+
 2008-12-11  Andras Varga
 
 	* added LGPL headers to files

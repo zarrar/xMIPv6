@@ -22,12 +22,15 @@
 #include <set>
 #include <omnetpp.h>
 #include "IPvXAddress.h"
+#include "TCPCommand_m.h"
 
 class TCPSegment;
 
 namespace tcp_old {
 
 class TCPConnection;
+class TCPSendQueue;
+class TCPReceiveQueue;
 
 // macro for normal ev<< logging (note: deliberately no parens in macro def)
 #define tcpEV (ev.disable_tracing||TCP::testing)?ev:ev
@@ -115,8 +118,8 @@ class INET_API TCP : public cSimpleModule
     {
         IPvXAddress localAddr;
         IPvXAddress remoteAddr;
-        short localPort;
-        short remotePort;
+        int localPort;   // -1: unspec
+        int remotePort;  // -1: unspec
 
         inline bool operator<(const SockPair& b) const
         {
@@ -138,8 +141,8 @@ class INET_API TCP : public cSimpleModule
     TcpAppConnMap tcpAppConnMap;
     TcpConnMap tcpConnMap;
 
-    short lastEphemeralPort;
-    std::multiset<short> usedEphemeralPorts;
+    ushort lastEphemeralPort;
+    std::multiset<ushort> usedEphemeralPorts;
 
   protected:
     /** Factory method; may be overriden for customizing TCP */
@@ -189,7 +192,17 @@ class INET_API TCP : public cSimpleModule
     /**
      * To be called from TCPConnection: reserves an ephemeral port for the connection.
      */
-    virtual short getEphemeralPort();
+    virtual ushort getEphemeralPort();
+
+    /**
+     * To be called from TCPConnection: create a new send queue.
+     */
+    virtual tcp_old::TCPSendQueue* createSendQueue(TCPDataTransferMode transferModeP);
+
+    /**
+     * To be called from TCPConnection: create a new receive queue.
+     */
+    virtual tcp_old::TCPReceiveQueue* createReceiveQueue(TCPDataTransferMode transferModeP);
 };
 
 }

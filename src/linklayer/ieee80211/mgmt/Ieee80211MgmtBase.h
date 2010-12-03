@@ -50,8 +50,7 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public INotifiable
     long numMgmtFramesDropped;
 
     // queue statistics
-    cOutVector dataQueueLenVec;
-    cOutVector dataQueueDropVec;
+    simsignal_t dataQueueLenSignal;
 
   protected:
     virtual int numInitStages() const {return 2;}
@@ -73,10 +72,13 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public INotifiable
     virtual void sendOrEnqueue(cPacket *frame);
 
     /** Redefined from PassiveQueueBase. */
-    virtual bool enqueue(cMessage *msg);
+    virtual cMessage *enqueue(cMessage *msg);
 
     /** Redefined from PassiveQueueBase. */
     virtual cMessage *dequeue();
+
+    /** Redefined from IPassiveQueue. */
+    virtual bool isEmpty();
 
     /** Redefined from PassiveQueueBase: send message to MAC */
     virtual void sendOut(cMessage *msg);
@@ -110,5 +112,3 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public INotifiable
 };
 
 #endif
-
-

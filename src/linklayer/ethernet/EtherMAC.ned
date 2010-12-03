@@ -124,10 +124,10 @@ package inet.linklayer.ethernet;
 // Output scalars (written in the finish() function) include the final values of
 // the above variables and throughput.
 //
-// @see EtherMAC2, EthernetInterface, EthernetInterface2, OutputQueue, EtherEncap, EtherLLC
+// @see EtherMACFullDuplex, EthernetInterface, OutputQueue, EtherEncap, EtherLLC
 // @see EtherFrame, EthernetIIFrame, EtherFrameWithLLC, Ieee802Ctrl
 //
-simple EtherMAC
+simple EtherMAC like IEtherMAC
 {
     parameters:
         bool promiscuous = default(false); // if true, all packets are received, otherwise only the
@@ -135,9 +135,6 @@ simple EtherMAC
         string address = default("auto");  // MAC address as hex string (12 hex digits), or
                                 // "auto". "auto" values will be replaced by
                                 // a generated MAC address in init stage 0.
-        double txrate @unit("bps") = default(100Mbps); // maximum data rate supported by this station (bit/s);
-                                // actually chosen speed may be lower due to auto-
-                                // configuration. 0 means fully auto-configured.
         bool duplexEnabled = default(true);   // whether duplex mode can be enabled or not; whether
                                 // MAC will actually use duplex mode depends on the result
                                 // of the auto-configuration process (duplex is only
@@ -145,11 +142,22 @@ simple EtherMAC
         int txQueueLimit = default(1000); // maximum number of frames queued up for transmission;
                                 // additional frames are dropped. Only used if queueModule==""
         string queueModule = default("");    // name of optional external queue module
+        bool frameBursting = default(true);     // enable/disable frame bursting mode in Gigabit Ethernet
         int mtu = default(1500);
         @display("i=block/rxtx");
+        @statistic[collision](title="Collision";record=count,vector);
+        @statistic[backoff](title="Backoff";record=count,vector);
+        @statistic[txPkBytes](title="TX bytes";record=sum,count,vector);
+        @statistic[rxPkBytesOk](title="RX bytes";record=sum,count,vector);
+        @statistic[passedUpPkBytes](title="Passed up packet bytes to higher layer";record=sum,count,vector);
+        @statistic[txPausePkUnits](title="Sent pause";record=count,stats,vector);
+        @statistic[rxPausePkUnits](title="Received pause";record=count,stats,vector);
+        @statistic[rxPkBytesFromHL](title="Received packet bytes from higher layer";record=sum,count,vector);
+        @statistic[droppedPkBytesNotForUs](title="Dropped packet bytes not for us";record=sum,count,vector);
+        @statistic[droppedPkBytesBitError](title="Dropped packet bytes bit error";record=sum,count,vector);
+        @statistic[droppedPkBytesIfaceDown](title="Dropped packet bytes Iface down";record=sum,count,vector);
     gates:
         input upperLayerIn @labels(EtherFrame);    // to EtherLLC or MACRelayUnitPP
         output upperLayerOut @labels(EtherFrame);  // to EtherLLC or MACRelayUnitPP
         inout phys @labels(EtherFrame); // to physical layer or the network
 }
-

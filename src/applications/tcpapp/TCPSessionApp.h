@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <omnetpp.h>
+
 #include "TCPSocket.h"
 
 
@@ -37,8 +38,12 @@ class INET_API TCPSessionApp : public cSimpleModule
 
     // statistics
     int packetsRcvd;
-    int bytesRcvd;
+    long bytesRcvd;
+    long bytesSent;
     int indicationsRcvd;
+    simsignal_t rcvdPkBytesSignal;
+    simsignal_t sentPkBytesSignal;
+    simsignal_t rcvdIndicationsSignal;
 
   public:
     TCPSessionApp() : cSimpleModule(65536) {}

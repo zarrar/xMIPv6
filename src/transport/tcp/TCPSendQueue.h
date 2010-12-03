@@ -37,7 +37,7 @@
  * and the protocol doesn't rely on retransmitted segments having the
  * same segment boundaries as the original segments. Some implementations
  * store segments on the retransmission queue, and others store only the data
- * bytes; RFCs explicitly allow both. (See e.g. RFC1122 p90, section 4.2.2.15,
+ * bytes; RFCs explicitly allow both. (See e.g. RFC 1122 p90, section 4.2.2.15,
  * "IMPLEMENTATION" note).
  *
  * To simulate a TCP that retains segment boundaries in retransmissions,
@@ -57,7 +57,7 @@
  *
  * - simulate a "dummy" connection, that is, simulated TCP segments
  *   contain do not contain any real data, only the number of bytes they
- *   represent.  You'll want to do this when the app is there solely
+ *   represent. You'll want to do this when the app is there solely
  *   as a traffic generator (e.g. simulated file transfer or telnet session),
  *   but actual data is unimportant.
  *
@@ -117,6 +117,11 @@ class INET_API TCPSendQueue : public cPolymorphic
     virtual void enqueueAppData(cPacket *msg) = 0;
 
     /**
+     * Returns the sequence number of the first byte stored in the buffer.
+     */
+    virtual uint32 getBufferStartSeq() = 0;
+
+    /**
      * Returns the sequence number of the last byte stored in the buffer plus one.
      * (The first byte of the next send operation would get this sequence number.)
      */
@@ -135,7 +140,7 @@ class INET_API TCPSendQueue : public cPolymorphic
     /**
      * Called when the TCP wants to send or retransmit data, it constructs
      * a TCP segment which contains the data from the requested sequence
-     * number range. The actually returned segment may contain less then
+     * number range. The actually returned segment may contain less than
      * maxNumBytes bytes if the subclass wants to reproduce the original
      * segment boundaries when retransmitting.
      */

@@ -15,6 +15,7 @@
 #define __INET_TCPGENERICCLIAPPBASE_H
 
 #include <omnetpp.h>
+
 #include "TCPSocket.h"
 
 
@@ -38,6 +39,11 @@ class INET_API TCPGenericCliAppBase : public cSimpleModule, public TCPSocket::Ca
     int packetsRcvd;
     int bytesSent;
     int bytesRcvd;
+
+    //statistics:
+    simsignal_t connectSignal;
+    simsignal_t rcvdPkBytesSignal;
+    simsignal_t sentPkBytesSignal;
 
   protected:
     /**

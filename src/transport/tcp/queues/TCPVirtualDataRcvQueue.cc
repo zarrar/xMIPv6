@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2004 Andras Varga
-//               2009 Thomas Reschka
+// Copyright (C) 2009 Thomas Reschka
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -172,8 +172,8 @@ uint32 TCPVirtualDataRcvQueue::getAmountOfBufferedBytes()
     uint32 bytes=0;
 
     RegionList::iterator i = regionList.begin();
-    if (i==regionList.end())    // is queue empty?
-        {return 0;}
+    if (i==regionList.end()) // is queue empty?
+        return 0;
 
     while (i!=regionList.end())
     {

@@ -87,7 +87,7 @@ void TCPNewReno::processRexmitTimer(TCPEventCode& event)
 
     state->afterRto = true;
 
-    conn->retransmitOneSegment(); // FIXED 2009-08-05 by T.R.
+    conn->retransmitOneSegment(true);
 }
 
 void TCPNewReno::receivedDataAck(uint32 firstSeqAcked)
@@ -163,7 +163,7 @@ void TCPNewReno::receivedDataAck(uint32 firstSeqAcked)
 
             tcpEV << "Fast Recovery - Partial ACK received: retransmitting the first unacknowledged segment\n";
             // retransmit first unacknowledged segment
-            conn->retransmitOneSegment();
+            conn->retransmitOneSegment(false);
 
             // deflate cwnd by amount of new data acknowledged by cumulative acknowledgement field
             state->snd_cwnd -= state->snd_una - firstSeqAcked;
@@ -206,7 +206,7 @@ void TCPNewReno::receivedDataAck(uint32 firstSeqAcked)
             // by at most SMSS bytes for each ACK received that acknowledges new data."
             state->snd_cwnd += state->snd_mss;
 
-            // NOTE: we could increase cwnd based on the number of bytes being
+            // Note: we could increase cwnd based on the number of bytes being
             // acknowledged by each arriving ACK, rather than by the number of ACKs
             // that arrive. This is called "Appropriate Byte Counting" (ABC) and is
             // described in RFC 3465. This RFC is experimental and probably not
@@ -231,10 +231,10 @@ void TCPNewReno::receivedDataAck(uint32 firstSeqAcked)
             if (cwndVector) cwndVector->record(state->snd_cwnd);
 
             //
-            // NOTE: some implementations use extra additive constant mss/8 here
+            // Note: some implementations use extra additive constant mss/8 here
             // which is known to be incorrect (RFC 2581 p5)
             //
-            // NOTE 2: RFC 3465 (experimental) "Appropriate Byte Counting" (ABC)
+            // Note 2: RFC 3465 (experimental) "Appropriate Byte Counting" (ABC)
             // would require maintaining a bytes_acked variable here which we don't do
             //
 
@@ -301,7 +301,7 @@ void TCPNewReno::receivedDuplicateAck()
                 state->snd_cwnd = state->ssthresh + 3*state->snd_mss;
                 if (cwndVector) cwndVector->record(state->snd_cwnd);
                 tcpEV << " , cwnd=" << state->snd_cwnd << ", ssthresh=" << state->ssthresh << "\n";
-                conn->retransmitOneSegment();
+                conn->retransmitOneSegment(false);
 
                 // RFC 3782, page 5:
                 // "4) Fast Recovery, continued:

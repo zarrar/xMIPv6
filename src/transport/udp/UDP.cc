@@ -95,6 +95,11 @@ void UDP::initialize()
     WATCH(numPassedUp);
     WATCH(numDroppedWrongPort);
     WATCH(numDroppedBadChecksum);
+    rcvdPkSignal = registerSignal("rcvdPk");
+    sentPkSignal = registerSignal("sentPk");
+    passedUpPkSignal = registerSignal("passedUpPk");
+    droppedPkWrongPortSignal = registerSignal("droppedPkWrongPort");
+    droppedPkBadChecksumSignal = registerSignal("droppedPkBadChecksum");
 }
 
 void UDP::bind(int gateIndex, UDPControlInfo *ctrl)
@@ -173,10 +178,10 @@ void UDP::unbind(int sockId)
     delete sd;
 }
 
-short UDP::getEphemeralPort()
+ushort UDP::getEphemeralPort()
 {
     // start at the last allocated port number + 1, and search for an unused one
-    short searchUntil = lastEphemeralPort++;
+    ushort searchUntil = lastEphemeralPort++;
     if (lastEphemeralPort == EPHEMERAL_PORTRANGE_END) // wrap
         lastEphemeralPort = EPHEMERAL_PORTRANGE_START;
 
@@ -255,7 +260,7 @@ bool UDP::matchesSocket(SockDesc *sd, UDPPacket *udp, IPv6ControlInfo *ipCtrl)
     return true;
 }
 
-bool UDP::matchesSocket(SockDesc *sd, const IPvXAddress& localAddr, const IPvXAddress& remoteAddr, short remotePort)
+bool UDP::matchesSocket(SockDesc *sd, const IPvXAddress& localAddr, const IPvXAddress& remoteAddr, ushort remotePort)
 {
     return (sd->remotePort==0 || sd->remotePort!=remotePort) &&
            (sd->localAddr.isUnspecified() || sd->localAddr==localAddr) &&
@@ -275,6 +280,7 @@ void UDP::sendUp(cPacket *payload, UDPPacket *udpHeader, IPControlInfo *ipCtrl, 
     udpCtrl->setInterfaceId(ipCtrl->getInterfaceId());
     payload->setControlInfo(udpCtrl);
 
+    emit(passedUpPkSignal, payload);
     send(payload, "appOut", sd->appGateIndex);
     numPassedUp++;
 }
@@ -292,12 +298,14 @@ void UDP::sendUp(cPacket *payload, UDPPacket *udpHeader, IPv6ControlInfo *ipCtrl
     udpCtrl->setInterfaceId(ipCtrl->getInterfaceId());
     payload->setControlInfo(udpCtrl);
 
+    emit(passedUpPkSignal, payload);
     send(payload, "appOut", sd->appGateIndex);
     numPassedUp++;
 }
 
 void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cPolymorphic *ctrl)
 {
+    emit(droppedPkWrongPortSignal, udpPacket);
     numDroppedWrongPort++;
 
     // send back ICMP PORT_UNREACHABLE
@@ -328,7 +336,7 @@ void UDP::processICMPError(cPacket *msg)
     // extract details from the error message, then try to notify socket that sent bogus packet
     int type, code;
     IPvXAddress localAddr, remoteAddr;
-    int localPort, remotePort;
+    ushort localPort, remotePort;
 
     if (dynamic_cast<ICMPMessage *>(msg))
     {
@@ -390,7 +398,7 @@ void UDP::processICMPError(cPacket *msg)
     sendUpErrorNotification(srcSocket, UDP_I_ERROR, localAddr, remoteAddr, remotePort);
 }
 
-void UDP::sendUpErrorNotification(SockDesc *sd, int msgkind, const IPvXAddress& localAddr, const IPvXAddress& remoteAddr, short remotePort)
+void UDP::sendUpErrorNotification(SockDesc *sd, int msgkind, const IPvXAddress& localAddr, const IPvXAddress& remoteAddr, ushort remotePort)
 {
     cPacket *notifyMsg = new cPacket("ERROR", msgkind);
     UDPControlInfo *udpCtrl = new UDPControlInfo();
@@ -407,13 +415,15 @@ void UDP::sendUpErrorNotification(SockDesc *sd, int msgkind, const IPvXAddress& 
 
 void UDP::processUDPPacket(UDPPacket *udpPacket)
 {
+    emit(rcvdPkSignal, udpPacket);
     // simulate checksum: discard packet if it has bit error
     EV << "Packet " << udpPacket->getName() << " received from network, dest port " << udpPacket->getDestinationPort() << "\n";
     if (udpPacket->hasBitError())
     {
         EV << "Packet has bit error, discarding\n";
-        delete udpPacket;
+        emit(droppedPkBadChecksumSignal, udpPacket);
         numDroppedBadChecksum++;
+        delete udpPacket;
         return;
     }
 
@@ -504,6 +514,7 @@ void UDP::processMsgFromApp(cPacket *appData)
         udpPacket->setControlInfo(ipControlInfo);
         delete udpCtrl;
 
+        emit(sentPkSignal, udpPacket);
         send(udpPacket,"ipOut");
     }
     else
@@ -518,6 +529,7 @@ void UDP::processMsgFromApp(cPacket *appData)
         udpPacket->setControlInfo(ipControlInfo);
         delete udpCtrl;
 
+        emit(sentPkSignal, udpPacket);
         send(udpPacket,"ipv6Out");
     }
     numSent++;
