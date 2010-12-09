@@ -61,12 +61,6 @@ const char *notificationCategoryName(int category)
 
         case NF_MIPv6_RO_COMPLETED: return "MIPv6 RO COMPLETED";
 
-        case NF_LINK_REGISTER: return "Register_Link";
-        case NF_MIH_LINK_UP: return "MIH_Link_Up";
-        case NF_MIH_LINK_DOWN: return "MIH_Link_Down";
-        case NF_MIH_LINK_ACTION: return "MIH_Link_Action";
-        case NF_MIH_LINK_DETECTED: return "MIH_Link_Detected";
-
         default: sprintf(buf, "%d", category); s = buf;
     }
     return s;
@@ -79,8 +73,4 @@ void printNotificationBanner(int category, const cPolymorphic *details)
        << notificationCategoryName(category) << " "
        << (details ? details->info() : "") << "\n";
 }
-
-
-
-
 

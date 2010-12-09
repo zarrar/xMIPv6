@@ -83,12 +83,8 @@ enum
     NF_OVERLAY_NODE_LEAVE,                // OverSim
 
 
-    // IEEE 802.21
-    NF_LINK_REGISTER, // registers the NIC with 802.21
-    NF_MIH_LINK_UP, // attached to a base station | 13.12.07 - CB
-    NF_MIH_LINK_DOWN, // not attached to a base station | 13.12.07 - CB
-    NF_MIH_LINK_ACTION,
-    NF_MIH_LINK_DETECTED,
+    // - layer 7 (application)
+    //...
 };
 
 /**
@@ -102,7 +98,4 @@ const char *notificationCategoryName(int category);
 void printNotificationBanner(int category, const cPolymorphic *details);
 
 #endif
-
-
-
 
