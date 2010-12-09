@@ -563,14 +563,14 @@ int Ieee80211MgmtSTA::statusCodeToPrimResultCode(int statusCode)
 
 void Ieee80211MgmtSTA::handleDataFrame(Ieee80211DataFrame *frame)
 {
-//Only send the Data frame up to the highe layer if the STA is associated with an AP,else delete the frame (Zarrar Yousaf 19.11.07)
-	if (isAssociated)
-            sendUp(decapsulate(frame));
-	else
-	{
-		EV<<"Rejecting Data Frame as STA not Associated with the AP yet"<<endl;
-		delete frame;
-	}
+    //Only send the Data frame up to the higher layer if the STA is associated with an AP,else delete the frame (Zarrar Yousaf 19.11.07)
+    if (isAssociated)
+        sendUp(decapsulate(frame));
+    else
+    {
+        EV << "Rejecting Data Frame as STA not Associated with the AP yet" << endl;
+        delete frame;
+    }
 }
 
 void Ieee80211MgmtSTA::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame)
