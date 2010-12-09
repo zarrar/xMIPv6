@@ -251,9 +251,11 @@ void Ieee80211AgentSTA::processScanConfirm(Ieee80211Prim_ScanConfirm *resp)
     dumpAPList(resp);
 
     Ieee80211Prim_BSSDescription& bssDesc = resp->getBssList(bssIndex);
-    
+
+    // HACK
     //The two statements below are added because the L2 handover time was greater than before when a STA wants to re-connect to an AP with which it was associated before. When the STA wants to associat again with the previous AP, then since the AP is already having an entry of the STA because of old association, and thus it is expectign an authentication frame number 3 but it receives authentication frame number 1 from STA, which will cause teh AP to return an Auth-Error making the MN STA to start teh handover process all over again. 
     EV<<"First deauthenticate with AP address ="<<bssDesc.getBSSID()<<" before Authentication\n";
+    // FIXME do fixing in AP (Access Point) code
     sendDeauthenticateRequest(bssDesc.getBSSID(), 0);
     
     EV << "Chosen AP address=" << bssDesc.getBSSID() << " from list, starting authentication\n";

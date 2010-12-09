@@ -58,8 +58,6 @@ class INET_API Ieee80211MgmtAP : public Ieee80211MgmtAPBase
     int numAuthSteps;
     Ieee80211SupportedRatesElement supportedRates;
 
-MACAddress macAddr;
-
     // state
     STAList staList; ///< list of STAs
     cMessage *beaconTimer;
@@ -103,8 +101,6 @@ MACAddress macAddr;
     virtual void handleProbeRequestFrame(Ieee80211ProbeRequestFrame *frame);
     virtual void handleProbeResponseFrame(Ieee80211ProbeResponseFrame *frame);
     //@}
-//Ieee80211DataFrame* convertFromEtherFrame(EtherFrame *ethframe);
-
 };
 
 #endif

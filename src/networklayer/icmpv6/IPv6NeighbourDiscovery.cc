@@ -1617,7 +1617,7 @@ void IPv6NeighbourDiscovery::processRAPrefixInfo(IPv6RouterAdvertisement *ra,
     }
     /*d) If the prefix advertised does not match the prefix of an address already
          in the list, and the Valid Lifetime is not 0, form an address (and add
-         it to the list) by combining the advertised prefix with the link’s
+         it to the list) by combining the advertised prefix with the linkï¿½s
          interface identifier as follows:
     if (isPrefixAssignedToInterface == false && validLifetime != 0)
     {
@@ -2634,7 +2634,7 @@ void IPv6NeighbourDiscovery::invalidateNeigbourCache()
 bool IPv6NeighbourDiscovery::isConnectedToWirelessAP(InterfaceEntry *ie)
 {
 	//EV<<"Determination of whether an interface is connected to a WLAN AP or not."<<endl;
-	cModule* node = findContainingNode(this); // FIXME find the node ancestor by @node
+	cModule* node = findContainingNode(this);
 	cGate* gate = node->gate(ie->getNodeOutputGateId());
 	ASSERT(gate!=NULL); //to make sure that the gate exists
 	// TODO generalize
