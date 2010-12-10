@@ -647,7 +647,7 @@ cPacket *IPv6::decapsulate(IPv6Datagram *datagram)
 
 IPv6Datagram *IPv6::encapsulate(cPacket *transportPacket, InterfaceEntry *&destIE)
 {
-EV <<"\n<<=======THIS IS THE IPv6::encapsulate() FUNCTION=========>>\n";
+    // EV <<"\n<<=======THIS IS THE IPv6::encapsulate() FUNCTION=========>>\n";
     IPv6ControlInfo *controlInfo = check_and_cast<IPv6ControlInfo*>(transportPacket->removeControlInfo());
 
     IPv6Datagram *datagram = new IPv6Datagram(transportPacket->getName());
@@ -686,11 +686,11 @@ EV <<"\n<<=======THIS IS THE IPv6::encapsulate() FUNCTION=========>>\n";
 
     // #### copy routing headers from ctrlInfo to datagram if present, 29.08.07 - CB ####
 	// FIXME this is a nasty way of copying the extension headers
-    for (int i = 0; i < controlInfo->extensionHeaderArraySize(); i++)
+    for (int i = 0; i < controlInfo->getExtensionHeaderArraySize(); i++)
 	{
-    	IPv6ExtensionHeader* extHeader = controlInfo->extensionHeader(i);
+    	IPv6ExtensionHeader* extHeader = controlInfo->getExtensionHeader(i);
     	datagram->addExtensionHeader( (IPv6ExtensionHeader*) extHeader->dup() );
-    	EV << "Copied extension header to datagram." << endl;
+    	// EV << "Copied extension header to datagram." << endl;
 	}
 
     delete controlInfo;

@@ -19,14 +19,10 @@
 enum IPProtocolId;
 
 class noncobject IPv6Address;
-class noncobject IPv6ExtensionHeader;
-class noncobject IPv6RoutingHeader;
 
 cplusplus {{
-#include <iostream>
 #include "IPv6Address.h"
 #include "IPProtocolId_m.h"
-#include "IPv6ExtensionHeaders_m.h" // 31.08.07 - CB
 }}
 
 
@@ -65,5 +61,3 @@ class IPv6ControlInfo
     int interfaceId = -1; // interface on which the datagram was received, or
                           // should be sent (see InterfaceTable)
 }
-
-

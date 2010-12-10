@@ -54,12 +54,12 @@ IPv6Datagram *IPv6ControlInfo::removeOrigDatagram()
     return ret;
 }
 
-unsigned int IPv6ControlInfo::extensionHeaderArraySize() const
+unsigned int IPv6ControlInfo::getExtensionHeaderArraySize() const
 {
     return extensionHeaders.size();
 }
 
-IPv6ExtensionHeader* IPv6ControlInfo::extensionHeader(unsigned int k)
+IPv6ExtensionHeader* IPv6ControlInfo::getExtensionHeader(unsigned int k) const
 {
     ASSERT(k>=0 && k<extensionHeaders.size());
     return extensionHeaders[k];

@@ -21,6 +21,7 @@
 #include "IPv6ControlInfo_m.h"
 
 class IPv6Datagram;
+class IPv6ExtensionHeader;
 
 /**
  * Control information for sending/receiving packets over IPv6.
@@ -50,12 +51,12 @@ class INET_API IPv6ControlInfo : public IPv6ControlInfo_Base
     /**
      * Returns the number of extension headers in this datagram
      */
-    virtual unsigned int extensionHeaderArraySize() const;
+    virtual unsigned int getExtensionHeaderArraySize() const;
 
     /**
      * Returns the kth extension header in this datagram
      */
-    virtual IPv6ExtensionHeader* extensionHeader(unsigned int k);
+    virtual IPv6ExtensionHeader* getExtensionHeader(unsigned int k) const;
 
     /**
      * Adds an extension header to the datagram, at the given position.
