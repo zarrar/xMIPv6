@@ -90,7 +90,7 @@ void IPv6Tunneling::handleMessage(cMessage* msg)
 
 
 IPv6Tunneling::Tunnel::Tunnel(const IPv6Address& _entry, const IPv6Address& _exit, const IPv6Address& _destTrigger)
-	:entry(_entry), exit(_exit), destTrigger(_destTrigger), tunnelType(SPLIT), tunnelMTU(IPv6_MIN_MTU - 40)
+	:entry(_entry), exit(_exit), tunnelMTU(IPv6_MIN_MTU - 40), tunnelType(SPLIT), destTrigger(_destTrigger)
 {}
 
 
