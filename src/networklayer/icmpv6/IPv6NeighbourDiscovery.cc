@@ -2641,16 +2641,16 @@ bool IPv6NeighbourDiscovery::isConnectedToWirelessAP(InterfaceEntry *ie)
 	cGate* connectedGate = gate->getNextGate();
 	if (connectedGate!=NULL)
 	{
-		ASSERT(isNode(connectedGate->getOwnerModule()));
-		cModule* wlanMAC = connectedGate->getOwnerModule()->getSubmodule("relayUnit");
+	    cModule* ownerModule = connectedGate->getOwnerModule();
+		ASSERT(isNode(ownerModule));
+		cModule* wlanMAC = ownerModule->getSubmodule("relayUnit");
 		if ( wlanMAC!=NULL )
 			return true;
 		else
 		{
-			wlanMAC = connectedGate->getOwnerModule()->getSubmodule("wlan");//to search for a "wlan" module which, in the INET fw scheme of things, resides inside a WLAN AP
+			wlanMAC = ownerModule->getSubmodule("wlan");//to search for a "wlan" module which, in the INET fw scheme of things, resides inside a WLAN AP
 			return wlanMAC!=NULL;
 		}
 	}
 	return false;
 }
-
