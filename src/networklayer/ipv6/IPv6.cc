@@ -726,16 +726,16 @@ void IPv6::sendDatagramToOutput(IPv6Datagram *datagram, InterfaceEntry *ie, cons
 
 bool IPv6::determineOutputInterface(const IPv6Address& destAddress, IPv6Address& nextHop, int& interfaceId, IPv6Datagram* datagram)
 {
-	// try destination cache
+    // try destination cache
     //IPv6Address nextHop = rt->lookupDestCache(destAddress, interfaceId);
-	nextHop = rt->lookupDestCache(destAddress, interfaceId);
+    nextHop = rt->lookupDestCache(destAddress, interfaceId);
 
     if (interfaceId==-1)
     {
         // address not in destination cache: do longest prefix match in routing table
         EV << "do longest prefix match in routing table" << endl;
-    	const IPv6Route *route = rt->doLongestPrefixMatch(destAddress);
-    	EV << "finished longest prefix match in routing table" << endl;
+        const IPv6Route *route = rt->doLongestPrefixMatch(destAddress);
+        EV << "finished longest prefix match in routing table" << endl;
         if (!route)
         {
             if (rt->isRouter())
@@ -767,62 +767,62 @@ bool IPv6::determineOutputInterface(const IPv6Address& destAddress, IPv6Address&
 
 bool IPv6::processExtensionHeaders(IPv6Datagram* datagram)
 {
-	int noExtHeaders = datagram->getExtensionHeaderArraySize();
-	EV << noExtHeaders << " extension header(s) for processing..." << endl;
+    int noExtHeaders = datagram->getExtensionHeaderArraySize();
+    EV << noExtHeaders << " extension header(s) for processing..." << endl;
 
-	// walk through all extension headers
-	for (int i = 0; i < noExtHeaders; i++)
-	{
-		IPv6ExtensionHeader* eh = datagram->popExtensionHeader();
+    // walk through all extension headers
+    for (int i = 0; i < noExtHeaders; i++)
+    {
+        IPv6ExtensionHeader* eh = datagram->popExtensionHeader();
 
-		if ( dynamic_cast<IPv6RoutingHeader*>(eh) )
-		{
-			IPv6RoutingHeader* rh = (IPv6RoutingHeader*) (eh);
-			EV << "Routing Header with type=" << rh->getRoutingType() << endl;
+        if ( dynamic_cast<IPv6RoutingHeader*>(eh) )
+        {
+            IPv6RoutingHeader* rh = (IPv6RoutingHeader*) (eh);
+            EV << "Routing Header with type=" << rh->getRoutingType() << endl;
 
-			// type 2 routing header should be processed by MIPv6 module
-			// if no MIP support, ignore the header
-			if ( rt->hasMIPv6Support() && rh->getRoutingType() == 2 )
-			{
-				// for simplicity, we set a context pointer on the datagram
-				datagram->setContextPointer(rh);
-				EV << "Sending datagram with RH2 to MIPv6 module" << endl;
-				send(datagram, "xMIPv6Out");
-				return false;
-			}
-			else
-			{
-				delete rh;
-				EV << "Ignoring unknown routing header" << endl;
-			}
-}
-		else if ( dynamic_cast<IPv6DestinationOptionsHeader*>(eh) )
-		{
-			//IPv6DestinationOptionsHeader* doh = (IPv6DestinationOptionsHeader*) (eh);
-			//EV << "object of type=" << typeid(eh).name() << endl;
+            // type 2 routing header should be processed by MIPv6 module
+            // if no MIP support, ignore the header
+            if ( rt->hasMIPv6Support() && rh->getRoutingType() == 2 )
+            {
+                // for simplicity, we set a context pointer on the datagram
+                datagram->setContextPointer(rh);
+                EV << "Sending datagram with RH2 to MIPv6 module" << endl;
+                send(datagram, "xMIPv6Out");
+                return false;
+            }
+            else
+            {
+                delete rh;
+                EV << "Ignoring unknown routing header" << endl;
+            }
+        }
+        else if ( dynamic_cast<IPv6DestinationOptionsHeader*>(eh) )
+        {
+            //IPv6DestinationOptionsHeader* doh = (IPv6DestinationOptionsHeader*) (eh);
+            //EV << "object of type=" << typeid(eh).name() << endl;
 
-			if ( rt->hasMIPv6Support() && dynamic_cast<HomeAddressOption*>(eh) )
-			{
-				datagram->setContextPointer(eh);
-				EV << "Sending datagram with HoA Option to MIPv6 module" << endl;
-				send(datagram, "xMIPv6Out");
-				return false;
-			}
-			else
-			{
-				delete eh;
-				EV << "Ignoring unknown destination options header" << endl;
-			}
-		}
-		else
-		{
-			delete eh;
-			EV << "Ignoring unknown extension header" << endl;
-		}
-	}
+            if ( rt->hasMIPv6Support() && dynamic_cast<HomeAddressOption*>(eh) )
+            {
+                datagram->setContextPointer(eh);
+                EV << "Sending datagram with HoA Option to MIPv6 module" << endl;
+                send(datagram, "xMIPv6Out");
+                return false;
+            }
+            else
+            {
+                delete eh;
+                EV << "Ignoring unknown destination options header" << endl;
+            }
+        }
+        else
+        {
+            delete eh;
+            EV << "Ignoring unknown extension header" << endl;
+        }
+    }
 
-	// we have processed no extension headers -> the IPv6 module can continue
-	// working on this datagram
-	return true;
+    // we have processed no extension headers -> the IPv6 module can continue
+    // working on this datagram
+    return true;
 }
 

@@ -65,12 +65,6 @@ IPv6ExtensionHeader* IPv6ControlInfo::getExtensionHeader(unsigned int k) const
     return extensionHeaders[k];
 }
 
-/*void IPv6ControlInfo::setExtHeaders(unsigned int k, const IPv6ExtensionHeader& extHeaders_var)
-{
-    //throw new cException(this, "setExtensionHeader() not supported, use addExtensionHeader()");
-	throw new cException("setExtensionHeader() not supported, use addExtensionHeader()");
-}*/
-
 void IPv6ControlInfo::addExtensionHeader(IPv6ExtensionHeader* eh, int atPos)
 {
     if (atPos<0 || atPos>=extensionHeaders.size())

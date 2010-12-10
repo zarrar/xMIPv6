@@ -32,8 +32,6 @@ class INET_API IPv6ControlInfo : public IPv6ControlInfo_Base
 {
   protected:
     IPv6Datagram *dgram;
-
-    // 19.10.07 - CB
     typedef std::vector<IPv6ExtensionHeader*> ExtensionHeaders;
     ExtensionHeaders extensionHeaders;
 
@@ -47,7 +45,6 @@ class INET_API IPv6ControlInfo : public IPv6ControlInfo_Base
     virtual IPv6Datagram *getOrigDatagram() const {return dgram;}
     virtual IPv6Datagram *removeOrigDatagram();
     
-    // 19.10.07 - CB
     /**
      * Returns the number of extension headers in this datagram
      */
@@ -63,13 +60,6 @@ class INET_API IPv6ControlInfo : public IPv6ControlInfo_Base
      * The default (atPos==-1) is to add the header at the end.
      */
     virtual void addExtensionHeader(IPv6ExtensionHeader* eh, int atPos=-1);
-    
-    /**
-     * From IPv6ControlInfo_Base: overloaded to disallow it's usage. 
-     */
-    //void setExtHeaders(unsigned int k, const IPv6ExtensionHeader& extHeaders_var);
 };
 
 #endif
-
-
