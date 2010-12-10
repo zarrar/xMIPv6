@@ -18,6 +18,17 @@
 
 #include "ModuleAccess.h"
 
+inline bool _isNode(cModule *mod)
+{
+    cProperties *props = mod->getProperties();
+    return props && props->getAsBool("node");
+}
+
+bool isNode(cModule *mod)
+{
+    return (mod != NULL) ? _isNode(mod) : false;
+}
+
 static cModule *findSubmodRecursive(cModule *curmod, const char *name)
 {
     for (cModule::SubmoduleIterator i(curmod); !i.end(); i++)
@@ -46,7 +57,7 @@ cModule *findModuleWhereverInNode(const char *name, cModule *from)
     for (cModule *curmod=from; curmod; curmod=curmod->getParentModule())
     {
         mod = findSubmodRecursive(curmod, name);
-        if (mod || isNode(curmod))
+        if (mod || _isNode(curmod))
             break;
     }
     return mod;
@@ -64,7 +75,7 @@ cModule *findContainingNode(cModule *from)
 {
     for (cModule *curmod=from; curmod; curmod=curmod->getParentModule())
     {
-        if (isNode(curmod))
+        if (_isNode(curmod))
         	return curmod;
     }
     return NULL;

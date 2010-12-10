@@ -49,15 +49,7 @@ INET_API cModule *findModuleSomewhereUp(const char *name, cModule *from);
 /**
  * Checks if the module is node, i.e. it has a @node attribute.
  */
-inline bool isNode(cModule *mod)
-{
-	if (mod)
-	{
-		cProperties *props = mod->getProperties();
-		return props && props->getAsBool("node");
-	}
-	return false;
-}
+bool isNode(cModule *mod);
 
 /**
  * Find the node containing the given module.
