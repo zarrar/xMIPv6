@@ -32,7 +32,7 @@
 #include "InterfaceTableAccess.h"
 #include "RoutingTable6Access.h"
 #include "IPv6Datagram.h"
-//#include "IPv6ExtensionHeaders.h" // for RH2
+//#include "IPv6ExtensionHeaders_m.h" // for RH2
 #include "MobilityHeader.h" // for HAOpt & RH2
 
 #include <functional>
