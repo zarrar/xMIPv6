@@ -50,16 +50,27 @@ class INET_API IPv6ControlInfo : public IPv6ControlInfo_Base
      */
     virtual unsigned int getExtensionHeaderArraySize() const;
 
+    /** Generated but unused method, should not be called. */
+    virtual void setExtensionHeaderArraySize(unsigned int size);
+
     /**
      * Returns the kth extension header in this datagram
      */
-    virtual IPv6ExtensionHeader* getExtensionHeader(unsigned int k) const;
+    virtual IPv6ExtensionHeaderPtr& getExtensionHeader(unsigned int k);
+
+    /** Generated but unused method, should not be called. */
+    virtual void setExtensionHeader(unsigned int k, const IPv6ExtensionHeaderPtr& extensionHeader_var);
 
     /**
      * Adds an extension header to the datagram, at the given position.
      * The default (atPos==-1) is to add the header at the end.
      */
     virtual void addExtensionHeader(IPv6ExtensionHeader* eh, int atPos=-1);
+
+    /**
+     * Remove the first extension header and return it.
+     */
+    IPv6ExtensionHeader* removeFirstExtensionHeader();
 };
 
 #endif

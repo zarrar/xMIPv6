@@ -684,19 +684,19 @@ IPv6Datagram *IPv6::encapsulate(cPacket *transportPacket, InterfaceEntry *&destI
     datagram->setHopLimit(controlInfo->getHopLimit()>0 ? controlInfo->getHopLimit() : 32); //FIXME use iface hop limit instead of 32?
     datagram->setTransportProtocol(controlInfo->getProtocol());
 
-    // #### copy routing headers from ctrlInfo to datagram if present, 29.08.07 - CB ####
-	// FIXME this is a nasty way of copying the extension headers
-    for (int i = 0; i < controlInfo->getExtensionHeaderArraySize(); i++)
-	{
-    	IPv6ExtensionHeader* extHeader = controlInfo->getExtensionHeader(i);
-    	datagram->addExtensionHeader( (IPv6ExtensionHeader*) extHeader->dup() );
-    	// EV << "Copied extension header to datagram." << endl;
-	}
+    // #### Move extension headers from ctrlInfo to datagram if present
+    while (0 < controlInfo->getExtensionHeaderArraySize())
+    {
+    	IPv6ExtensionHeader* extHeader = controlInfo->removeFirstExtensionHeader();
+    	datagram->addExtensionHeader(extHeader);
+    	// EV << "Move extension header to datagram." << endl;
+    }
 
     delete controlInfo;
 
-	datagram->setByteLength(datagram->calculateHeaderByteLength()); // 30.08.07 - CB
-	datagram->encapsulate(transportPacket); // 30.08.07 - CB
+    datagram->setByteLength(datagram->calculateHeaderByteLength());
+    datagram->encapsulate(transportPacket);
+
     return datagram;
 }
 

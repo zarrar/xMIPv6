@@ -344,10 +344,9 @@ void IPv6NeighbourDiscovery::reachabilityConfirmed(const IPv6Address& neighbour,
     {
         EV << "NUD in progress. Cancelling NUD Timer\n";
         bubble("Reachability Confirmed via NUD.");
-        cancelEvent(msg);
-        delete msg;
+        cancelAndDelete(msg);
+        nce->nudTimeoutEvent = NULL;
     }
-    nce->nudTimeoutEvent = NULL; // update 20.09.07 - CB
 
     // TODO (see header file for description)
     /*A neighbor is considered reachable if the node has recently received
@@ -983,11 +982,9 @@ void IPv6NeighbourDiscovery::cancelRouterDiscovery(InterfaceEntry *ie)
     if (rdEntry != NULL)
     {
         EV << "rdEntry is not NULL, RD cancelled!" << endl;
-        cancelEvent(rdEntry->timeoutMsg);
-        //rdEntry->timeoutMsg = NULL;  // FIX 18.12.07 - CB
+        cancelAndDelete(rdEntry->timeoutMsg);
         rdList.erase(rdEntry);
         delete rdEntry;
-        //rdEntry = NULL; // FIX 18.12.07 - CB
     }
     else
         EV << "rdEntry is NULL, not cancelling RD!" << endl;
@@ -2312,7 +2309,8 @@ void IPv6NeighbourDiscovery::processNAForIncompleteNCEState(
         //- It sends any packets queued for the neighbour awaiting address
         //  resolution.
         sendQueuedPacketsToIPv6Module(nce);
-        cancelEvent(nce->arTimer);
+        cancelAndDelete(nce->arTimer);
+        nce->arTimer = NULL;
     }
 }
 
@@ -2383,8 +2381,8 @@ void IPv6NeighbourDiscovery:: processNAForOtherNCEStates(
                 EV << "NUD in progress. Cancelling NUD Timer\n";
                 bubble("Reachability Confirmed via NUD.");
                 nce->reachabilityExpires = simTime() + ie->ipv6Data()->_getReachableTime();
-                cancelEvent(msg);
-                delete msg;
+                cancelAndDelete(msg);
+                nce->nudTimeoutEvent = NULL;
             }
             nce->nudTimeoutEvent = NULL;
         }
