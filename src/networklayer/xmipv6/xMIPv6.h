@@ -33,6 +33,7 @@
 #include "IPv6NDMessage_m.h"
 #include "IPv6ControlInfo.h"
 #include "IPv6InterfaceData.h"
+#include "IPv6ExtensionHeaders.h"
 #include "InterfaceEntry.h"
 #include "InterfaceTable.h"
 #include "InterfaceTableAccess.h"

@@ -773,7 +773,7 @@ bool IPv6::processExtensionHeaders(IPv6Datagram* datagram)
     // walk through all extension headers
     for (int i = 0; i < noExtHeaders; i++)
     {
-        IPv6ExtensionHeader* eh = datagram->popExtensionHeader();
+        IPv6ExtensionHeader* eh = datagram->removeFirstExtensionHeader();
 
         if ( dynamic_cast<IPv6RoutingHeader*>(eh) )
         {
