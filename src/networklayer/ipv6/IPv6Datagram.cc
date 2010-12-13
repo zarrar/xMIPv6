@@ -17,7 +17,7 @@
 
 
 #include "IPv6Datagram.h"
-#include "IPv6ExtensionHeaders_m.h"
+#include "IPv6ExtensionHeaders.h"
 #include "MobilityHeader_m.h"
 
 
@@ -82,10 +82,7 @@ int IPv6Datagram::calculateHeaderByteLength() const
     return len;
 }
 
-
-// #### Added by CB, 29.08.07 ####
-
-IPv6ExtensionHeaderPtr IPv6Datagram::popExtensionHeader()
+IPv6ExtensionHeaderPtr IPv6Datagram::removeFirstExtensionHeader()
 {
 	static IPv6ExtensionHeaderPtr null;
     if ( extensionHeaders.size() == 0)
@@ -106,56 +103,3 @@ IPv6Datagram::~IPv6Datagram()
 		delete eh; // delete the header
 	}
 }
-
-
-//---
-
-Register_Class(IPv6ExtensionHeader);
-
-
-IPProtocolId IPv6ExtensionHeader::getExtensionType() const
-{
-    // FIXME msg files don't yet support readonly attrs that can be
-    // redefined in subclasses, so for now we resort to the following
-    // unsafe and unextensible nasty solution
-    if (dynamic_cast<const IPv6HopByHopOptionsHeader*>(this)) {
-        return IP_PROT_IPv6EXT_HOP;
-    } else if (dynamic_cast<const IPv6RoutingHeader*>(this)) {
-        return IP_PROT_IPv6EXT_ROUTING;
-    } else if (dynamic_cast<const IPv6FragmentHeader*>(this)) {
-        return IP_PROT_IPv6EXT_FRAGMENT;
-    } else if (dynamic_cast<const IPv6DestinationOptionsHeader*>(this)) {
-        return IP_PROT_IPv6EXT_DEST;
-    } else if (dynamic_cast<const IPv6AuthenticationHeader*>(this)) {
-        return IP_PROT_IPv6EXT_AUTH;
-    } else if (dynamic_cast<const IPv6EncapsulatingSecurityPayloadHeader*>(this)) {
-        return IP_PROT_IPv6EXT_ESP;
-    } else {
-        throw cRuntimeError("unrecognised HeaderExtension subclass %s in IPv6ExtensionHeader::getExtensionType()", getClassName());
-    }
-}
-
-int IPv6ExtensionHeader::getByteLength() const
-{
-    // FIXME msg files don't yet support readonly attrs that can be
-    // redefined in subclasses, so for now we resort to the following
-    // unsafe and unextensible nasty solution
-    if (dynamic_cast<const IPv6HopByHopOptionsHeader*>(this)) {
-        return 8; // FIXME verify
-    } else if (dynamic_cast<const IPv6RoutingHeader*>(this)) {
-        return 8 + 16 * ((IPv6RoutingHeader*)this)->getAddressArraySize(); // FIXME verify, update 28.08.07 - CB
-    } else if (dynamic_cast<const IPv6FragmentHeader*>(this)) {
-        return 8;
-    } else if (dynamic_cast<const IPv6DestinationOptionsHeader*>(this)) {
-    	//return 8; // FIXME verify
-    	return 20; // FIXME only valid for Home Address Option!
-    } else if (dynamic_cast<const IPv6AuthenticationHeader*>(this)) {
-        return 8; // FIXME verify
-    } else if (dynamic_cast<const IPv6EncapsulatingSecurityPayloadHeader*>(this)) {
-        return 8; // FIXME verify
-    } else {
-        throw cRuntimeError("unrecognised HeaderExtension subclass %s in IPv6ExtensionHeader::getExtensionType()", getClassName());
-    }
-}
-
-
