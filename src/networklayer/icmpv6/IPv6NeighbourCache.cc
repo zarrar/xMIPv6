@@ -211,47 +211,45 @@ void IPv6NeighbourCache::remove(const IPv6Address& addr, int interfaceID)
     neighbourMap.erase(it);
 }
 
-
-// Added by CB
-void IPv6NeighbourCache::invalidateEntriesForInterfaceID(int interfaceID)
-{
-	for (NeighbourMap::iterator it=neighbourMap.begin(); it!=neighbourMap.end(); it++)
-	{
-		if ( it->first.interfaceID == interfaceID )
-		{	
-			it->second.reachabilityState = PROBE; // we make sure this neighbour is not used anymore in the future, unless reachability can be confirmed
-			neighbourDiscovery.cancelAndDelete(it->second.nudTimeoutEvent); // 20.9.07 - CB
-			it->second.nudTimeoutEvent = NULL;
-		}			
-	}
-}
-
-
-// Added by CB
-void IPv6NeighbourCache::invalidateAllEntries()
-{
-	while (! neighbourMap.empty() )
-	{
-		NeighbourMap::iterator it = neighbourMap.begin();
-		remove(it);
-	}
-	/*
-	int size = neighbourMap.size();
-	EV << "size: " << size << endl;
-	for (NeighbourMap::iterator it=neighbourMap.begin(); it!=neighbourMap.end(); it++)
-	{
-		it->second.reachabilityState = PROBE; // we make sure this neighbour is not used anymore in the future, unless reachability can be confirmed			
-	}
-	*/
-}
-
-
 void IPv6NeighbourCache::remove(NeighbourMap::iterator it)
 {
     //delete it->second.nudTimeoutEvent;
 	neighbourDiscovery.cancelAndDelete(it->second.nudTimeoutEvent); // 20.9.07 - CB
     it->second.nudTimeoutEvent = NULL;
     neighbourMap.erase(it);
+}
+
+// Added by CB
+void IPv6NeighbourCache::invalidateEntriesForInterfaceID(int interfaceID)
+{
+    for (NeighbourMap::iterator it=neighbourMap.begin(); it!=neighbourMap.end(); it++)
+    {
+        if ( it->first.interfaceID == interfaceID )
+        {	
+            it->second.reachabilityState = PROBE; // we make sure this neighbour is not used anymore in the future, unless reachability can be confirmed
+            neighbourDiscovery.cancelAndDelete(it->second.nudTimeoutEvent); // 20.9.07 - CB
+            it->second.nudTimeoutEvent = NULL;
+        }			
+    }
+}
+
+
+// Added by CB
+void IPv6NeighbourCache::invalidateAllEntries()
+{
+    while (! neighbourMap.empty() )
+    {
+        NeighbourMap::iterator it = neighbourMap.begin();
+        remove(it);
+    }
+    /*
+    int size = neighbourMap.size();
+    EV << "size: " << size << endl;
+    for (NeighbourMap::iterator it=neighbourMap.begin(); it!=neighbourMap.end(); it++)
+    {
+        it->second.reachabilityState = PROBE; // we make sure this neighbour is not used anymore in the future, unless reachability can be confirmed			
+    }
+    */
 }
 
 const char *IPv6NeighbourCache::stateName(ReachabilityState state)
