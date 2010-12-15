@@ -165,7 +165,6 @@ void IPv6NeighbourDiscovery::handleMessage(cMessage *msg)
 void IPv6NeighbourDiscovery::processNDMessage(ICMPv6Message *msg,
     IPv6ControlInfo *ctrlInfo)
 {
-	EV << "/// processNDMessage" << endl;
 
     if (dynamic_cast<IPv6RouterSolicitation *>(msg))
     {
@@ -1018,7 +1017,6 @@ void IPv6NeighbourDiscovery::processRDTimeout(cMessage *msg)
         EV << "No RA messages were received. Assume no routers are on-link";
         delete rdEntry;
         rdList.erase(rdEntry); // update 19.12.07 - CB
-        //rdEntry = NULL; // update 19.12.07 - CB
         delete msg;
     }
 }
@@ -1233,8 +1231,6 @@ IPv6RouterAdvertisement *IPv6NeighbourDiscovery::createAndSendRAPacket(
 void IPv6NeighbourDiscovery::processRAPacket(IPv6RouterAdvertisement *ra,
     IPv6ControlInfo *raCtrlInfo)
 {
-    //EV << "/// processRAPacket" << endl;
-
     InterfaceEntry *ie = ift->getInterfaceById(raCtrlInfo->getInterfaceId());
 
     if (ie->ipv6Data()->getAdvSendAdvertisements())
@@ -2384,7 +2380,6 @@ void IPv6NeighbourDiscovery:: processNAForOtherNCEStates(
                 cancelAndDelete(msg);
                 nce->nudTimeoutEvent = NULL;
             }
-            nce->nudTimeoutEvent = NULL;
         }
         else
         {

@@ -163,16 +163,15 @@ void RoutingTable6::parseXMLConfigFile()
         {
             //The next tag should be "interface".
             if (opp_strcmp(ifTag->getTagName(),"interface")==0)
-				//	continue;
             {
-                    //std::cout << "Getting attribute: name" << endl;
-                    const char *ifname = ifTag->getAttribute("name");
-                    if (!ifname)
-                        error("<interface> without name attribute at %s", child->getSourceLocation());
-                    InterfaceEntry *ie = ift->getInterfaceByName(ifname);
-                    if (!ie)
-                        error("no interface named %s was registered, %s", ifname, child->getSourceLocation());
-                    configureInterfaceFromXML(ie, ifTag);
+                //std::cout << "Getting attribute: name" << endl;
+                const char *ifname = ifTag->getAttribute("name");
+                if (!ifname)
+                    error("<interface> without name attribute at %s", child->getSourceLocation());
+                InterfaceEntry *ie = ift->getInterfaceByName(ifname);
+                if (!ie)
+                    error("no interface named %s was registered, %s", ifname, child->getSourceLocation());
+                configureInterfaceFromXML(ie, ifTag);
             }
             else if (opp_strcmp(ifTag->getTagName(),"tunnel")==0)
 	            configureTunnelFromXML(ifTag);

@@ -75,8 +75,6 @@ void IPv6::updateDisplayString()
 
 void IPv6::endService(cPacket *msg)
 {
-	EV <<"\n<<=======THIS IS THE IPv6::endService() function=========>>\n";
-
 	// 28.09.07 - CB
 	// support for rescheduling datagrams which are supposed to be sent over
 	// a tentative address.
@@ -105,12 +103,10 @@ void IPv6::endService(cPacket *msg)
 	   (msg->getArrivalGate()->isName("xMIPv6In") && dynamic_cast<MobilityHeader*>(msg))) // Zarrar
     {
         	// packet from upper layers, tunnel link-layer output or ND: encapsulate and send out
-	EV <<"\n<<=======HandleMessagefromHL() Called=========>>\n";
         handleMessageFromHL( msg );
     }
     else
     {
-	EV <<"\n<<=======checking_and_casting msg into IPv6Datagram=========>>\n";
         // datagram from network or from ND: localDeliver and/or route
         IPv6Datagram *dgram = check_and_cast<IPv6Datagram *>(msg);
         handleDatagramFromNetwork(dgram);
@@ -128,7 +124,6 @@ InterfaceEntry *IPv6::getSourceInterfaceFrom(cPacket *msg)
 
 void IPv6::handleDatagramFromNetwork(IPv6Datagram *datagram)
 {
-EV <<"\n<<=======HandleMessagefromNetwork() Called=========>>\n";
     // check for header biterror
     if (datagram->hasBitError())
     {
@@ -587,14 +582,13 @@ void IPv6::isLocalAddress(IPv6Datagram *datagram)
         {
             EV << "Protocol " << protocol << ", passing up on gate " << gateindex << "\n";
             //TODO: Indication of forward progress
-            send(packet, "transportOut", gateindex);
+            send(packet, outGate);
         }
     }
 }
 
 void IPv6::handleReceivedICMP(ICMPv6Message *msg)
 {
-EV <<"\n<<=======THIS IS THE IPv6::handleReceivedICMP() FUNCTION=========>>\n";
     switch (msg->getType())
     {
         case ICMPv6_REDIRECT:  // TODO implement redirect handling
@@ -646,14 +640,9 @@ cPacket *IPv6::decapsulate(IPv6Datagram *datagram)
 
 IPv6Datagram *IPv6::encapsulate(cPacket *transportPacket, InterfaceEntry *&destIE)
 {
-    // EV <<"\n<<=======THIS IS THE IPv6::encapsulate() FUNCTION=========>>\n";
     IPv6ControlInfo *controlInfo = check_and_cast<IPv6ControlInfo*>(transportPacket->removeControlInfo());
 
     IPv6Datagram *datagram = new IPv6Datagram(transportPacket->getName());
-    // -- moved the following two lines below, as otherwise the size of the extension headers would
-    // not be taken into account, 30.08.07 - CB
-    //datagram->setByteLength(datagram->calculateHeaderByteLength());
-    //datagram->encapsulate(transportPacket);
 
     // IPV6_MULTICAST_IF option, but allow interface selection for unicast packets as well
     destIE = ift->getInterfaceById(controlInfo->getInterfaceId());

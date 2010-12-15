@@ -380,7 +380,6 @@ void IPv6InterfaceData::deduceAdvPrefix()
 	}
 }
 
-
 // overloaded version of assign address. Difference in terms of specifying the address as CoA or HoA. Zarrar 20.07.07
 void IPv6InterfaceData::assignAddress(const IPv6Address& addr, bool tentative, simtime_t expiryTime, simtime_t prefExpiryTime, bool hFlag)
 {
@@ -401,7 +400,6 @@ void IPv6InterfaceData::assignAddress(const IPv6Address& addr, bool tentative, s
 
     choosePreferredAddress();
 }
-
 
 /**
  * This method traverses the address list and searches for a specific address.
@@ -427,14 +425,12 @@ IPv6Address IPv6InterfaceData::removeAddress(IPv6InterfaceData::AddressType type
 	return addr;
 }
 
-
 std::ostream& operator<<(std::ostream& os, const IPv6InterfaceData::HomeNetworkInfo& homeNetInfo)
 {
 	os << "HoA of MN:" << homeNetInfo.HoA << " HA Address: " << homeNetInfo.homeAgentAddr
 	   << " Home Network Prefix: " << homeNetInfo.prefix/*.prefix()*/;
 	return os;
 }
-
 
 void IPv6InterfaceData::updateHomeNetworkInfo(const IPv6Address& hoa, const IPv6Address& ha, const IPv6Address& prefix, const int prefixLength)
 {
