@@ -54,8 +54,5 @@ enum IPProtocolId
     IP_PROT_IPv6EXT_FRAGMENT = 44; // Fragmentation/reassembly header.
     IP_PROT_IPv6EXT_AUTH = 51;     // Authentication header.
     IP_PROT_IPv6EXT_ESP = 50;      // Encapsulating security payload.
-
     IP_PROT_IPv6EXT_MOB = 135;      // Mobility Header for MIPv6 support.
-  
-
 }

@@ -59,10 +59,9 @@ class MIPv6NDAdvertisementInterval
 //RFC 3775 Section 7.4
 class MIPv6HAInformation
 {
-      	unsigned int homeAgentPreference;
-	unsigned int homeAgentLifetime;  
+    unsigned int homeAgentPreference;
+    unsigned int homeAgentLifetime;  
 }
-
 
 //
 // Neighbour Discovery for IPv6.
@@ -101,7 +100,7 @@ packet IPv6RouterAdvertisement extends IPv6NDMessage
     unsigned int curHopLimit;
     bool managedAddrConfFlag;	//M-bit
     bool otherStatefulConfFlag;	//O-bit
-	bool homeAgentFlag = false;		//H-bit // set default value of false, 4.9.07 - CB 
+	bool homeAgentFlag = false;		//H-bit // RFC 5175 Section 3. // set default value of false, 4.9.07 - CB 
     unsigned short routerLifetime;  // 0 indicates router is not a default router
     unsigned int reachableTime;
     unsigned int retransTimer;
@@ -109,11 +108,10 @@ packet IPv6RouterAdvertisement extends IPv6NDMessage
     //Possible Options
     MACAddress sourceLinkLayerAddress;		//source link layer option
     unsigned int MTU;				//MTU option
-        	
 	IPv6NDPrefixInformation prefixInformation[];	//Prefix Information Option
 	MIPv6NDAdvertisementInterval advInterval;	//New Advertisement Interval Option (MIPv6)
 	MIPv6HAInformation haInformation;		//New Home Agent Information Option (MIPv6)
-};
+}
 
 //
 // Neighbour Solicitation Message Format
@@ -142,7 +140,7 @@ packet IPv6NeighbourAdvertisement extends IPv6NDMessage
 
     //Possible Options
     MACAddress targetLinkLayerAddress;	//Target Link Layer Address option
-};
+}
 
 //
 // Redirect Message Format

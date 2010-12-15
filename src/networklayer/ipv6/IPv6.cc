@@ -592,7 +592,6 @@ void IPv6::isLocalAddress(IPv6Datagram *datagram)
     }
 }
 
-
 void IPv6::handleReceivedICMP(ICMPv6Message *msg)
 {
 EV <<"\n<<=======THIS IS THE IPv6::handleReceivedICMP() FUNCTION=========>>\n";

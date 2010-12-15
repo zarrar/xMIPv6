@@ -60,20 +60,20 @@ void IPv6NeighbourDiscovery::initialize(int stage)
         rt6 = RoutingTable6Access().get();
         icmpv6 = ICMPv6Access().get();
 
-    if (rt6->isMobileNode())
-    	mipv6 = xMIPv6Access().get();
+        if (rt6->isMobileNode())
+    	    mipv6 = xMIPv6Access().get();
 
         pendingQueue.setName("pendingQueue");
 
-	//MIPv6Enabled = par("MIPv6Support");	// (Zarrar 14.07.07)
-	/*if(rt6->isRouter()) // 12.9.07 - CB
+        //MIPv6Enabled = par("MIPv6Support");	// (Zarrar 14.07.07)
+        /*if(rt6->isRouter()) // 12.9.07 - CB
         {
-	minRAInterval = par("minIntervalBetweenRAs"); // from the omnetpp.ini file (Zarrar 15.07.07)
-	maxRAInterval = par("maxIntervalBetweenRAs"); // from the omnetpp.ini file (Zarrar 15.07.07)
-	//WATCH (MIPv6Enabled);	// (Zarrar 14.07.07)
-	WATCH(minRAInterval);	// (Zarrar 15.07.07)
-	WATCH(maxRAInterval);	// (Zarrar 15.07.07)
-	}*/
+            minRAInterval = par("minIntervalBetweenRAs"); // from the omnetpp.ini file (Zarrar 15.07.07)
+            maxRAInterval = par("maxIntervalBetweenRAs"); // from the omnetpp.ini file (Zarrar 15.07.07)
+            //WATCH (MIPv6Enabled);	// (Zarrar 14.07.07)
+            WATCH(minRAInterval);	// (Zarrar 15.07.07)
+            WATCH(maxRAInterval);	// (Zarrar 15.07.07)
+        }*/
 
         for (int i=0; i < ift->getNumInterfaces(); i++)
         {

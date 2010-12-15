@@ -70,7 +70,7 @@ class INET_API IPv6NeighbourCache
         MACAddress macAddress;
         bool isRouter;
         bool isDefaultRouter; // is it on the Default Router List?
-	bool isHomeAgent;	//is the router also a Home Agent (RFC 3775-MIPv6)...Zarrar Yousaf 09.03.07
+        bool isHomeAgent;	//is the router also a Home Agent (RFC 3775-MIPv6)...Zarrar Yousaf 09.03.07
         // Neighbour Unreachability Detection variables
         ReachabilityState reachabilityState;
         simtime_t reachabilityExpires; // reachabilityLastConfirmed+reachableTime
