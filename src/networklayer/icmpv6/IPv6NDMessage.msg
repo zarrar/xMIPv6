@@ -31,7 +31,7 @@ class noncobject MACAddress;
 
 //
 // IPv6ND Prefix Information
-// RFC 2461 Section 4.6.2
+// RFC 2461 / RFC 4861 Section 4.6.2
 //
 class IPv6NDPrefixInformation
 {

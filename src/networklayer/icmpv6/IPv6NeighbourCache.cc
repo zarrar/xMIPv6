@@ -197,17 +197,8 @@ void IPv6NeighbourCache::remove(const IPv6Address& addr, int interfaceID)
     Key key(addr, interfaceID);
     NeighbourMap::iterator it = neighbourMap.find(key);
     ASSERT(it!=neighbourMap.end()); // entry must exist
-
-    // the following line did not work due to ownership issues
-    // therefore replaced delete with cancelAndDelete
-    // 3.9.07 - CB
-    //delete it->second.nudTimeoutEvent;
     neighbourDiscovery.cancelAndDelete( it->second.nudTimeoutEvent );
     it->second.nudTimeoutEvent = NULL;
-    
-    // FIXME the delete from above can sometimes cause problems
-    // don't know why - to be investigated! 4.9.07 - CB
-    
     neighbourMap.erase(it);
 }
 
