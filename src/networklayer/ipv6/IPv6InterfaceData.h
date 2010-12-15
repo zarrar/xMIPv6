@@ -135,7 +135,7 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
         int maxRtrSolicitations;
 	    uint initialBindAckTimeout;//MIPv6: added by Zarrar Yousaf @ CNI UniDo 17.06.07
 	    uint maxBindAckTimeout;//MIPv6: added by Zarrar Yousaf @ CNI UniDo 17.06.07
-	    float initialBindAckTimeoutFirst; //MIPv6: 12.9.07 - CB // TODO: datatype float or double
+	    simtime_t initialBindAckTimeoutFirst; //MIPv6: 12.9.07 - CB
 	    uint maxRRBindingLifeTime; // 14.9.07 - CB
 	    uint maxHABindingLifeTime; // 14.9.07 - CB
 	    uint maxTokenLifeTime; // 10.07.08 - CB

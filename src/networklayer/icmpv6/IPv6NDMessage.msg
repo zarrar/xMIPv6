@@ -35,7 +35,7 @@ class noncobject MACAddress;
 //
 class IPv6NDPrefixInformation
 {
-    unsigned int prefixLength;
+    unsigned short prefixLength;
     bool onlinkFlag;		//L-bit
     bool autoAddressConfFlag;	//A-bit
 	bool routerAddress;		//R-bit: used in case of MIPv6 when the H-bit is set
@@ -49,10 +49,7 @@ class IPv6NDPrefixInformation
 //
 class MIPv6NDAdvertisementInterval
 {
-    properties:
-        omitGetVerb = true;
-    fields:
-      unsigned int advertisementInterval;		//MUST be equal to "maxRtrAdvInterval"  
+    unsigned int advertisementInterval;		//MUST be equal to "maxRtrAdvInterval"  
 }
 
 //MIPv6 Home Agent Information Option
@@ -97,7 +94,7 @@ packet IPv6RouterSolicitation extends IPv6NDMessage
 packet IPv6RouterAdvertisement extends IPv6NDMessage
 {
     //Additional ICMP fields
-    unsigned int curHopLimit;
+    unsigned short curHopLimit;
     bool managedAddrConfFlag;	//M-bit
     bool otherStatefulConfFlag;	//O-bit
 	bool homeAgentFlag = false;		//H-bit // RFC 5175 Section 3. // set default value of false, 4.9.07 - CB 
