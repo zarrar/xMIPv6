@@ -685,6 +685,8 @@ IPv6Datagram *IPv6::encapsulate(cPacket *transportPacket, InterfaceEntry *&destI
     datagram->setByteLength(datagram->calculateHeaderByteLength());
     datagram->encapsulate(transportPacket);
 
+    // setting IP options is currently not supported
+
     return datagram;
 }
 

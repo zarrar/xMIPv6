@@ -185,7 +185,7 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
     /**
      * IP forwarding on/off
      */
-    virtual bool isRouter()  const {return isrouter;}
+    virtual bool isRouter() const {return isrouter;}
 
     /**
     * Determine whether normal Router or Home Agent
@@ -250,6 +250,11 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
      * Add or update a destination cache entry.
      */
     virtual void updateDestCache(const IPv6Address& dest, const IPv6Address& nextHopAddr, int interfaceId);
+
+    /**
+     * Discard all entries in destination cache
+     */
+    virtual void purgeDestCache();
 
     /**
      * Discard all entries in destination cache where next hop is the given
@@ -343,7 +348,6 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
 	 */
 	bool isHomeAddress(const IPv6Address& addr);
 
-
 	/**
 	 * Removes the current default routes for the given interface.
 	 */
@@ -354,37 +358,27 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
 	 */	
 	void removeAllRoutes();
 
-
 	/**
 	 * Removes all prefixes registered for the given interface.
 	 */
 	void removePrefixes(int interfaceID);
 
-
 	/*
 	 * Removes all destination cache entries for the specified interface
 	 */
 	void purgeDestCacheForInterfaceID(int interfaceId);
-	
-	/*
-	 * Removes all entries from the destination cache
-	 */
-	void purgeDestCache();
-
 
 	/**
 	 * Can be used to check whether this node supports MIPv6 or not
 	 * (MN, MR, HA or CN).
 	 */
-	bool hasMIPv6Support() { return mipv6Support; };
-
+	bool hasMIPv6Support() { return mipv6Support; }
 
 	/**
 	 * This method is used to define whether the node support MIPv6 or
 	 * not (MN, MR, HA or CN).
 	 */
-	void setMIPv6Support(bool value) { mipv6Support = value; };
-
+	void setMIPv6Support(bool value) { mipv6Support = value; }
 
 	/**
 	 * Checks whether the provided address is in an on-link address
