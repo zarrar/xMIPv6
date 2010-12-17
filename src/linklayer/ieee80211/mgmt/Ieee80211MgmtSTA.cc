@@ -217,10 +217,6 @@ Ieee80211DataFrame *Ieee80211MgmtSTA::encapsulate(cPacket *msg)
     // receiver is the AP
     frame->setReceiverAddress(assocAP.address);
 
-    // UPDATE CB
-    //if( frame->getReceiverAddress().isUnspecified() )
-    //	frame->setReceiverAddress(MACAddress::BROADCAST_ADDRESS);
-
     // destination address is in address3
     Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->removeControlInfo());
     frame->setAddress3(ctrl->getDest());
@@ -564,7 +560,8 @@ int Ieee80211MgmtSTA::statusCodeToPrimResultCode(int statusCode)
 
 void Ieee80211MgmtSTA::handleDataFrame(Ieee80211DataFrame *frame)
 {
-    //Only send the Data frame up to the higher layer if the STA is associated with an AP,else delete the frame (Zarrar Yousaf 19.11.07)
+    //Only send the Data frame up to the higher layer if the STA is associated with an AP,
+    //else delete the frame (Zarrar Yousaf 19.11.07)
     if (isAssociated)
         sendUp(decapsulate(frame));
     else
