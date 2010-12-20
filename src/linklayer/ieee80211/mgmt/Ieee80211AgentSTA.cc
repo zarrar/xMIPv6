@@ -45,49 +45,14 @@ void Ieee80211AgentSTA::initialize(int stage)
         NotificationBoard *nb = NotificationBoardAccess().get();
         nb->subscribe(this, NF_L2_BEACON_LOST);
 
-        //Statisitic variables initiailisation (ZY 24.11.07)
-        scanReqVector.setName("SCAN_REQUEST");
-        disassociateReqVector.setName("DISASSOC_REQ");
-        associateReqVector.setName("ASSOC_REQ");
-        authenticateReqVector.setName("AUTHENTICATE_REQ");
-        associateConfirmVector.setName("ASSOC_CONFIRM");
-        authenticateConfirmVector.setName("AUTHENTICATE_CONFIRM");
-        scanConfirmVector.setName("SCAN_CONFIRM");
-
-        scanReqScalar.setName("SCAN_REQUEST1");
-        disassociateReqScalar.setName("DISASSOC_REQ1");
-        associateReqScalar.setName("ASSOC_REQ1");
-        authenticateReqScalar.setName("AUTHENTICATE_REQ1");
-        associateConfirmScalar.setName("ASSOC_CONFIRM1");
-        authenticateConfirmScalar.setName("AUTHENTICATE_CONFIRM1");
-        scanConfirmScalar.setName("SCAN_CONFIRM1");
-
-        scanReq = 0;
-        disassociateReq = 0;
-        associateReq = 0;
-        authenticateReq = 0;
-        associateConfirm = 0;
-        authenticateConfirm = 0;
-        scanConfirm = 0;
+        //Statistics:
+        sentRequestSignal = registerSignal("sentRequest");
+        acceptConfirmSignal = registerSignal("acceptConfirm");
+        dropConfirmSignal = registerSignal("dropConfirm");
 
         // start up: send scan request
         scheduleAt(simTime()+uniform(0,maxChannelTime), new cMessage("startUp", MK_STARTUP));
     }
-}
-
-void Ieee80211AgentSTA::finish()
-{
-	recordScalar("ScanRequest_Time",scanReq );
-	recordScalar("DissassociateReq_Time",disassociateReq);
-	recordScalar("AssociateReq_Time",associateReq);
-	recordScalar("AuthenticateReq_Time",authenticateReq);
-	recordScalar("AssociateConf_Time",associateConfirm);
-	recordScalar("AuthenticateConf_Time",authenticateConfirm);
-	recordScalar("ScanConfirm_Time",scanConfirm);
-	recordScalar("SCAN_DELAY",authenticateReq - scanReq);
-	recordScalar("AUTHENTICATE_DELAY",authenticateConfirm - authenticateReq);
-	recordScalar("ASSOCIATE_DELAY",associateConfirm - authenticateConfirm);
-	recordScalar("L2_HO_DELAY",associateConfirm - scanReq);
 }
 
 void Ieee80211AgentSTA::handleMessage(cMessage *msg)
@@ -171,9 +136,7 @@ void Ieee80211AgentSTA::sendScanRequest()
         req->setChannelList(i, channelsToScan[i]);
     //XXX BSSID, SSID are left at default ("any")
 
-    scanReq = simTime(); //Statistic variable (ZY 24.11.07)
-    scanReqVector.record(scanReq);//Statistic variable (ZY 24.11.07)
-    scanReqScalar.collect(scanReq);   
+    emit(sentRequestSignal, PR_SCAN_REQUEST);
     sendRequest(req);
 }
 
@@ -183,11 +146,7 @@ void Ieee80211AgentSTA::sendAuthenticateRequest(const MACAddress& address)
     Ieee80211Prim_AuthenticateRequest *req = new Ieee80211Prim_AuthenticateRequest();
     req->setAddress(address);
     req->setTimeout(authenticationTimeout);
-    
-    authenticateReq = simTime();
-    authenticateReqVector.record(authenticateReq);
-    authenticateReqScalar.collect(authenticateReq);
-    
+    emit(sentRequestSignal, PR_AUTHENTICATE_REQUEST);
     sendRequest(req);
 }
 
@@ -197,6 +156,7 @@ void Ieee80211AgentSTA::sendDeauthenticateRequest(const MACAddress& address, int
     Ieee80211Prim_DeauthenticateRequest *req = new Ieee80211Prim_DeauthenticateRequest();
     req->setAddress(address);
     req->setReasonCode(reasonCode);
+    emit(sentRequestSignal, PR_DEAUTHENTICATE_REQUEST);
     sendRequest(req);
 }
 
@@ -206,11 +166,7 @@ void Ieee80211AgentSTA::sendAssociateRequest(const MACAddress& address)
     Ieee80211Prim_AssociateRequest *req = new Ieee80211Prim_AssociateRequest();
     req->setAddress(address);
     req->setTimeout(associationTimeout);
-    
-    associateReq = simTime(); //Statisitic (ZY 24.11.07)
-    associateReqVector.record(associateReq); //Statisitic (ZY 24.11.07)
-    associateReqScalar.collect(associateReq);
-    
+    emit(sentRequestSignal, PR_ASSOCIATE_REQUEST);
     sendRequest(req);
 }
 
@@ -220,6 +176,7 @@ void Ieee80211AgentSTA::sendReassociateRequest(const MACAddress& address)
     Ieee80211Prim_ReassociateRequest *req = new Ieee80211Prim_ReassociateRequest();
     req->setAddress(address);
     req->setTimeout(associationTimeout);
+    emit(sentRequestSignal, PR_REASSOCIATE_REQUEST);
     sendRequest(req);
 }
 
@@ -229,11 +186,7 @@ void Ieee80211AgentSTA::sendDisassociateRequest(const MACAddress& address, int r
     Ieee80211Prim_DisassociateRequest *req = new Ieee80211Prim_DisassociateRequest();
     req->setAddress(address);
     req->setReasonCode(reasonCode);
-    
-    disassociateReq = simTime(); //Statisitic (ZY 24.11.07)
-    disassociateReqVector.record(disassociateReq); //Statisitic (ZY 24.11.07)
-    disassociateReqScalar.collect(disassociateReq);    
-    
+    emit(sentRequestSignal, PR_DISASSOCIATE_REQUEST);
     sendRequest(req);
 }
 
@@ -244,11 +197,13 @@ void Ieee80211AgentSTA::processScanConfirm(Ieee80211Prim_ScanConfirm *resp)
     if (bssIndex==-1)
     {
         EV << "No (suitable) AP found, continue scanning\n";
+        emit(dropConfirmSignal, PR_SCAN_CONFIRM);
         sendScanRequest();
         return;
     }
 
     dumpAPList(resp);
+    emit(acceptConfirmSignal, PR_SCAN_CONFIRM);
 
     Ieee80211Prim_BSSDescription& bssDesc = resp->getBssList(bssIndex);
 
@@ -264,11 +219,6 @@ void Ieee80211AgentSTA::processScanConfirm(Ieee80211Prim_ScanConfirm *resp)
     sendDeauthenticateRequest(bssDesc.getBSSID(), 0);
     
     EV << "Chosen AP address=" << bssDesc.getBSSID() << " from list, starting authentication\n";
-    
-    scanConfirm = simTime(); //Statisitic added by ZY 28.11.07
-    scanConfirmVector.record(scanConfirm); //Statisitic added by ZY 28.11.07
-    scanConfirmScalar.collect(scanConfirm);
-    
     sendAuthenticateRequest(bssDesc.getBSSID());
 }
 
@@ -308,6 +258,7 @@ void Ieee80211AgentSTA::processAuthenticateConfirm(Ieee80211Prim_AuthenticateCon
     if (resp->getResultCode()!=PRC_SUCCESS)
     {
         EV << "Authentication error\n";
+        emit(dropConfirmSignal, PR_AUTHENTICATE_CONFIRM);
 
         // try scanning again, maybe we'll have better luck next time, possibly with a different AP
         EV << "Going back to scanning\n";
@@ -316,11 +267,7 @@ void Ieee80211AgentSTA::processAuthenticateConfirm(Ieee80211Prim_AuthenticateCon
     else
     {
         EV << "Authentication successful, let's try to associate\n";
-	
-	authenticateConfirm = simTime(); //Statisitic (ZY 24.11.07)
-	authenticateConfirmVector.record(authenticateConfirm); //Statisitic (ZY 24.11.07)
-	authenticateConfirmScalar.collect(authenticateConfirm);
-	
+        emit(acceptConfirmSignal, PR_AUTHENTICATE_CONFIRM);
         sendAssociateRequest(resp->getAddress());
     }
 }
@@ -330,6 +277,7 @@ void Ieee80211AgentSTA::processAssociateConfirm(Ieee80211Prim_AssociateConfirm *
     if (resp->getResultCode()!=PRC_SUCCESS)
     {
         EV << "Association error\n";
+        emit(dropConfirmSignal, PR_ASSOCIATE_CONFIRM);
 
         // try scanning again, maybe we'll have better luck next time, possibly with a different AP
         EV << "Going back to scanning\n";
@@ -338,12 +286,8 @@ void Ieee80211AgentSTA::processAssociateConfirm(Ieee80211Prim_AssociateConfirm *
     else
     {
         EV << "Association successful\n";
+        emit(acceptConfirmSignal, PR_ASSOCIATE_CONFIRM);
         // we are happy!
-	
-	associateConfirm = simTime(); //Statisitic (ZY 24.11.07)
-	associateConfirmVector.record(associateConfirm); //Statisitic (ZY 24.11.07)
-	associateConfirmScalar.collect(associateConfirm);
-	
         getParentModule()->getParentModule()->bubble("Associated with AP");
     }
 }
@@ -354,12 +298,14 @@ void Ieee80211AgentSTA::processReassociateConfirm(Ieee80211Prim_ReassociateConfi
     if (resp->getResultCode()!=PRC_SUCCESS)
     {
         EV << "Reassociation error\n";
+        emit(dropConfirmSignal, PR_REASSOCIATE_CONFIRM);
         EV << "Going back to scanning\n";
         sendScanRequest();
     }
     else
     {
         EV << "Reassociation successful\n";
+        emit(acceptConfirmSignal, PR_REASSOCIATE_CONFIRM);
         // we are happy!
     }
 }
