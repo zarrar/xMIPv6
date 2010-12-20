@@ -45,31 +45,31 @@ void Ieee80211AgentSTA::initialize(int stage)
         NotificationBoard *nb = NotificationBoardAccess().get();
         nb->subscribe(this, NF_L2_BEACON_LOST);
 
-	//Statisitic variables initiailisation (ZY 24.11.07)
-	scanReqVector.setName("SCAN_REQUEST");
-	disassociateReqVector.setName("DISASSOC_REQ");
-	associateReqVector.setName("ASSOC_REQ");
-	authenticateReqVector.setName("AUTHENTICATE_REQ");
-	associateConfirmVector.setName("ASSOC_CONFIRM");
-	authenticateConfirmVector.setName("AUTHENTICATE_CONFIRM");
-	scanConfirmVector.setName("SCAN_CONFIRM");
-	
-	scanReqScalar.setName("SCAN_REQUEST1");
-	disassociateReqScalar.setName("DISASSOC_REQ1");
-	associateReqScalar.setName("ASSOC_REQ1");
-	authenticateReqScalar.setName("AUTHENTICATE_REQ1");
-	associateConfirmScalar.setName("ASSOC_CONFIRM1");
-	authenticateConfirmScalar.setName("AUTHENTICATE_CONFIRM1");
-	scanConfirmScalar.setName("SCAN_CONFIRM1");
-	
-	scanReq = 0;
-	disassociateReq = 0;
-	associateReq = 0;
-	authenticateReq = 0;
-	associateConfirm = 0;
-	authenticateConfirm = 0;
-	scanConfirm = 0;
-	
+        //Statisitic variables initiailisation (ZY 24.11.07)
+        scanReqVector.setName("SCAN_REQUEST");
+        disassociateReqVector.setName("DISASSOC_REQ");
+        associateReqVector.setName("ASSOC_REQ");
+        authenticateReqVector.setName("AUTHENTICATE_REQ");
+        associateConfirmVector.setName("ASSOC_CONFIRM");
+        authenticateConfirmVector.setName("AUTHENTICATE_CONFIRM");
+        scanConfirmVector.setName("SCAN_CONFIRM");
+
+        scanReqScalar.setName("SCAN_REQUEST1");
+        disassociateReqScalar.setName("DISASSOC_REQ1");
+        associateReqScalar.setName("ASSOC_REQ1");
+        authenticateReqScalar.setName("AUTHENTICATE_REQ1");
+        associateConfirmScalar.setName("ASSOC_CONFIRM1");
+        authenticateConfirmScalar.setName("AUTHENTICATE_CONFIRM1");
+        scanConfirmScalar.setName("SCAN_CONFIRM1");
+
+        scanReq = 0;
+        disassociateReq = 0;
+        associateReq = 0;
+        authenticateReq = 0;
+        associateConfirm = 0;
+        authenticateConfirm = 0;
+        scanConfirm = 0;
+
         // start up: send scan request
         scheduleAt(simTime()+uniform(0,maxChannelTime), new cMessage("startUp", MK_STARTUP));
     }
@@ -256,7 +256,7 @@ void Ieee80211AgentSTA::processScanConfirm(Ieee80211Prim_ScanConfirm *resp)
     // The two statements below are added because the L2 handover time was greater than before when
     // a STA wants to re-connect to an AP with which it was associated before. When the STA wants to
     // associat again with the previous AP, then since the AP is already having an entry of the STA
-    // because of old association, and thus it is expectign an authentication frame number 3 but it
+    // because of old association, and thus it is expecting an authentication frame number 3 but it
     // receives authentication frame number 1 from STA, which will cause the AP to return an Auth-Error
     // making the MN STA to start the handover process all over again. 
     EV<<"First deauthenticate with AP address ="<<bssDesc.getBSSID()<<" before Authentication\n";
