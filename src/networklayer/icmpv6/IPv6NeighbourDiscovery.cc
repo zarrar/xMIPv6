@@ -799,9 +799,9 @@ void IPv6NeighbourDiscovery::initiateDAD(const IPv6Address& tentativeAddr,
 
     cMessage *msg = new cMessage("dadTimeout", MK_DAD_TIMEOUT);
     msg->setContextPointer(dadEntry);
-    // update: added uniform(0,1) to account for joining the solicited-node multicast
+    // update: added uniform(0, IPv6_MAX_RTR_SOLICITATION_DELAY) to account for joining the solicited-node multicast
     // group which is delay up to one 1 second (RFC 4862, 5.4.2) - 16.01.08, CB
-    scheduleAt(simTime()+ie->ipv6Data()->getRetransTimer()+uniform(0,1), msg);
+    scheduleAt(simTime()+ie->ipv6Data()->getRetransTimer()+uniform(0, IPv6_MAX_RTR_SOLICITATION_DELAY), msg);
 
     emit(startDADSignal, 1);
 }
