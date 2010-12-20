@@ -210,7 +210,7 @@ void Ieee80211AgentSTA::processScanConfirm(Ieee80211Prim_ScanConfirm *resp)
     // HACK
     // The two statements below are added because the L2 handover time was greater than before when
     // a STA wants to re-connect to an AP with which it was associated before. When the STA wants to
-    // associat again with the previous AP, then since the AP is already having an entry of the STA
+    // associate again with the previous AP, then since the AP is already having an entry of the STA
     // because of old association, and thus it is expecting an authentication frame number 3 but it
     // receives authentication frame number 1 from STA, which will cause the AP to return an Auth-Error
     // making the MN STA to start the handover process all over again. 
