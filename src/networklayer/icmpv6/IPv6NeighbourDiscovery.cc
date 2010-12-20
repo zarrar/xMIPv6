@@ -1210,7 +1210,7 @@ IPv6RouterAdvertisement *IPv6NeighbourDiscovery::createAndSendRAPacket(
             prefixInfo.setAutoAddressConfFlag(advPrefix.advAutonomousFlag);
 
 		    if ( rt6->isHomeAgent() )
-		    	prefixInfo.setRouterAddress(true); // set the R-bit if the node is a HA
+		    	prefixInfo.setRouterAddressFlag(true); // set the R-bit if the node is a HA
 
 		    //- In the Valid Lifetime field: the entry's AdvValidLifetime.
 		    prefixInfo.setValidLifetime(SIMTIME_DBL(advPrefix.advValidLifetime));
@@ -1277,7 +1277,7 @@ void IPv6NeighbourDiscovery::processRAPacket(IPv6RouterAdvertisement *ra,
             }
 
             // When in foreign network(s), the MN needs info about its HA address and its own Home Address (HoA), when sending BU to HA and CN(s). Therefore while in the home network I intialise struct HomeNetworkInfo{} with HoA and HA address, which will eventually be used by the MN while sending BUs from within visit networks. (Zarrar Yousaf 12.07.07)
-            if ( ra->getHomeAgentFlag() && (prefixInfo.getRouterAddress() == true) )//If R-Flag is set and RA is from HA
+            if ( ra->getHomeAgentFlag() && (prefixInfo.getRouterAddressFlag() == true) )//If R-Flag is set and RA is from HA
 			{
 				// homeNetworkInfo now carries HoA, global unicast HA address and the home network prefix
             	// update 4.9.07 - CB
