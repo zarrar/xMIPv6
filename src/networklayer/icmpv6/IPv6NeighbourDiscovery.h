@@ -57,7 +57,7 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
 	//bool MIPv6Enabled; //zarrar yousaf 14.07.07
 	//double minRAInterval; //zarrar yousaf 15.07.07
 	//double maxRAInterval; //zarrar yousaf 15.07.07
-    cOutVector statVectorStartDAD;
+    simsignal_t startDADSignal;
 
     public:
         /**

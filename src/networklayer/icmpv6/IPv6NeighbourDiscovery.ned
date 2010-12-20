@@ -32,6 +32,7 @@ simple IPv6NeighbourDiscovery
 	    double minIntervalBetweenRAs @unit(s) = default(30ms); //minRtrAdvInterval:  0.03 sec for MIPv6 , declared as parameter to facilitate testing without recompiling (Zarrar 15.07.07)
 	    double maxIntervalBetweenRAs @unit(s) = default(70ms);  //MaxrtrAdvInterval: 0.07 sec for MIPv6, declared as parameter to facilitate testing without recompiling (Zarrar 15.07.07)
         @display("i=block/network");
+        @statistic[startDAD](title="start DAD";record=count,vector);
     gates:
         input ipv6In;
         output ipv6Out;

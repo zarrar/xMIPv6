@@ -91,7 +91,7 @@ void IPv6NeighbourDiscovery::initialize(int stage)
         else
             scheduleAt(simTime()+uniform(0.4,1), msg);//Random Host bootup time
 
-        statVectorStartDAD.setName("Starting DAD");
+        startDADSignal = registerSignal("startDAD");
     }
 }
 
@@ -803,7 +803,7 @@ void IPv6NeighbourDiscovery::initiateDAD(const IPv6Address& tentativeAddr,
     // group which is delay up to one 1 second (RFC 4862, 5.4.2) - 16.01.08, CB
     scheduleAt(simTime()+ie->ipv6Data()->getRetransTimer()+uniform(0,1), msg);
 
-    statVectorStartDAD.record(1);
+    emit(startDADSignal, 1);
 }
 
 void IPv6NeighbourDiscovery::processDADTimeout(cMessage *msg)
