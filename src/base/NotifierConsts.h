@@ -71,7 +71,6 @@ enum
 
     // layer 3 - IPv6
     NF_IPv6_HANDOVER_OCCURRED,
-    // new ones
     NF_MIPv6_RO_COMPLETED,
 
     // - layer 4 (transport)

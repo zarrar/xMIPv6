@@ -179,11 +179,11 @@ void Ieee80211MgmtSTA::handleUpperMessage(cPacket *msg)
 {
     Ieee80211DataFrame *frame = encapsulate(msg);
     
-    // UPDATE cb
-    if ( frame->getReceiverAddress().isUnspecified() )
-    	delete frame;
+    // Discard frame if STA is not associated (assocAP.address is unspecified).
+    if (frame->getReceiverAddress().isUnspecified())
+        delete frame;
     else
-    sendOrEnqueue(frame);
+        sendOrEnqueue(frame);
 }
 
 void Ieee80211MgmtSTA::handleCommand(int msgkind, cPolymorphic *ctrl)
@@ -560,13 +560,13 @@ int Ieee80211MgmtSTA::statusCodeToPrimResultCode(int statusCode)
 
 void Ieee80211MgmtSTA::handleDataFrame(Ieee80211DataFrame *frame)
 {
-    //Only send the Data frame up to the higher layer if the STA is associated with an AP,
-    //else delete the frame (Zarrar Yousaf 19.11.07)
+    // Only send the Data frame up to the higher layer if the STA is associated with an AP,
+    // else delete the frame
     if (isAssociated)
         sendUp(decapsulate(frame));
     else
     {
-        EV << "Rejecting Data Frame as STA not Associated with the AP yet" << endl;
+        EV << "Rejecting data frame as STA is not associated with an AP" << endl;
         delete frame;
     }
 }
