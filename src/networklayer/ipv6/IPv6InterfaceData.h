@@ -524,16 +524,22 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
     simtime_t _getMaxRtrSolicitationDelay() const {return hostConstants.maxRtrSolicitationDelay;}
     simtime_t _getRtrSolicitationInterval() const {return hostConstants.rtrSolicitationInterval;}
     uint _getMaxRtrSolicitations() const {return hostConstants.maxRtrSolicitations;}
-    simtime_t _initialBindAckTimeout(){return hostConstants.initialBindAckTimeout;}//MIPv6: added by Zarrar Yousaf @ CNI UniDo 17.06.07
-    simtime_t _maxBindAckTimeout(){return hostConstants.maxBindAckTimeout;}//MIPv6: added by Zarrar Yousaf @ CNI UniDo 17.06.07
-    simtime_t _initialBindAckTimeoutFirst(){return hostConstants.initialBindAckTimeoutFirst;} //MIPv6, 12.9.07 - CB
-    uint _maxRRBindingLifeTime(){return hostConstants.maxRRBindingLifeTime;} //MIPv6, 14.9.07 - CB
-    uint _maxHABindingLifeTime(){return hostConstants.maxHABindingLifeTime;} //MIPv6, 14.9.07 - CB
-    uint _maxTokenLifeTime(){return hostConstants.maxTokenLifeTime;} //MIPv6, 10.07.08 - CB
+    simtime_t _getInitialBindAckTimeout() const {return hostConstants.initialBindAckTimeout;}//MIPv6: added by Zarrar Yousaf @ CNI UniDo 17.06.07
+    simtime_t _getMaxBindAckTimeout() const {return hostConstants.maxBindAckTimeout;}//MIPv6: added by Zarrar Yousaf @ CNI UniDo 17.06.07
+    simtime_t _getInitialBindAckTimeoutFirst() const {return hostConstants.initialBindAckTimeoutFirst;} //MIPv6, 12.9.07 - CB
+    uint _getMaxRRBindingLifeTime() const {return hostConstants.maxRRBindingLifeTime;} //MIPv6, 14.9.07 - CB
+    uint _getMaxHABindingLifeTime() const {return hostConstants.maxHABindingLifeTime;} //MIPv6, 14.9.07 - CB
+    uint _getMaxTokenLifeTime() const {return hostConstants.maxTokenLifeTime;} //MIPv6, 10.07.08 - CB
     /************Setters for Host Protocol Constants***************************/
     virtual void _setMaxRtrSolicitationDelay(simtime_t d) {hostConstants.maxRtrSolicitationDelay = d;}
     virtual void _setRtrSolicitationInterval(simtime_t d) {hostConstants.rtrSolicitationInterval = d;}
     virtual void _setMaxRtrSolicitations(uint d) {hostConstants.maxRtrSolicitations = d;}
+    virtual void _setInitialBindAckTimeout(simtime_t d) {hostConstants.initialBindAckTimeout = SIMTIME_DBL(d);}
+    virtual void _setMaxBindAckTimeout(simtime_t d) {hostConstants.maxBindAckTimeout = SIMTIME_DBL(d);}
+    virtual void _setInitialBindAckTimeoutFirst(simtime_t d) {hostConstants.initialBindAckTimeoutFirst = d;}
+    virtual void _setMaxRRBindingLifeTime(uint d) {hostConstants.maxRRBindingLifeTime = d;}
+    virtual void _setMaxHABindingLifeTime(uint d) {hostConstants.maxHABindingLifeTime = d;}
+    virtual void _setMaxTokenLifeTime(uint d) {hostConstants.maxTokenLifeTime = d;}
     /************End of Host Protocol Constant getters and setters*************/
 
     /************Getters for Node Protocol Constants***************************/
@@ -584,7 +590,7 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
     simtime_t getMinRtrAdvInterval() const {return rtrVars.minRtrAdvInterval;}
     bool getAdvManagedFlag() const {return rtrVars.advManagedFlag;}
     bool getAdvOtherConfigFlag() const {return rtrVars.advOtherConfigFlag;}
-    bool getAdvHomeAgentFlag() {return rtrVars.advHomeAgentFlag;}
+    bool getAdvHomeAgentFlag() const {return rtrVars.advHomeAgentFlag;}
     int getAdvLinkMTU() const {return rtrVars.advLinkMTU;}
     int getAdvReachableTime() const {return rtrVars.advReachableTime;}
     int getAdvRetransTimer() const {return rtrVars.advRetransTimer;}
@@ -669,9 +675,9 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
 	 */
 	void updateHomeNetworkInfo(const IPv6Address& hoa, const IPv6Address& ha, const IPv6Address& prefix, const int prefixLength);
 
-	const IPv6Address& getHomeAgentAddress() {return homeInfo.homeAgentAddr;} // Zarrar 03.09.07
-	const IPv6Address& getMNHomeAddress() {return homeInfo.HoA;} // Zarrar 03.09.07
-	const IPv6Address& getMNPrefix() {return homeInfo.prefix/*.prefix()*/;} // Zarrar 03.09.07
+	const IPv6Address& getHomeAgentAddress() const {return homeInfo.homeAgentAddr;} // Zarrar 03.09.07
+	const IPv6Address& getMNHomeAddress() const {return homeInfo.HoA;} // Zarrar 03.09.07
+	const IPv6Address& getMNPrefix() const {return homeInfo.prefix/*.prefix()*/;} // Zarrar 03.09.07
 
 	/**
 	 * Removes a CoA address from the interface if one exists.

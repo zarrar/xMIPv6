@@ -301,7 +301,7 @@ bool BindingUpdateList::isHomeTokenAvailable(const IPv6Address& dest, InterfaceE
 	ASSERT(entry != NULL);
 
 	return entry->tokenH != UNDEFINED_TOKEN &&
-		   (entry->sentHoTI + ie->ipv6Data()->_maxTokenLifeTime()) > simTime();
+		   (entry->sentHoTI + ie->ipv6Data()->_getMaxTokenLifeTime()) > simTime();
 }
 
 
@@ -311,7 +311,7 @@ bool BindingUpdateList::isCareOfTokenAvailable(const IPv6Address& dest, Interfac
 	ASSERT(entry != NULL);
 
 	return entry->tokenC != UNDEFINED_TOKEN &&
-		   (entry->sentCoTI + ie->ipv6Data()->_maxTokenLifeTime()) > simTime();
+		   (entry->sentCoTI + ie->ipv6Data()->_getMaxTokenLifeTime()) > simTime();
 }
 
 
@@ -419,7 +419,7 @@ bool BindingUpdateList::recentlySentCOTI(const IPv6Address& dest, InterfaceEntry
 
 	ASSERT(entry!=NULL);
 
-	return entry->sentCoTI + ie->ipv6Data()->_maxTokenLifeTime() / 3 > simTime();
+	return entry->sentCoTI + ie->ipv6Data()->_getMaxTokenLifeTime() / 3 > simTime();
 }
 
 
@@ -429,7 +429,7 @@ bool BindingUpdateList::recentlySentHOTI(const IPv6Address& dest, InterfaceEntry
 
 	ASSERT(entry!=NULL);
 
-	return entry->sentHoTI + ie->ipv6Data()->_maxTokenLifeTime() / 3 > simTime();
+	return entry->sentHoTI + ie->ipv6Data()->_getMaxTokenLifeTime() / 3 > simTime();
 }
 
 

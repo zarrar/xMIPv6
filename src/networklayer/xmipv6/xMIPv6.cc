@@ -359,13 +359,13 @@ void xMIPv6::createBUTimer(const IPv6Address& buDest, InterfaceEntry* ie)
 	// update lifetime, 14.9.07
 	//if ( homeRegistration )
 	if ( buDest == ie->ipv6Data()->getHomeAgentAddress() ) // update 12.06.08 - CB
-		createBUTimer(buDest, ie, ie->ipv6Data()->_maxHABindingLifeTime(), true);
+		createBUTimer(buDest, ie, ie->ipv6Data()->_getMaxHABindingLifeTime(), true);
 	else
 	{
 		if ( bulEntry != NULL && bulEntry->state == BindingUpdateList::DEREGISTER ) // CB, 10.10.08
 			createDeregisterBUTimer(buDest, ie); // CB, 10.10.08
 		else
-			createBUTimer(buDest, ie, ie->ipv6Data()->_maxRRBindingLifeTime(), false);
+			createBUTimer(buDest, ie, ie->ipv6Data()->_getMaxRRBindingLifeTime(), false);
 	}
 }
 
@@ -424,11 +424,11 @@ void xMIPv6::createBUTimer(const IPv6Address& buDest, InterfaceEntry* ie, const 
 	  InitialBindackTimeoutFirstReg (see Section 13) as a value for the
 	  initial retransmission timer.*/
 	if ( !bul->isInBindingUpdateList(buDest) )
-		buIfEntry->ackTimeout = ie->ipv6Data()->_initialBindAckTimeoutFirst();//the backoff constant gets initialised here
+		buIfEntry->ackTimeout = ie->ipv6Data()->_getInitialBindAckTimeoutFirst();//the backoff constant gets initialised here
 	/*Otherwise, the mobile node should use the specified value of
 	  INITIAL_BINDACK_TIMEOUT for the initial retransmission timer.*/
 	else
-		buIfEntry->ackTimeout = ie->ipv6Data()->_initialBindAckTimeout();  // if there's an entry in the BUL, use different value
+		buIfEntry->ackTimeout = ie->ipv6Data()->_getInitialBindAckTimeout();  // if there's an entry in the BUL, use different value
 
 	buIfEntry->homeRegistration = homeRegistration; // added by CB, 28.08.07
 
@@ -493,12 +493,12 @@ void xMIPv6::sendPeriodicBU(cMessage *msg)
 		//scheduleAt(buIfEntry->nextScheduledTime, msg);
 	}
 	else*/
-	if ( ! (buIfEntry->ackTimeout < ie->ipv6Data()->_maxBindAckTimeout()) )
+	if ( ! (buIfEntry->ackTimeout < ie->ipv6Data()->_getMaxBindAckTimeout()) )
 	{
 		ev<<"Crossed maximum BINDACK timeout...resetting to predefined maximum." << endl;//buIfEntry->nextBindAckTimeout<<" ++++++\n";
 		//ev<<"\n++++Present Sent Time: "<<buIfEntry->presentSentTimeBU<<" Present TimeOut: "<<buIfEntry->ackTimeout<<endl;
 		//buIfEntry->nextScheduledTime = buIfEntry->presentSentTimeBU + buIfEntry->maxBindAckTimeout;
-		buIfEntry->ackTimeout = ie->ipv6Data()->_maxBindAckTimeout();
+		buIfEntry->ackTimeout = ie->ipv6Data()->_getMaxBindAckTimeout();
 		//buIfEntry->nextScheduledTime = ie->ipv6()->_maxBindAckTimeout();
 		//ev<<"\n++++Next Sent Time: "<<buIfEntry->nextScheduledTime<<endl;//" Next TimeOut: "<<buIfEntry->nextBindAckTimeout<<endl;
 		//scheduleAt(buIfEntry->nextScheduledTime, msg);
@@ -1603,7 +1603,7 @@ void xMIPv6::createTestInitTimer(MobilityHeader* testInit, const IPv6Address& de
 	tiIfEntry->testInitMsg = testInit;
 	/*o  Otherwise, the mobile node should use the specified value of
       	 INITIAL_BINDACK_TIMEOUT for the initial retransmission timer.*/
-	tiIfEntry->ackTimeout = ie->ipv6Data()->_initialBindAckTimeout();
+	tiIfEntry->ackTimeout = ie->ipv6Data()->_getInitialBindAckTimeout();
 	tiIfEntry->nextScheduledTime = simTime(); // we send the HoTI/CoTI now
 
 	testInitTriggerMsg->setContextPointer(tiIfEntry); // attach the Test Init If Entry to this message
@@ -1691,8 +1691,8 @@ void xMIPv6::sendTestInit(cMessage* msg)
    	  node MAY continue to send these messages at this slower rate
    	  indefinitely.*/
 	tiIfEntry->ackTimeout = tiIfEntry->ackTimeout * 2;
-	if (! (tiIfEntry->ackTimeout < ie->ipv6Data()->_maxBindAckTimeout()) )
-		tiIfEntry->ackTimeout = ie->ipv6Data()->_maxBindAckTimeout();
+	if (! (tiIfEntry->ackTimeout < ie->ipv6Data()->_getMaxBindAckTimeout()) )
+		tiIfEntry->ackTimeout = ie->ipv6Data()->_getMaxBindAckTimeout();
 
 	msg->setContextPointer(tiIfEntry);
 	scheduleAt(tiIfEntry->nextScheduledTime, msg);
@@ -1791,7 +1791,7 @@ void xMIPv6::resetBUIfEntry(const IPv6Address& dest, int interfaceID, simtime_t 
 	// first we cancel the current retransmission timer
 	cancelEvent(entry->timer);
 	// then we reset the timeout value to the initial value
-	entry->ackTimeout = entry->ifEntry->ipv6Data()->_initialBindAckTimeout();
+	entry->ackTimeout = entry->ifEntry->ipv6Data()->_getInitialBindAckTimeout();
 	// and then we reschedule again for BU expiry time
 	// (with correct offset for scheduling)
 	entry->nextScheduledTime = retransmissionTime;
@@ -1895,7 +1895,8 @@ void xMIPv6::processHoTMessage(HomeTest* HoT, IPv6ControlInfo* ctrlInfo)
 
 		// 10.07.08 - CB
 		// set token expiry appropriately
-		createHomeTokenEntryExpiryTimer( srcAddr, ift->getInterfaceById(interfaceID), simTime() + ie->ipv6Data()->_maxTokenLifeTime() );
+		createHomeTokenEntryExpiryTimer( srcAddr, ift->getInterfaceById(interfaceID), simTime() +
+		        ie->ipv6Data()->_getMaxTokenLifeTime() );
 
 		// if we have the care-of token as well, we can send the BU to the CN now
 		// but only if we have not already sent or are about to send a BU, 26.10.07
@@ -1991,7 +1992,8 @@ void xMIPv6::processCoTMessage(CareOfTest* CoT, IPv6ControlInfo* ctrlInfo)
 
 		// 10.07.08 - CB
 		// set token expiry appropriately
-		createCareOfTokenEntryExpiryTimer(srcAddr, ift->getInterfaceById(interfaceID), simTime() + ie->ipv6Data()->_maxTokenLifeTime());
+		createCareOfTokenEntryExpiryTimer(srcAddr, ift->getInterfaceById(interfaceID), simTime()
+		        + ie->ipv6Data()->_getMaxTokenLifeTime());
 
 		// if we have the home token as well, we can send the BU to the CN now
 		// but only if we have already sent or are about to send a BU, 26.10.07
