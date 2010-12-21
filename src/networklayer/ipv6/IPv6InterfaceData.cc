@@ -154,10 +154,8 @@ std::string IPv6InterfaceData::detailedInfo() const
     return info(); // TBD this could be improved: multi-line text, etc
 }
 
-/*
-// removed this function at it is replaced by the overloaded version, 3.9.07 - CB
 void IPv6InterfaceData::assignAddress(const IPv6Address& addr, bool tentative,
-                                      simtime_t expiryTime, simtime_t prefExpiryTime)
+                                      simtime_t expiryTime, simtime_t prefExpiryTime, bool hFlag)
 {
     addresses.push_back(AddressData());
     AddressData& a = addresses.back();
@@ -165,9 +163,17 @@ void IPv6InterfaceData::assignAddress(const IPv6Address& addr, bool tentative,
     a.tentative = tentative;
     a.expiryTime = expiryTime;
     a.prefExpiryTime = prefExpiryTime;
+
+    if ( addr.isGlobal() )  //only tag a global scope address as HoA or CoA, depending on the status of the H-Flag
+    {
+        if (hFlag == true)
+            a.addrType = HoA; //if H-Flag is set then the auto-conf address is the Home address -.....
+        else
+            a.addrType = CoA; // else it is a care of address (CoA)
+    }
+
     choosePreferredAddress();
 }
-*/
 
 void IPv6InterfaceData::updateMatchingAddressExpiryTimes(const IPv6Address& prefix, int length,
                                                          simtime_t expiryTime, simtime_t prefExpiryTime)
@@ -378,27 +384,6 @@ void IPv6InterfaceData::deduceAdvPrefix()
 		autoConfRouterGlobalScopeAddress(p);
 		assignAddress(p.rtrAddress, false, 0, 0);
 	}
-}
-
-// overloaded version of assign address. Difference in terms of specifying the address as CoA or HoA. Zarrar 20.07.07
-void IPv6InterfaceData::assignAddress(const IPv6Address& addr, bool tentative, simtime_t expiryTime, simtime_t prefExpiryTime, bool hFlag)
-{
-    addresses.push_back( AddressData() );
-    AddressData& a = addresses.back();
-    a.address = addr;
-    a.tentative = tentative;
-    a.expiryTime = expiryTime;
-    a.prefExpiryTime = prefExpiryTime;
-
-    if ( addr.isGlobal() )  //only tag a global scope address as HoA or CoA, depending on the status of the H-Flag
-	{
-    	if (hFlag == true)
-    		a.addrType = HoA; //if H-Flag is set then the auto-conf address is the Home address -.....
-    	else
-    		a.addrType = CoA; // else it is a care of address (CoA)
-	}
-
-    choosePreferredAddress();
 }
 
 /**

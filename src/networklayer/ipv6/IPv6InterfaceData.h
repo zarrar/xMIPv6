@@ -394,11 +394,14 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
     //@{
     /**
      * Assigns the given address to the interface.
-     */
-    // Removed as replaced by overloaded version, 3.9.07 - CB
-    /*virtual void assignAddress(const IPv6Address& addr, bool tentative,
-                               simtime_t expiryTime, simtime_t prefExpiryTime);
-     */
+     * Overloaded function, which also takes into account the status of the H-Flag in the recieved RA.
+     * Called from  IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(
+     *                      IPv6NDPrefixInformation& prefixInfo, InterfaceEntry* ie, bool hFlag).
+     * Relevant only when MIPv6 is supported. (Zarrar Yousaf 20.07.07)
+     **/
+    virtual void assignAddress(const IPv6Address& addr, bool tentative,
+                               simtime_t expiryTime, simtime_t prefExpiryTime, bool hFlag = false);
+
     /**
      * Update expiry times of addresses. Expiry times possibly come from
      * prefixes (with on-link flag set to either zero or one)
@@ -659,13 +662,6 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
     void autoConfRouterGlobalScopeAddress(AdvPrefix &p);
 
     void deduceAdvPrefix();
-
-    /**
-	 * Overloaded function, which also takes into account the status of the H-Flag in the recieved RA. Called from
-	 * IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(IPv6NDPrefixInformation& prefixInfo, InterfaceEntry* ie, bool hFlag).
-	 * relevant only when MIPv6 is supported. (Zarrar Yousaf 20.07.07)
-	 **/
-    void assignAddress(const IPv6Address& addr, bool tentative, simtime_t expiryTime, simtime_t prefExpiryTime, bool hFlag = false); //overloaded by Zarrar 20.07.07, update 3.9.07 - CB
 
 	/**
 	 * 03.09.07
