@@ -211,7 +211,7 @@ bool IPv6InterfaceData::isTentativeAddress(int i) const
 
 IPv6InterfaceData::AddressType IPv6InterfaceData::getAddressType(int i) const
 {
-    ASSERT(i>=0 && i<addresses.size());
+    ASSERT(i>=0 && i<(int)addresses.size());
     return addresses[i].addrType;
 }
 
@@ -252,7 +252,7 @@ void IPv6InterfaceData::permanentlyAssign(const IPv6Address& addr)
 
 void IPv6InterfaceData::tentativelyAssign(int i)
 {
-	ASSERT(i>=0 && i<addresses.size());
+	ASSERT(i>=0 && i<(int)addresses.size());
     addresses[i].tentative = true;
     choosePreferredAddress();
 }
