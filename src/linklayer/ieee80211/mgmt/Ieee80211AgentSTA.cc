@@ -21,7 +21,6 @@
 #include "NotifierConsts.h"
 
 
-
 Define_Module(Ieee80211AgentSTA);
 
 #define MK_STARTUP  1
@@ -206,18 +205,6 @@ void Ieee80211AgentSTA::processScanConfirm(Ieee80211Prim_ScanConfirm *resp)
     emit(acceptConfirmSignal, PR_SCAN_CONFIRM);
 
     Ieee80211Prim_BSSDescription& bssDesc = resp->getBssList(bssIndex);
-
-    // HACK
-    // The two statements below are added because the L2 handover time was greater than before when
-    // a STA wants to re-connect to an AP with which it was associated before. When the STA wants to
-    // associate again with the previous AP, then since the AP is already having an entry of the STA
-    // because of old association, and thus it is expecting an authentication frame number 3 but it
-    // receives authentication frame number 1 from STA, which will cause the AP to return an Auth-Error
-    // making the MN STA to start the handover process all over again. 
-    EV<<"First deauthenticate with AP address ="<<bssDesc.getBSSID()<<" before Authentication\n";
-    // FIXME do fixing in AP (Access Point) code
-    sendDeauthenticateRequest(bssDesc.getBSSID(), 0);
-    
     EV << "Chosen AP address=" << bssDesc.getBSSID() << " from list, starting authentication\n";
     sendAuthenticateRequest(bssDesc.getBSSID());
 }
