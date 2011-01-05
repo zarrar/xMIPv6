@@ -60,11 +60,12 @@ class INET_API IPv6 : public QueueBase
     // 28.9.07 - CB
     // datagrams that are supposed to be sent with a tentative IPv6 address
     // are resscheduled for later resubmission.
-    struct ScheduledDatagram : public cPacket
+    class ScheduledDatagram : public cPacket
     {
-    	IPv6Datagram* datagram;
-    	InterfaceEntry* ie;
-    	MACAddress macAddr;
+      public:
+        IPv6Datagram* datagram;
+        InterfaceEntry* ie;
+        MACAddress macAddr;
     };
 
   protected:

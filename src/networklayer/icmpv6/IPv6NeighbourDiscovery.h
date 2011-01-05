@@ -54,7 +54,7 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
         virtual ~IPv6NeighbourDiscovery();
 
     private:
-    simsignal_t startDADSignal;
+        simsignal_t startDADSignal;
 
     public:
         /**
@@ -94,7 +94,7 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
         IInterfaceTable *ift;
         RoutingTable6 *rt6;
         ICMPv6 *icmpv6;
-        class INET_API xMIPv6 *mipv6; // in case the node has MIP support
+        xMIPv6 *mipv6; // in case the node has MIP support
 
         IPv6NeighbourCache neighbourCache;
         typedef std::set<cMessage*> RATimerList;
@@ -328,9 +328,9 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
             const IPv6Address& nsSrcAddr, const IPv6Address& nsDestAddr, InterfaceEntry *ie);
         virtual void sendSolicitedNA(IPv6NeighbourSolicitation *ns,
             IPv6ControlInfo *nsCtrlInfo, InterfaceEntry *ie);
-public: // update 12.9.07 - CB
+    public: // update 12.9.07 - CB
         virtual void sendUnsolicitedNA(InterfaceEntry *ie);
-protected: // update 12.9.07 - CB
+    protected: // update 12.9.07 - CB
         virtual void processNAPacket(IPv6NeighbourAdvertisement *na, IPv6ControlInfo *naCtrlInfo);
         virtual bool validateNAPacket(IPv6NeighbourAdvertisement *na, IPv6ControlInfo *naCtrlInfo);
         virtual void processNAForIncompleteNCEState(IPv6NeighbourAdvertisement *na,
@@ -356,9 +356,10 @@ protected: // update 12.9.07 - CB
          *  Send an unreachable message to the IPv6 module.
          *  TODO: Relocate to ICMPv6 module
          */
+        /*ICMPv6DestUnreachableMsg *createAndSendUnreachableMessage(
+            const IPv6Address& destAddress, InterfaceEntry *ie);*/
 
-        /*ICMPv6DestUnreachableMsg *createAndSendUnreachableMessage(const IPv6Address& destAddress, InterfaceEntry *ie);*/
-	public:
+    public:
 		void invalidateNeigbourCache();
 
 	protected:

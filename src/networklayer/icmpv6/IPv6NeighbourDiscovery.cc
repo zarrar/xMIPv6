@@ -1509,7 +1509,8 @@ void IPv6NeighbourDiscovery::processRAPrefixInfo(IPv6RouterAdvertisement *ra,
     }
 }
 
-/*void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(
+/*
+void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(
     IPv6NDPrefixInformation& prefixInfo, InterfaceEntry *ie)
 {
     EV << "Processing Prefix Info for address auto-configuration.\n";
@@ -2062,55 +2063,55 @@ void IPv6NeighbourDiscovery::sendUnsolicitedNA(InterfaceEntry *ie)
 
     IPv6NeighbourAdvertisement *na = new IPv6NeighbourAdvertisement("NApacket");
     IPv6Address myIPv6Addr = ie->ipv6Data()->getPreferredAddress();
-    //RFC 2461: Section 7.2.6
-    /*The Target Address field in the unsolicited advertisement is set to
-	  an IP address of the interface, and the Target Link-Layer Address
-	  option is filled with the new link-layer address.*/
+
+    // The Target Address field in the unsolicited advertisement is set to
+    // an IP address of the interface, and the Target Link-Layer Address
+    // option is filled with the new link-layer address.
     na->setTargetAddress(myIPv6Addr);
     na->setTargetLinkLayerAddress( ie->getMacAddress() );
 
-    /*The Solicited flag MUST be set to zero, in order to avoid confusing
-      the Neighbor Unreachability Detection algorithm.*/
+    // The Solicited flag MUST be set to zero, in order to avoid confusing
+    // the Neighbor Unreachability Detection algorithm.
     na->setSolicitedFlag(false);
 
-    /*If the node is a router, it MUST set the Router flag to one;
-      otherwise it MUST set it to zero.*/
+    // If the node is a router, it MUST set the Router flag to one;
+    // otherwise it MUST set it to zero.
     na->setRouterFlag( rt6->isRouter() );
 
-   /*The Override flag MAY be set to either zero or one.  In either case,
-    neighboring nodes will immediately change the state of their Neighbor
-    Cache entries for the Target Address to STALE, prompting them to
-    verify the path for reachability.  If the Override flag is set to
-    one, neighboring nodes will install the new link-layer address in
-    their caches.  Otherwise, they will ignore the new link-layer
-	 address, choosing instead to probe the cached address.*/
+    // The Override flag MAY be set to either zero or one.  In either case,
+    // neighboring nodes will immediately change the state of their Neighbor
+    // Cache entries for the Target Address to STALE, prompting them to
+    // verify the path for reachability.  If the Override flag is set to
+    // one, neighboring nodes will install the new link-layer address in
+    // their caches.  Otherwise, they will ignore the new link-layer
+    // address, choosing instead to probe the cached address.
     na->setOverrideFlag(true);
 
-    /*A node that has multiple IP addresses assigned to an interface MAY
-    multicast a separate Neighbor Advertisement for each address.  In
-    such a case the node SHOULD introduce a small delay between the
-    sending of each advertisement to reduce the probability of the
-    advertisements being lost due to congestion.
+    // A node that has multiple IP addresses assigned to an interface MAY
+    // multicast a separate Neighbor Advertisement for each address.  In
+    // such a case the node SHOULD introduce a small delay between the
+    // sending of each advertisement to reduce the probability of the
+    // advertisements being lost due to congestion.
 
-    A proxy MAY multicast Neighbor Advertisements when its link-layer
-    address changes or when it is configured (by system management or
-    other mechanisms) to proxy for an address.  If there are multiple
-    nodes that are providing proxy services for the same set of addresses
-    the proxies SHOULD provide a mechanism that prevents multiple proxies
-    from multicasting advertisements for any one address, in order to
-    reduce the risk of excessive multicast traffic.
+    // A proxy MAY multicast Neighbor Advertisements when its link-layer
+    // address changes or when it is configured (by system management or
+    // other mechanisms) to proxy for an address.  If there are multiple
+    // nodes that are providing proxy services for the same set of addresses
+    // the proxies SHOULD provide a mechanism that prevents multiple proxies
+    // from multicasting advertisements for any one address, in order to
+    // reduce the risk of excessive multicast traffic.
 
-    Also, a node belonging to an anycast address MAY multicast
-    unsolicited Neighbor Advertisements for the anycast address when the
-    node's link-layer address changes.
+    // Also, a node belonging to an anycast address MAY multicast
+    // unsolicited Neighbor Advertisements for the anycast address when the
+    // node's link-layer address changes.
 
-    Note that because unsolicited Neighbor Advertisements do not reliably
-    update caches in all nodes (the advertisements might not be received
-    by all nodes), they should only be viewed as a performance
-    optimization to quickly update the caches in most neighbors.  The
-    Neighbor Unreachability Detection algorithm ensures that all nodes
-    obtain a reachable link-layer address, though the delay may be
-    slightly longer.*/
+    // Note that because unsolicited Neighbor Advertisements do not reliably
+    // update caches in all nodes (the advertisements might not be received
+    // by all nodes), they should only be viewed as a performance
+    // optimization to quickly update the caches in most neighbors.  The
+    // Neighbor Unreachability Detection algorithm ensures that all nodes
+    // obtain a reachable link-layer address, though the delay may be
+    // slightly longer.
     sendPacketToIPv6Module(na, IPv6Address::ALL_NODES_2, myIPv6Addr, ie->getInterfaceId());
 }
 
@@ -2420,7 +2421,8 @@ void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(IPv6NDPrefixInfo
     	/*RFC 3775, 11.5.4
     	  A mobile node detects that it has returned to its home link through
           the movement detection algorithm in use (Section 11.5.1), when the
-          mobile node detects that its home subnet prefix is again on-link. */
+          mobile node detects that its home subnet prefix is again on-link.
+        */
         if (ie->ipv6Data()->getAddress(i).matches(prefix, prefixLength) == true)
         {
 			// A MN can have the following address combinations:
@@ -2446,75 +2448,76 @@ void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(IPv6NDPrefixInfo
     /*d) If the prefix advertised does not match the prefix of an address already
          in the list, and the Valid Lifetime is not 0, form an address (and add
          it to the list) by combining the advertised prefix with the link's
-         interface identifier as follows:*/
-	    if ( (isPrefixAssignedToInterface == false) && (validLifetime != 0) )
-	    {
-	    	EV<<"Prefix not assigned to interface. Possible new router detected. Auto-configuring new address."<<endl;
-		    IPv6Address linkLocalAddress = ie->ipv6Data()->getLinkLocalAddress();
-		    ASSERT(linkLocalAddress.isUnspecified() == false);
-		    IPv6Address newAddr = linkLocalAddress.setPrefix(prefix, prefixLength);
-		    IPv6Address CoA;
-		    //TODO: for now we leave the newly formed address as not tentative,
-		    //according to Greg, we have to always perform DAD for a newly formed address.
-			EV << "Assigning new address to: " << ie->getName() << endl;
+         interface identifier as follows:
+    */
+    if ( (isPrefixAssignedToInterface == false) && (validLifetime != 0) )
+    {
+    	EV<<"Prefix not assigned to interface. Possible new router detected. Auto-configuring new address."<<endl;
+	    IPv6Address linkLocalAddress = ie->ipv6Data()->getLinkLocalAddress();
+	    ASSERT(linkLocalAddress.isUnspecified() == false);
+	    IPv6Address newAddr = linkLocalAddress.setPrefix(prefix, prefixLength);
+	    IPv6Address CoA;
+	    //TODO: for now we leave the newly formed address as not tentative,
+	    //according to Greg, we have to always perform DAD for a newly formed address.
+		EV << "Assigning new address to: " << ie->getName() << endl;
 
-			// we are for sure either in the home network or in a new foreign network
-			// -> remove CoA
-			//CoA = ie->ipv6()->removeCoAAddr();
-			// moved code from above to processDADTimeout()
+		// we are for sure either in the home network or in a new foreign network
+		// -> remove CoA
+		//CoA = ie->ipv6()->removeCoAAddr();
+		// moved code from above to processDADTimeout()
 
-			// 27.9.07 - CB
-			if ( returnedHome )
+		// 27.9.07 - CB
+		if ( returnedHome )
+		{
+			// we have to remove the CoA before we create a new one
+			EV << "Node returning home - removing CoA...\n";
+			CoA = ie->ipv6Data()->removeAddress(IPv6InterfaceData::CoA);
+
+			// nothing to do more wrt managing addresses, as we are at home and a HoA is
+			// already existing at the interface
+
+			// initiate the returning home procedure
+			ASSERT( !CoA.isUnspecified() );
+			mipv6->returningHome(CoA, ie);
+		}
+		else // non-mobile nodes will never have returnedHome == true, so they will always assign a new address
+		{
+			CoA = ie->ipv6Data()->getGlobalAddress(IPv6InterfaceData::CoA);
+
+			// form new address and initiate DAD, as we are in a foreign network
+
+			if ( ie->ipv6Data()->getNumAddresses() == 1 )
 			{
-				// we have to remove the CoA before we create a new one
-				EV << "Node returning home - removing CoA...\n";
-				CoA = ie->ipv6Data()->removeAddress(IPv6InterfaceData::CoA);
-
-				// nothing to do more wrt managing addresses, as we are at home and a HoA is
-				// already existing at the interface
-
-				// initiate the returning home procedure
-				ASSERT( !CoA.isUnspecified() );
-				mipv6->returningHome(CoA, ie);
+				// we only have a link-layer and no unicast address of scope > link-local
+				// this means DAD is already running or has already been completed
+				// create a unicast address with scope > link-local
+				bool isLinkLocalTentative = ie->ipv6Data()->isTentativeAddress( linkLocalAddress );
+				// if the link local address is tentative, then we make the global unicast address tentative as well
+				ie->ipv6Data()->assignAddress(newAddr, isLinkLocalTentative, simTime()+validLifetime, simTime()+preferredLifetime, hFlag);
 			}
-			else // non-mobile nodes will never have returnedHome == true, so they will always assign a new address
+			else
 			{
-				CoA = ie->ipv6Data()->getGlobalAddress(IPv6InterfaceData::CoA);
-
-				// form new address and initiate DAD, as we are in a foreign network
-
-				if ( ie->ipv6Data()->getNumAddresses() == 1 )
+				// set tentative flag for all addresses on this interface
+				for (int j=0; j < ie->ipv6Data()->getNumAddresses(); j++ )
 				{
-					// we only have a link-layer and no unicast address of scope > link-local
-					// this means DAD is already running or has already been completed
-					// create a unicast address with scope > link-local
-					bool isLinkLocalTentative = ie->ipv6Data()->isTentativeAddress( linkLocalAddress );
-					// if the link local address is tentative, then we make the global unicast address tentative as well
-					ie->ipv6Data()->assignAddress(newAddr, isLinkLocalTentative, simTime()+validLifetime, simTime()+preferredLifetime, hFlag);
+					// TODO improve this code so that only addresses are set to tentative which are
+					// formed based on the link-local address from above
+					ie->ipv6Data()->tentativelyAssign(j);
+					EV << "Setting address " << ie->ipv6Data()->getAddress(j) << " to tentative." << endl;
 				}
-				else
-				{
-					// set tentative flag for all addresses on this interface
-					for (int j=0; j < ie->ipv6Data()->getNumAddresses(); j++ )
-					{
-						// TODO improve this code so that only addresses are set to tentative which are
-						// formed based on the link-local address from above
-						ie->ipv6Data()->tentativelyAssign(j);
-						EV << "Setting address " << ie->ipv6Data()->getAddress(j) << " to tentative." << endl;
-					}
 
-					initiateDAD(ie->ipv6Data()->getLinkLocalAddress(), ie);
+				initiateDAD(ie->ipv6Data()->getLinkLocalAddress(), ie);
 
-			        // set MIPv6Init structure that will later on be used for initiating MIPv6 protocol after DAD was performed
-					dadGlobalList[ie].hFlag = hFlag;
-					dadGlobalList[ie].validLifetime = validLifetime;
-					dadGlobalList[ie].preferredLifetime = preferredLifetime;
-					dadGlobalList[ie].addr = newAddr;
-					//dadGlobalList[ie].returnedHome = returnedHome;
-					dadGlobalList[ie].CoA = CoA;
-				}
+		        // set MIPv6Init structure that will later on be used for initiating MIPv6 protocol after DAD was performed
+				dadGlobalList[ie].hFlag = hFlag;
+				dadGlobalList[ie].validLifetime = validLifetime;
+				dadGlobalList[ie].preferredLifetime = preferredLifetime;
+				dadGlobalList[ie].addr = newAddr;
+				//dadGlobalList[ie].returnedHome = returnedHome;
+				dadGlobalList[ie].CoA = CoA;
 			}
-	    }
+		}
+    }
 }
 
 void IPv6NeighbourDiscovery::routersUnreachabilityDetection(const InterfaceEntry* ie)

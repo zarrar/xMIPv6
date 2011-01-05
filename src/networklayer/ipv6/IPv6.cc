@@ -84,7 +84,7 @@ void IPv6::endService(cPacket *msg)
 
 		// take care of datagram which was supposed to be sent over a tentative address
 		if ( sDgram->ie->ipv6Data()->isTentativeAddress(sDgram->datagram->getSrcAddress()) )
-    {
+        {
 			// address is still tentative - enqueue again
 			queue.insert(sDgram);
 		}
@@ -102,7 +102,7 @@ void IPv6::endService(cPacket *msg)
 	   (msg->getArrivalGate()->isName("icmpIn") && dynamic_cast<ICMPv6Message*>(msg)) || //Added this for ICMP msgs from ICMP module-WEI
 	   (msg->getArrivalGate()->isName("xMIPv6In") && dynamic_cast<MobilityHeader*>(msg))) // Zarrar
     {
-        	// packet from upper layers, tunnel link-layer output or ND: encapsulate and send out
+        // packet from upper layers, tunnel link-layer output or ND: encapsulate and send out
         handleMessageFromHL( msg );
     }
     else
@@ -535,25 +535,25 @@ void IPv6::isLocalAddress(IPv6Datagram *datagram)
     }
     else if (protocol==IP_PROT_IPv6EXT_MOB && dynamic_cast<MobilityHeader*>(packet))
     {
-    	// added check for MIPv6 support to prevent nodes w/o the
-    	// xMIP module from processing related messages, 4.9.07 - CB
-    	if ( rt->hasMIPv6Support() )
-    	{
-    		EV << "MIPv6 packet: passing it to xMIPv6 module\n";
-    		send(check_and_cast<MobilityHeader*>(packet), "xMIPv6Out");
-    	}
-    	else
-    	{
-    		// update 12.9.07 - CB
-    		/*RFC3775, 11.3.5
-    		  Any node that does not recognize the Mobility header will return an
-    		  ICMP Parameter Problem, Code 1, message to the sender of the packet*/
-    		EV << "No MIPv6 support on this node!\n";
-    		IPv6ControlInfo *ctrlInfo = check_and_cast<IPv6ControlInfo*>(packet->removeControlInfo());
-    		icmp->sendErrorMessage(packet, ctrlInfo, ICMPv6_PARAMETER_PROBLEM, 1);
+        // added check for MIPv6 support to prevent nodes w/o the
+        // xMIP module from processing related messages, 4.9.07 - CB
+        if ( rt->hasMIPv6Support() )
+        {
+            EV << "MIPv6 packet: passing it to xMIPv6 module\n";
+            send(check_and_cast<MobilityHeader*>(packet), "xMIPv6Out");
+        }
+        else
+        {
+            // update 12.9.07 - CB
+            /*RFC3775, 11.3.5
+              Any node that does not recognize the Mobility header will return an
+              ICMP Parameter Problem, Code 1, message to the sender of the packet*/
+            EV << "No MIPv6 support on this node!\n";
+            IPv6ControlInfo *ctrlInfo = check_and_cast<IPv6ControlInfo*>(packet->removeControlInfo());
+            icmp->sendErrorMessage(packet, ctrlInfo, ICMPv6_PARAMETER_PROBLEM, 1);
 
-    		//delete packet; // 13.9.07 - CB, update 21.9.07 - CB
-    	}
+            //delete packet; // 13.9.07 - CB, update 21.9.07 - CB
+        }
     }
     else if (protocol==IP_PROT_IPv6_ICMP && dynamic_cast<ICMPv6Message*>(packet))
     {
@@ -563,17 +563,17 @@ void IPv6::isLocalAddress(IPv6Datagram *datagram)
     else if (protocol==IP_PROT_IP || protocol==IP_PROT_IPv6)
     {
         EV << "Tunnelled IP datagram\n";
-		send(packet, "upperTunnelingOut");
+        send(packet, "upperTunnelingOut");
     }
     else
     {
-    	int gateindex = mapping.getOutputGateForProtocol(protocol);
+        int gateindex = mapping.getOutputGateForProtocol(protocol);
         // 21.9.07 - CB
         cGate* outGate = gate("transportOut", gateindex);
         if (! outGate->isConnected() )
         {
-        	EV << "Transport layer gate not connected - dropping packet!\n";
-        	delete packet;
+            EV << "Transport layer gate not connected - dropping packet!\n";
+            delete packet;
         }
         else
         {
@@ -608,7 +608,7 @@ void IPv6::handleReceivedICMP(ICMPv6Message *msg)
             int gateindex = mapping.getOutputGateForProtocol(IP_PROT_ICMP);
             send(msg, "transportOut", gateindex);
         }
-     }
+    }
 }
 
 cPacket *IPv6::decapsulate(IPv6Datagram *datagram)
