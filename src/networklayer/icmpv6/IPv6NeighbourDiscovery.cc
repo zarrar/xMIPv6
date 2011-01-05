@@ -468,8 +468,8 @@ void IPv6NeighbourDiscovery::processNUDTimeout(cMessage *timeoutMsg)
     EV << "NUD has timed out\n";
     Neighbour *nce = (Neighbour *) timeoutMsg->getContextPointer();
     const Key *nceKey = nce->nceKey;
-    if ( nceKey == NULL ) // 19.09.07 - CB
-    	opp_error("nce->MAC=%s, isRouter=%d", nce->macAddress.str().c_str(), nce->isRouter);
+    if ( nceKey == NULL )
+    	opp_error("The nceKey is NULL at nce->MAC=%s, isRouter=%d", nce->macAddress.str().c_str(), nce->isRouter);
     InterfaceEntry *ie = ift->getInterfaceById(nceKey->interfaceID);
 
     if (nce->reachabilityState == IPv6NeighbourCache::DELAY)

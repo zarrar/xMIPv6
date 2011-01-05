@@ -35,9 +35,12 @@
 #include "RoutingTable6.h"
 #include "RoutingTable6Access.h"
 #include "IPv6NeighbourCache.h"
-#include "ICMPv6.h"
-#include "ICMPv6Access.h"
-//#include "xMIPv6Access.h" // 13.9.07 - CB
+//#include "ICMPv6.h"
+//#include "ICMPv6Access.h"
+
+// Forward declarations:
+class ICMPv6;
+class xMIPv6;
 
 /**
  * Implements RFC 2461 Neighbor Discovery for IPv6.
