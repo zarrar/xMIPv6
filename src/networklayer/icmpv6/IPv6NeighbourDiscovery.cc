@@ -1353,67 +1353,11 @@ void IPv6NeighbourDiscovery::processRAForRouterUpdates(IPv6RouterAdvertisement *
             neighbour->isRouter = true;
         }
     }
-
-    // uncommented the following block, 3.9.07 - CB
-    /*
-    else
-
-    //================================Zarrar Yousaf 09.03.07=========================================
-    if (neighbour == NULL && (ra->homeAgentFlag()==false))
-    {
-        EV << "Neighbour Cache Entry does not contain RA's source address\n";
-        if (ra->routerLifetime() != 0)
-        {
-            EV << "RA's router lifetime is non-zero, creating an entry in the "
-               << "Host's default router list with lifetime=" << ra->routerLifetime() << endl;
-            //If a Neighbor Cache entry is created for the router its reachability
-            //state MUST be set to STALE as specified in Section 7.3.3.
-            if (ra->sourceLinkLayerAddress().isUnspecified())
-            {
-                neighbour = neighbourCache.addRouter(raSrcAddr, ifID,
-                    simTime()+ra->routerLifetime());
-                //Note:invalidation timers are not explicitly defined.
-            }
-            else
-            {
-                neighbour = neighbourCache.addRouter(raSrcAddr, ifID,
-                    ra->sourceLinkLayerAddress(), simTime()+ra->routerLifetime());
-                //According to Greg, we should add a default route for hosts as well!
-                // - yes, but before adding a default route, we'll first have to invalidate the previous existing default route - CB
-                rt6->removeDefaultRoute(ifID); // 27.08.07 - CB
-                rt6->addDefaultRoute(raSrcAddr, ifID, simTime()+ra->routerLifetime());
-            }
-        }
-        else
-        {
-            EV << "Router Lifetime is 0, adding NON-default router.\n";
-            //WEI-The router is advertising itself, BUT not as a default router.
-            if (ra->sourceLinkLayerAddress().isUnspecified())
-                neighbour = neighbourCache.addNeighbour(raSrcAddr, ifID);
-            else
-                neighbour = neighbourCache.addNeighbour(raSrcAddr, ifID,
-                    ra->sourceLinkLayerAddress());
-            neighbour->isRouter = true;
-        }
-    }
-    */
-
-    //=================================================================================================
-
-
     else
     {
         //If no Source Link-Layer Address is included, but a corresponding Neighbor
         //Cache entry exists, its IsRouter flag MUST be set to TRUE.
         neighbour->isRouter = true;
-
-	//=========if HomeAgentFlag == true, then the status should be recorded in the Neighbour Cache: Zarrar Yousaf (09.03.07)======
-	//if(ra->getHomeAgentFlag()) 		//if the homeAgentFlag is set
-	//	neighbour->isHomeAgent = true;
-	//else
-	//	continue;
-	//=================================The homeAgentFlag check ends here========================================================
-
 
         //If a cache entry already exists and is updated with a different link-
         //layer address the reachability state MUST also be set to STALE.
@@ -2476,8 +2420,6 @@ void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(IPv6NDPrefixInfo
 
     for (int i = 0; i < ie->ipv6Data()->getNumAddresses(); i++)
 	{
-		//EV << "/// addrInfo: " << ie->ipv6()->address(i) << endl; // CB
-
     	if ( ie->ipv6Data()->getAddress(i).getScope() == IPv6Address::LINK )
     		// skip the link local address - it's not relevant for movement detection
     		continue;

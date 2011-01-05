@@ -143,55 +143,6 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addRouter(const IPv6Address& 
     return &nbor;
 }
 
-
-//==========Added by Zarrar Yousaf (09.03.07) for indicating Home Agent in the Neighbour Cache for MIPv6 (RFC 3775) implementation=========
-//==========The functions below are similar to addRouter() implementation above, except that the HomeAgent Flag is true by default=========
-
-/** Creates and initializes a router entry (isRouter=isDefaultRouter=true), state=INCOMPLETE. */
-/*
-IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addHomeAgent(const IPv6Address& addr, int interfaceID, simtime_t expiryTime)
-{
-    Key key(addr, interfaceID);
-    ASSERT(neighbourMap.find(key)==neighbourMap.end()); // entry must not exist yet
-    Neighbour& nbor = neighbourMap[key];
-
-    nbor.nceKey = lookupKeyAddr(key);//a ptr that links to the key.-WEI for convenience.
-    nbor.isRouter = true;
-    nbor.isDefaultRouter = true;//FIXME: a router may advertise itself it self as a router but not as a default one.-WEI
-    nbor.isHomeAgent = true; 		//Zarrar 09.03.07     
-    nbor.reachabilityState = INCOMPLETE;
-    nbor.reachabilityExpires = 0;
-    nbor.numProbesSent = 0;
-    nbor.nudTimeoutEvent = NULL;
-    nbor.routerExpiryTime = expiryTime;
-    return &nbor;
-}
-*/
-
-/** Creates and initializes a router entry (isRouter=isDefaultRouter=true), MAC address and state=STALE. */
-/*
-IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addHomeAgent(const IPv6Address& addr, int interfaceID, MACAddress macAddress, simtime_t expiryTime)
-{
-    Key key(addr, interfaceID);
-    ASSERT(neighbourMap.find(key)==neighbourMap.end()); // entry must not exist yet
-    Neighbour& nbor = neighbourMap[key];
-
-    nbor.nceKey = lookupKeyAddr(key);//a ptr that links to the key.-WEI for convenience.
-    nbor.macAddress = macAddress;
-    nbor.isRouter = true;
-    nbor.isDefaultRouter = true;
-    nbor.isHomeAgent = true; 		//Zarrar 09.03.07
-    nbor.reachabilityState = STALE;
-    nbor.reachabilityExpires = 0;
-    nbor.numProbesSent = 0;
-    nbor.nudTimeoutEvent = NULL;
-
-    nbor.routerExpiryTime = expiryTime;
-    return &nbor;
-}
-*/
-//==================================Home Agent Implementation ends here=======================================================================
-
 void IPv6NeighbourCache::remove(const IPv6Address& addr, int interfaceID)
 {
     Key key(addr, interfaceID);
@@ -223,7 +174,6 @@ void IPv6NeighbourCache::invalidateEntriesForInterfaceID(int interfaceID)
         }			
     }
 }
-
 
 // Added by CB
 void IPv6NeighbourCache::invalidateAllEntries()

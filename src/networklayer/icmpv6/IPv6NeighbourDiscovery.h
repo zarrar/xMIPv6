@@ -54,9 +54,6 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
         virtual ~IPv6NeighbourDiscovery();
 
     private:
-	//bool MIPv6Enabled; //zarrar yousaf 14.07.07
-	//double minRAInterval; //zarrar yousaf 15.07.07
-	//double maxRAInterval; //zarrar yousaf 15.07.07
     simsignal_t startDADSignal;
 
     public:
@@ -295,12 +292,6 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
         virtual void processRAPrefixInfo(IPv6RouterAdvertisement *ra, InterfaceEntry *ie);
         virtual void processRAPrefixInfoForAddrAutoConf(IPv6NDPrefixInformation& prefixInfo,
             InterfaceEntry *ie,  bool hFlag = false); // overloaded method - 3.9.07 CB
-	/**
-	* An overloaded funciton whihc is called only if the node is a MN. Because the adress auto-configured
-	* in the MN has to be tagged as either being a HoA or a CoA by taking into account the status of the
-	* H-FLag in the RA.
-	**/
-	//void processRAPrefixInfoForAddrAutoConf(IPv6NDPrefixInformation& prefixInfo, InterfaceEntry *ie, bool hFlag); //overloaded function zarrar 20.07.07, removed 3.9.07 CB
         /**
          *  Create a timer for the given interface entry that sends periodic
          *  Router Advertisements
@@ -367,9 +358,6 @@ protected: // update 12.9.07 - CB
          */
 
         /*ICMPv6DestUnreachableMsg *createAndSendUnreachableMessage(const IPv6Address& destAddress, InterfaceEntry *ie);*/
-
-	//double getMinRAInterval() const {return minRAInterval;} //zarrar yousaf 15.07.07
-	//double getMaxRAInterval() const {return maxRAInterval;} //zarrar yousaf 15.07.07
 	public:
 		void invalidateNeigbourCache();
 

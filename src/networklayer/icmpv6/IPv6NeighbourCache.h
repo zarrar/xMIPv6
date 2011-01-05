@@ -144,19 +144,6 @@ class INET_API IPv6NeighbourCache
     virtual Neighbour *addRouter(const IPv6Address& addr, int interfaceID,
                          MACAddress macAddress, simtime_t expiryTime, bool isHomeAgent = false); // added HA flag, 3.9.07 - CB
 
-
-    /** Creates and initializes a HOME AGENT entry (isRouter=isDefaultRouter=isHomeAgent=true), state=INCOMPLETE. */
-    //Similar to addRouter() above. Addedy by Zarrar Yousaf on 09.03.07 for MIPv6 implementation
-    /*virtual Neighbour *addHomeAgent(const IPv6Address& addr, int interfaceID,
-                        simtime_t expiryTime);*/
-
-    /** Creates and initializes a HOME AGENT entry (isRouter=isDefaultRouter=isHomeAgent=true), MAC address and state=STALE. */
-    //Similar to addRouter() above. Addedy by Zarrar Yousaf on 09.03.07 for MIPv6 implementation
-    /*virtual Neighbour *addHomeAgent(const IPv6Address& addr, int interfaceID,
-                         MACAddress macAddress, simtime_t expiryTime);*/
-
-
-
     /** Deletes the given neighbour from the cache. */
     virtual void remove(const IPv6Address& addr, int interfaceID);
 
