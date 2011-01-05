@@ -189,10 +189,7 @@ FIXME implement fragmentation here.
 
     // route packet
     if (destIE!=NULL)
-    {
-    	EV << "fragmentAndRoute: sending immediately to output." << endl;
         sendDatagramToOutput(datagram, destIE, MACAddress::BROADCAST_ADDRESS); // FIXME what MAC address to use?
-    }
     else if (!datagram->getDestAddress().isMulticast())
         routePacket(datagram, destIE, true);
     else
@@ -614,7 +611,6 @@ void IPv6::handleReceivedICMP(ICMPv6Message *msg)
      }
 }
 
-
 cPacket *IPv6::decapsulate(IPv6Datagram *datagram)
 {
     // decapsulate transport packet
@@ -713,7 +709,6 @@ void IPv6::sendDatagramToOutput(IPv6Datagram *datagram, InterfaceEntry *ie, cons
     send(datagram, "queueOut", ie->getNetworkLayerGateIndex());
 }
 
-
 bool IPv6::determineOutputInterface(const IPv6Address& destAddress, IPv6Address& nextHop, int& interfaceId, IPv6Datagram* datagram)
 {
     // try destination cache
@@ -752,8 +747,6 @@ bool IPv6::determineOutputInterface(const IPv6Address& destAddress, IPv6Address&
 
     return true;
 }
-
-
 
 bool IPv6::processExtensionHeaders(IPv6Datagram* datagram)
 {

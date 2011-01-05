@@ -163,7 +163,5 @@ class INET_API IPv6 : public QueueBase
     bool processExtensionHeaders(IPv6Datagram* datagram);
 };
 
-
 #endif
-
 

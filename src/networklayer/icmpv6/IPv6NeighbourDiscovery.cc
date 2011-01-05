@@ -1518,9 +1518,7 @@ void IPv6NeighbourDiscovery::processRAPrefixInfo(IPv6RouterAdvertisement *ra,
     simtime_t preferredLifetime = prefixInfo.getPreferredLifetime();
     simtime_t validLifetime = prefixInfo.getValidLifetime();
 
-
     EV << "/// standard prefix: " << prefix << std::endl;
-
 
     //RFC 2461: Section 5.5.3
     //First condition tested, the autonomous flag is already set
@@ -1630,9 +1628,6 @@ void IPv6NeighbourDiscovery::createRATimer(InterfaceEntry *ie)
     // end CB
 
     simtime_t interval = uniform(ie->ipv6Data()->getMinRtrAdvInterval(), ie->ipv6Data()->getMaxRtrAdvInterval());
-
-
-    EV<<"\nThe random calculated RA interval is: " << interval << " seconds\n";
     advIfEntry->raTimeoutMsg = msg;
 
     simtime_t nextScheduledTime = simTime() + interval;
@@ -2064,7 +2059,6 @@ void IPv6NeighbourDiscovery::sendUnsolicitedNA(InterfaceEntry *ie)
     //RFC 2461
     //Section 7.2.6: Sending Unsolicited Neighbor Advertisements
 	Enter_Method_Silent();
-	EV << "sending unsolicited NA" << endl;
 
     IPv6NeighbourAdvertisement *na = new IPv6NeighbourAdvertisement("NApacket");
     IPv6Address myIPv6Addr = ie->ipv6Data()->getPreferredAddress();
@@ -2382,7 +2376,6 @@ void IPv6NeighbourDiscovery::processRedirectPacket(IPv6Redirect *redirect,
     MACAddress macAddr = redirect->getTargetLinkLayerAddress();
 }
 
-
 //The overlaoded function has been added by zarrar yousaf on 20.07.07
 void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(IPv6NDPrefixInformation& prefixInfo, InterfaceEntry* ie, bool hFlag)
 {
@@ -2524,7 +2517,6 @@ void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(IPv6NDPrefixInfo
 	    }
 }
 
-
 void IPv6NeighbourDiscovery::routersUnreachabilityDetection(const InterfaceEntry* ie)
 {
 	// remove all entries from the destination cache for this interface
@@ -2557,7 +2549,6 @@ void IPv6NeighbourDiscovery::routersUnreachabilityDetection(const InterfaceEntry
 	}
 }
 
-
 void IPv6NeighbourDiscovery::invalidateNeigbourCache()
 {
 	//Enter_Method("Invalidating Neigbour Cache Entries");
@@ -2587,3 +2578,4 @@ bool IPv6NeighbourDiscovery::isConnectedToWirelessAP(InterfaceEntry *ie)
 	}
 	return false;
 }
+
