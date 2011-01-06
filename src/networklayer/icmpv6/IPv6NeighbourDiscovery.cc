@@ -1519,8 +1519,6 @@ void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(
     simtime_t preferredLifetime = prefixInfo.getPreferredLifetime();
     simtime_t validLifetime = prefixInfo.getValidLifetime();
 
-    EV << "/// standard prefix: " << prefix << std::endl;
-
     //RFC 2461: Section 5.5.3
     //First condition tested, the autonomous flag is already set
 
@@ -1546,8 +1544,6 @@ void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(
     {
         if (ie->ipv6Data()->getAddress(i).matches(prefix, prefixLength) == true)
             isPrefixAssignedToInterface = true;
-		EV <<"The received Prefix is already assigned to the interface"<<endl; //Zarrar Yousaf 19.07.07
-		}
     }
     /*d) If the prefix advertised does not match the prefix of an address already
          in the list, and the Valid Lifetime is not 0, form an address (and add
@@ -1555,7 +1551,6 @@ void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(
          interface identifier as follows:
     if (isPrefixAssignedToInterface == false && validLifetime != 0)
     {
-	EV<<"Prefix not assigned to interface. Possible new router detected. Auto-configuring new address."<<endl;
         IPv6Address linkLocalAddress = ie->ipv6Data()->getLinkLocalAddress();
         ASSERT(linkLocalAddress.isUnspecified() == false);
         IPv6Address newAddr = linkLocalAddress.setPrefix(prefix, prefixLength);
@@ -1605,9 +1600,7 @@ void IPv6NeighbourDiscovery::createRATimer(InterfaceEntry *ie)
     // 20.9.07 - CB
     /*if ( rt6->isRouter() )
     {
-    	EV<<"\n+=+=+= Getting min RA Interval from omneptp.ini =+=+=\n";
     	ie->ipv6()->setMinRtrAdvInterval(IPv6NeighbourDiscovery::getMinRAInterval()); //should be 0.07 for MIPv6 Support
-    	EV<<"\n+=+=+= Getting max RA Interval from omneptp.ini =+=+=\n";
     	ie->ipv6()->setMaxRtrAdvInterval(IPv6NeighbourDiscovery::getMaxRAInterval()); //should be 0.03 for MIPv6 Support
    	}*/
     // update 23.10.07 - CB
@@ -1616,7 +1609,6 @@ void IPv6NeighbourDiscovery::createRATimer(InterfaceEntry *ie)
     	EV<<"This Interface is connected to a WLAN AP, hence using MIPv6 Default Values"<<endl;
     	simtime_t minRAInterval = par("minIntervalBetweenRAs"); //reading from the omnetpp.ini (ZY 23.07.09)
     	simtime_t maxRAInterval = par("maxIntervalBetweenRAs"); //reading from the omnetpp.ini (ZY 23.07.09
-    	//EV<<"\n+=+=+= Getting min and max RA Interval from omneptp.ini =+=+=\n";
     	ie->ipv6Data()->setMinRtrAdvInterval(minRAInterval);
     	ie->ipv6Data()->setMaxRtrAdvInterval(maxRAInterval);
     }

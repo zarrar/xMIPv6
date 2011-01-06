@@ -669,8 +669,6 @@ bool RoutingTable6::routeLessThan(const IPv6Route *a, const IPv6Route *b)
 
 void RoutingTable6::addRoute(IPv6Route *route)
 {
-    EV << "// adding route: " << *route << endl; // Added by CB
-
     routeList.push_back(route);
 
     // we keep entries sorted by prefix length in routeList, so that we can
