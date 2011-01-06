@@ -1509,7 +1509,7 @@ void IPv6NeighbourDiscovery::processRAPrefixInfo(IPv6RouterAdvertisement *ra,
     }
 }
 
-/*
+#if 0
 void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(
     IPv6NDPrefixInformation& prefixInfo, InterfaceEntry *ie)
 {
@@ -1548,7 +1548,7 @@ void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(
     /*d) If the prefix advertised does not match the prefix of an address already
          in the list, and the Valid Lifetime is not 0, form an address (and add
          it to the list) by combining the advertised prefix with the link�s
-         interface identifier as follows:
+         interface identifier as follows:*/
     if (isPrefixAssignedToInterface == false && validLifetime != 0)
     {
         IPv6Address linkLocalAddress = ie->ipv6Data()->getLinkLocalAddress();
@@ -1584,10 +1584,10 @@ void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(
           set to the Lifetime in the received option.
 
        3) Otherwise, reset the stored Lifetime in the corresponding
-          address to two hours.
+          address to two hours.*/
 
 }
-*/
+#endif
 
 void IPv6NeighbourDiscovery::createRATimer(InterfaceEntry *ie)
 {
