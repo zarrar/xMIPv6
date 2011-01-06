@@ -1915,8 +1915,6 @@ void IPv6NeighbourDiscovery::processNSForNonTentativeAddress(IPv6NeighbourSolici
     //Neighbour Solicitation Information
     MACAddress nsMacAddr = ns->getSourceLinkLayerAddress();
 
-    int ifID = ie->getInterfaceId();
-
     //target addr is not tentative addr
     //solicitation processed as described in RFC2461:section 7.2.3
     if (nsCtrlInfo->getSrcAddr().isUnspecified())
