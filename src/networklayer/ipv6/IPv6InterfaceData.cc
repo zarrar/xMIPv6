@@ -87,17 +87,13 @@ std::string IPv6InterfaceData::info() const
     os << "IPv6:{" << endl;
     for (int i=0; i<getNumAddresses(); i++)
     {
-    	if( rt6->isMobileNode() && getAddress(i).isGlobal())
-           os << (i?"\t            , ":"\tAddrs:") << getAddress(i)
-              << "(" << IPv6Address::scopeName(getAddress(i).getScope())
-              << (isTentativeAddress(i)?" tent":"") << ") "<< (addresses[i].addrType==0?"HoA":"CoA")
-              << " expiryTime: " << (addresses[i].expiryTime==0?"inf":SIMTIME_STR(addresses[i].expiryTime))
-              << " prefExpiryTime: " <<(addresses[i].prefExpiryTime==0?"inf":SIMTIME_STR(addresses[i].prefExpiryTime))<<endl;
-    	else
-    		os << (i?"\t            , ":"\tAddrs:") << getAddress(i)
-               << "(" << IPv6Address::scopeName(getAddress(i).getScope())
-               << (isTentativeAddress(i)?" tent":"") << ") "<< " expiryTime: " << (addresses[i].expiryTime==0?"inf":SIMTIME_STR(addresses[i].expiryTime))
-               << " prefExpiryTime: " << (addresses[i].prefExpiryTime==0?"inf":SIMTIME_STR(addresses[i].prefExpiryTime))
+        os << (i?"\t            , ":"\tAddrs:") << getAddress(i)
+           << "(" << IPv6Address::scopeName(getAddress(i).getScope())
+           << (isTentativeAddress(i)?" tent":"") << ") "
+           << ((rt6->isMobileNode() && getAddress(i).isGlobal()) 
+               ? (addresses[i].addrType==HoA ? "HoA" : "CoA") : "")
+           << " expiryTime: " << (addresses[i].expiryTime==0 ? "inf" : SIMTIME_STR(addresses[i].expiryTime))
+           << " prefExpiryTime: " << (addresses[i].prefExpiryTime==0 ? "inf" : SIMTIME_STR(addresses[i].prefExpiryTime))
            << endl;
     }
 
@@ -106,7 +102,8 @@ std::string IPv6InterfaceData::info() const
         const AdvPrefix& a = getAdvPrefix(i);
         os << (i?", ":"\tAdvPrefixes: ") << a.prefix << "/" << a.prefixLength << "("
            << (a.advOnLinkFlag?"":"off-link ")
-           << (a.advAutonomousFlag?"":"non-auto ") << (a.advRtrAddr?"R-Flag = 1 ":"R-Flag = 0 ");
+           << (a.advAutonomousFlag?"":"non-auto ");
+        os << "R-Flag = " << (a.advRtrAddr ? "1 " : "0 ");
         if (a.advValidLifetime==0)
            os  << "lifetime:inf";
         else if (a.advValidLifetime>0)
