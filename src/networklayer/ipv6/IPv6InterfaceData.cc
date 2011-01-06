@@ -168,6 +168,7 @@ void IPv6InterfaceData::assignAddress(const IPv6Address& addr, bool tentative,
         else
             a.addrType = CoA; // else it is a care of address (CoA)
     }
+    // FIXME else a.addrType = ???;
 
     choosePreferredAddress();
 }
