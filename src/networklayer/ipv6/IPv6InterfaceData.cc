@@ -125,8 +125,8 @@ std::string IPv6InterfaceData::info() const
     // the following is for MIPv6 support
     // 4.9.07 - Zarrar, CB
    	if ( rt6->isMobileNode() )
-   		os  << "\tHome Network Info: " << " HoA="<< homeInfo.HoA << ", HA=" << homeInfo.homeAgentAddr
-   			<< ", home prefix=" << homeInfo.prefix/*.prefix()*/ << "\n";
+   	    os << "\tHome Network Info: " << " HoA="<< homeInfo.HoA << ", HA=" << homeInfo.homeAgentAddr
+   	       << ", home prefix=" << homeInfo.prefix/*.prefix()*/ << "\n";
 
     if (rtrVars.advSendAdvertisements)
     {
@@ -249,7 +249,7 @@ void IPv6InterfaceData::permanentlyAssign(const IPv6Address& addr)
 
 void IPv6InterfaceData::tentativelyAssign(int i)
 {
-	ASSERT(i>=0 && i<(int)addresses.size());
+    ASSERT(i>=0 && i<(int)addresses.size());
     addresses[i].tentative = true;
     choosePreferredAddress();
 }
@@ -276,11 +276,11 @@ bool IPv6InterfaceData::addrLess(const AddressData& a, const AddressData& b)
     // sort() produces increasing order, so "better" addresses should
     // compare as "less", to make them appear first in the array
     if (a.tentative!=b.tentative)
-         return !a.tentative; // tentative=false is better
+        return !a.tentative; // tentative=false is better
     if (a.address.getScope()!=b.address.getScope())
-         return a.address.getScope()>b.address.getScope(); // bigger scope is better
+        return a.address.getScope()>b.address.getScope(); // bigger scope is better
     if ( a.address.isGlobal() && b.address.isGlobal() && a.addrType != b.addrType)
-    	return a.addrType == CoA; // HoA is better than CoA, 24.9.07 - CB
+        return a.addrType == CoA; // HoA is better than CoA, 24.9.07 - CB
     return (a.expiryTime==0 && b.expiryTime!=0) || a.expiryTime>b.expiryTime;  // longer expiry time is better
 }
 
@@ -354,33 +354,33 @@ const IPv6Address& IPv6InterfaceData::getGlobalAddress(AddressType type) const
 
 const IPv6Address IPv6InterfaceData::autoConfRouterGlobalScopeAddress(int i) // removed return-by-reference - CB
 {
-	AdvPrefix& p = rtrVars.advPrefixList[i];
-	IPv6Address prefix = p.prefix;
-	short length = p.prefixLength;
-	IPv6Address linkLocalAddr = getLinkLocalAddress();
- 	IPv6Address globalAddress = linkLocalAddr.setPrefix(prefix, length); //the global address gets autoconfigured, given its prefix, which during initialisation is supplied by the FlatnetworkConfigurator6
- 	p.rtrAddress = globalAddress; //the newly formed global address from the respective adv prefix is stored in the AdvPrefix list, which will be used later by the RA prefix info option
-	return globalAddress;
+    AdvPrefix& p = rtrVars.advPrefixList[i];
+    IPv6Address prefix = p.prefix;
+    short length = p.prefixLength;
+    IPv6Address linkLocalAddr = getLinkLocalAddress();
+    IPv6Address globalAddress = linkLocalAddr.setPrefix(prefix, length); //the global address gets autoconfigured, given its prefix, which during initialisation is supplied by the FlatnetworkConfigurator6
+    p.rtrAddress = globalAddress; //the newly formed global address from the respective adv prefix is stored in the AdvPrefix list, which will be used later by the RA prefix info option
+    return globalAddress;
 }
 
 void IPv6InterfaceData::autoConfRouterGlobalScopeAddress(AdvPrefix &p)
 {
-	IPv6Address prefix = p.prefix;
-	short length = p.prefixLength;
-	IPv6Address linkLocalAddr = getLinkLocalAddress();
- 	IPv6Address globalAddress = linkLocalAddr.setPrefix(prefix, length); //the global address gets autoconfigured, given its prefix, which during initialisation is supplied by the FlatnetworkConfigurator6
- 	p.rtrAddress = globalAddress; //the newly formed global address from the respective adv prefix is stored in the AdvPrefix list, which will be used later by the RA prefix info option
+    IPv6Address prefix = p.prefix;
+    short length = p.prefixLength;
+    IPv6Address linkLocalAddr = getLinkLocalAddress();
+    IPv6Address globalAddress = linkLocalAddr.setPrefix(prefix, length); //the global address gets autoconfigured, given its prefix, which during initialisation is supplied by the FlatnetworkConfigurator6
+    p.rtrAddress = globalAddress; //the newly formed global address from the respective adv prefix is stored in the AdvPrefix list, which will be used later by the RA prefix info option
 }
 
 void IPv6InterfaceData::deduceAdvPrefix()
 {
-	for (int i=0; i< getNumAdvPrefixes();i++)
-	{
-		IPv6InterfaceData::AdvPrefix& p = rtrVars.advPrefixList[i];
-		/*IPv6Address globalAddr = */
-		autoConfRouterGlobalScopeAddress(p);
-		assignAddress(p.rtrAddress, false, 0, 0);
-	}
+    for (int i=0; i< getNumAdvPrefixes();i++)
+    {
+        IPv6InterfaceData::AdvPrefix& p = rtrVars.advPrefixList[i];
+        /*IPv6Address globalAddr = */
+        autoConfRouterGlobalScopeAddress(p);
+        assignAddress(p.rtrAddress, false, 0, 0);
+    }
 }
 
 /**
@@ -389,42 +389,42 @@ void IPv6InterfaceData::deduceAdvPrefix()
  */
 IPv6Address IPv6InterfaceData::removeAddress(IPv6InterfaceData::AddressType type)
 {
-	IPv6Address addr;
+    IPv6Address addr;
 
-	for (AddressDataVector::iterator it=addresses.begin(); it!=addresses.end(); ++it ) // 24.9.07 - CB
-	{
-		if ( (*it).addrType == type )
-		{
-			addr = it->address;
-			addresses.erase(it);
-			break; // it is assumed that we do not have more than one CoA
-		}
-	}
+    for (AddressDataVector::iterator it=addresses.begin(); it!=addresses.end(); ++it ) // 24.9.07 - CB
+    {
+        if ( (*it).addrType == type )
+        {
+            addr = it->address;
+            addresses.erase(it);
+            break; // it is assumed that we do not have more than one CoA
+        }
+    }
 
-	// pick new address as we've removed the old one
-	choosePreferredAddress();
+    // pick new address as we've removed the old one
+    choosePreferredAddress();
 
-	return addr;
+    return addr;
 }
 
 std::ostream& operator<<(std::ostream& os, const IPv6InterfaceData::HomeNetworkInfo& homeNetInfo)
 {
-	os << "HoA of MN:" << homeNetInfo.HoA << " HA Address: " << homeNetInfo.homeAgentAddr
-	   << " Home Network Prefix: " << homeNetInfo.prefix/*.prefix()*/;
-	return os;
+    os << "HoA of MN:" << homeNetInfo.HoA << " HA Address: " << homeNetInfo.homeAgentAddr
+       << " Home Network Prefix: " << homeNetInfo.prefix/*.prefix()*/;
+    return os;
 }
 
 void IPv6InterfaceData::updateHomeNetworkInfo(const IPv6Address& hoa, const IPv6Address& ha, const IPv6Address& prefix, const int prefixLength)
 {
-	EV<< "\n++++++ Updating the Home Network Information \n";
-	homeInfo.HoA = hoa;
-	homeInfo.homeAgentAddr = ha;
-	homeInfo.prefix = prefix;
+    EV<< "\n++++++ Updating the Home Network Information \n";
+    homeInfo.HoA = hoa;
+    homeInfo.homeAgentAddr = ha;
+    homeInfo.prefix = prefix;
 
-	// check if we already have a HoA on this interface
-	// if not, then we create one
-	IPv6Address addr = getGlobalAddress(HoA);
+    // check if we already have a HoA on this interface
+    // if not, then we create one
+    IPv6Address addr = getGlobalAddress(HoA);
 
-	if ( addr == IPv6Address::UNSPECIFIED_ADDRESS )
-		this->assignAddress(hoa, false, 0, 0, true);
+    if ( addr == IPv6Address::UNSPECIFIED_ADDRESS )
+        this->assignAddress(hoa, false, 0, 0, true);
 }

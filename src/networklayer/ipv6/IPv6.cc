@@ -259,7 +259,7 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
     		 !rt->isMobileNode() // or if it is a correspondent or non-MIP node
     	  )
     	)
-        {
+    {
     	if ( datagram->getTransportProtocol() == IP_PROT_IPv6EXT_MOB )
     		// in case of mobility header we can only search for "real" tunnels
     		// as T2RH or HoA Opt. are not allowed with these messages
@@ -268,19 +268,19 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
     	else
     		// otherwise we can search for everything
     		interfaceId = tunneling->getVIfIndexForDest(destAddress);
-            }
+    }
     //else
     	//interfaceId = -1;
 
 	if ( interfaceId > ift->getNumInterfaces() )
-            {
+    {
 		// a virtual tunnel interface provides a path to the destination: do tunneling
 		EV << "tunneling: src addr=" << datagram->getSrcAddress() << ", dest addr=" << destAddress << std::endl;
 
 		//EV << "sending datagram to encapsulation..." << endl;
 		send(datagram, "lowerTunnelingOut");
             return;
-        }
+    }
 
 	if (interfaceId == -1)
 		if ( !determineOutputInterface(destAddress, nextHop, interfaceId, datagram) )

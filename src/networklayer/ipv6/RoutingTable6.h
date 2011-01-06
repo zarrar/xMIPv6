@@ -188,15 +188,15 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
     virtual bool isRouter() const {return isrouter;}
 
     /**
-    * Determine whether normal Router or Home Agent
-    */
+     * Determine whether normal Router or Home Agent
+     */
     bool isHomeAgent() const {return ishome_agent;}
-    
+
     /**
      * Define whether normal Router or Home Agent.
      */
     void setIsHomeAgent(bool value) {ishome_agent = value;}
-    
+
     /**
      * Determine whether a node is a Mobile Node or Correspondent Node:
      * MN if TRUE or else a CN
@@ -208,7 +208,6 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
      * MN if TRUE or else a CN
      */
     void setIsMobileNode(bool value) {ismobile_node = value;}
-
 
     /** @name Routing functions */
     //@{
@@ -334,58 +333,56 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
     virtual IPv6Route *getRoute(int i);
     //@}
 
+    //================Added by Zarrar Yousaf ===================================
 
-	//================Added by Zarrar Yousaf ===================================
-	
-	const IPv6Address& getDestinationAddress();
-	//void updateHomeNetworkInfo(const IPv6Address& hoa, const IPv6Address& ha);//10.07.07 This updates the struct HomeNetwork Info{} with the MN's Home Address(HoA) and the global scope address of the MNs Home Agent (ha).
-	//const IPv6Address& getHomeAgentAddress() {return homeInfo.homeAgentAddr;} // Zarrar 15.07.07 // return by reference - CB
-	//const IPv6Address& getMNHomeAddress() {return homeInfo.HoA;} // Zarrar 15.07.07 // return by reference - CB
-	const IPv6Address& getHomeAddress(); // NEW, 14.01.08 - CB
+    const IPv6Address& getDestinationAddress();
+    //void updateHomeNetworkInfo(const IPv6Address& hoa, const IPv6Address& ha);//10.07.07 This updates the struct HomeNetwork Info{} with the MN's Home Address(HoA) and the global scope address of the MNs Home Agent (ha).
+    //const IPv6Address& getHomeAgentAddress() {return homeInfo.homeAgentAddr;} // Zarrar 15.07.07 // return by reference - CB
+    //const IPv6Address& getMNHomeAddress() {return homeInfo.HoA;} // Zarrar 15.07.07 // return by reference - CB
+    const IPv6Address& getHomeAddress(); // NEW, 14.01.08 - CB
 
-	/**
-	 * Check whether provided address is a HoA
-	 */
-	bool isHomeAddress(const IPv6Address& addr);
+    /**
+     * Check whether provided address is a HoA
+     */
+    bool isHomeAddress(const IPv6Address& addr);
 
-	/**
-	 * Removes the current default routes for the given interface.
-	 */
-	void removeDefaultRoutes(int interfaceID);
+    /**
+     * Removes the current default routes for the given interface.
+     */
+    void removeDefaultRoutes(int interfaceID);
 
-	/**
-	 * Removes all routes from the routing table.
-	 */	
-	void removeAllRoutes();
+    /**
+     * Removes all routes from the routing table.
+     */	
+    void removeAllRoutes();
 
-	/**
-	 * Removes all prefixes registered for the given interface.
-	 */
-	void removePrefixes(int interfaceID);
+    /**
+     * Removes all prefixes registered for the given interface.
+     */
+    void removePrefixes(int interfaceID);
 
-	/*
-	 * Removes all destination cache entries for the specified interface
-	 */
-	void purgeDestCacheForInterfaceID(int interfaceId);
+    /*
+     * Removes all destination cache entries for the specified interface
+     */
+    void purgeDestCacheForInterfaceID(int interfaceId);
 
-	/**
-	 * Can be used to check whether this node supports MIPv6 or not
-	 * (MN, MR, HA or CN).
-	 */
-	bool hasMIPv6Support() { return mipv6Support; }
+    /**
+     * Can be used to check whether this node supports MIPv6 or not
+     * (MN, MR, HA or CN).
+     */
+    bool hasMIPv6Support() { return mipv6Support; }
 
-	/**
-	 * This method is used to define whether the node support MIPv6 or
-	 * not (MN, MR, HA or CN).
-	 */
-	void setMIPv6Support(bool value) { mipv6Support = value; }
+    /**
+     * This method is used to define whether the node support MIPv6 or
+     * not (MN, MR, HA or CN).
+     */
+    void setMIPv6Support(bool value) { mipv6Support = value; }
 
-	/**
-	 * Checks whether the provided address is in an on-link address
-	 * with respect to the prefix advertisement list.
-	 */
-	bool isOnLinkAddress(const IPv6Address& address); // update 11.9.07 - CB
-
+    /**
+     * Checks whether the provided address is in an on-link address
+     * with respect to the prefix advertisement list.
+     */
+    bool isOnLinkAddress(const IPv6Address& address); // update 11.9.07 - CB
 };
 
 #endif

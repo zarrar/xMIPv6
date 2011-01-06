@@ -27,11 +27,11 @@
 #include "IPv6Address.h"
 #include "InterfaceEntry.h"
 /**
-* Including the RouitngTable6Access.h and RoutingTable6.h as node information, whether it is a MN, HA,
-* router or CN, is needed in the Ipv6InterfaceData::info(). The interface information displayed for the MN is
-* different, as the address gets tagged to be either of type HoA or CoA, from HA, router and CN, where info
-* regarding type of address is not required (Zarrar Yousaf 20.07.07)
-**/
+ * Including the RouitngTable6Access.h and RoutingTable6.h as node information, whether it is a MN, HA,
+ * router or CN, is needed in the Ipv6InterfaceData::info(). The interface information displayed for the MN is
+ * different, as the address gets tagged to be either of type HoA or CoA, from HA, router and CN, where info
+ * regarding type of address is not required (Zarrar Yousaf 20.07.07)
+ */
 #include "RoutingTable6Access.h" //Zarrar Yousaf 20.07.07
 #include "RoutingTable6.h"	//Zarrar Yousaf 20.07.07
 #include "IPv6NeighbourDiscovery.h" // CB 4.9.07
@@ -70,24 +70,23 @@
 #define IPv6_MIN_RANDOM_FACTOR              0.5
 #define IPv6_MAX_RANDOM_FACTOR              1.5
 /***************END of RFC 2461 Protocol Constants*****************************/
+
 /***************RFC 3775: Section 12 Protocol Constants************************/
-#define MIPv6_DHAAD_RETRIES			4 // retransmissions
-#define MIPv6_INITIAL_BINDACK_TIMEOUT		1 // second
-#define MIPv6_INITIAL_DHAAD_TIMEOUT		3 // seconds
-#define MIPv6_INITIAL_SOLICIT_TIMER		3 // seconds
-#define MIPv6_MAX_BINDACK_TIMEOUT 	       32 // seconds
+#define MIPv6_DHAAD_RETRIES                     4 // retransmissions
+#define MIPv6_INITIAL_BINDACK_TIMEOUT           1 // second
+#define MIPv6_INITIAL_DHAAD_TIMEOUT             3 // seconds
+#define MIPv6_INITIAL_SOLICIT_TIMER             3 // seconds
+#define MIPv6_MAX_BINDACK_TIMEOUT              32 // seconds
 #define MIPv6_MAX_NONCE_LIFETIME              240 // seconds
-#define MIPv6_MAX_TOKEN_LIFETIME              210 // 210 // seconds
+#define MIPv6_MAX_TOKEN_LIFETIME              210 // seconds
 #define MIPv6_MAX_UPDATE_RATE                   3 // times
 #define MIPv6_PREFIX_ADV_RETRIES                3 // retransmissions
 #define MIPv6_PREFIX_ADV_TIMEOUT                3 // seconds
 // update 12.9.07 - CB
-#define MIPv6_INITIAL_BINDACK_TIMEOUT_FIRST		1 // seconds
-#define MIPv6_MAX_RR_BINDING_LIFETIME			420 // 420 // seconds
-#define MIPv6_MAX_HA_BINDING_LIFETIME			60 * 60 // 1 hour
+#define MIPv6_INITIAL_BINDACK_TIMEOUT_FIRST     1 // seconds
+#define MIPv6_MAX_RR_BINDING_LIFETIME         420 // seconds
+#define MIPv6_MAX_HA_BINDING_LIFETIME        3600 // seconds (1 hour)
 /***************END of RFC 3775 Protocol Constants*****************************/
-
-
 
 /**
  * IPv6-specific data for InterfaceEntry. Most of this comes from
@@ -133,12 +132,12 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
         simtime_t maxRtrSolicitationDelay;
         simtime_t rtrSolicitationInterval;
         int maxRtrSolicitations;
-	    uint initialBindAckTimeout;//MIPv6: added by Zarrar Yousaf @ CNI UniDo 17.06.07
-	    uint maxBindAckTimeout;//MIPv6: added by Zarrar Yousaf @ CNI UniDo 17.06.07
-	    simtime_t initialBindAckTimeoutFirst; //MIPv6: 12.9.07 - CB
-	    uint maxRRBindingLifeTime; // 14.9.07 - CB
-	    uint maxHABindingLifeTime; // 14.9.07 - CB
-	    uint maxTokenLifeTime; // 10.07.08 - CB
+        uint initialBindAckTimeout; //MIPv6: added by Zarrar Yousaf @ CNI UniDo 17.06.07
+        uint maxBindAckTimeout; //MIPv6: added by Zarrar Yousaf @ CNI UniDo 17.06.07
+        simtime_t initialBindAckTimeoutFirst; //MIPv6: 12.9.07 - CB
+        uint maxRRBindingLifeTime; // 14.9.07 - CB
+        uint maxHABindingLifeTime; // 14.9.07 - CB
+        uint maxTokenLifeTime; // 10.07.08 - CB
     };
     HostConstants hostConstants;
 
@@ -157,37 +156,37 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
     NodeConstants nodeConstants;
     /***************END of RFC 2461 Protocol Constants*************************/
 
-/**
-* The enum AddressType defined below and the new member of the struct AddressData {AddressType addrType} is
-* relevant for MN(s) only as the address(es) configured on the MN interface needs to be tagged as either HoA
-* or CoA, based upon the status of the H-Flag recieved in the RA. This is
-**/
+    /**
+     * The enum AddressType defined below and the new member of the struct AddressData {AddressType addrType} is
+     * relevant for MN(s) only as the address(es) configured on the MN interface needs to be tagged as either HoA
+     * or CoA, based upon the status of the H-Flag recieved in the RA. This is
+     */
     enum AddressType {HoA, CoA}; // to tag a MN's address as Home-Address or Care-of-Address. Zarrar Yousaf 20.07.07
   private:
     /**
-	 * Zarrar 03.09.07: Home Network Information maintains home network information like the MN's home address
-	 * (HoA) and the HA's address and its prefix. The information from this list will be used by the MN in
-	 * sending BU towards HA for home registration while in visit network. This data will be updated as soon as
-	 * the MN processes the prefix information recieved in the RA from the HA and when it auto-configures its
-	 * global scope address. This home network info is defined in the IPv6InterfaceData in order to support MN(s)
-	 * with multiple interfaces, where there could be a possibility that multiple interfaces in a single MN may
-	 * belong to different home networks. Therefore it is necessary to maintain home network info on a per
-	 * interface basis
-	 */
-	struct HomeNetworkInfo
-	{
-		IPv6Address HoA; // Home Address of the MN, configured while in the home network
-		IPv6Address homeAgentAddr;
-		//IPv6NDPrefixInformation prefix;
-		IPv6Address prefix;
-	};
-	friend std::ostream& operator<<(std::ostream& os, const HomeNetworkInfo& homeNetInfo);
-	HomeNetworkInfo homeInfo;
+     * Zarrar 03.09.07: Home Network Information maintains home network information like the MN's home address
+     * (HoA) and the HA's address and its prefix. The information from this list will be used by the MN in
+     * sending BU towards HA for home registration while in visit network. This data will be updated as soon as
+     * the MN processes the prefix information recieved in the RA from the HA and when it auto-configures its
+     * global scope address. This home network info is defined in the IPv6InterfaceData in order to support MN(s)
+     * with multiple interfaces, where there could be a possibility that multiple interfaces in a single MN may
+     * belong to different home networks. Therefore it is necessary to maintain home network info on a per
+     * interface basis
+     */
+    struct HomeNetworkInfo
+    {
+        IPv6Address HoA; // Home Address of the MN, configured while in the home network
+        IPv6Address homeAgentAddr;
+        //IPv6NDPrefixInformation prefix;
+        IPv6Address prefix;
+    };
+    friend std::ostream& operator<<(std::ostream& os, const HomeNetworkInfo& homeNetInfo);
+    HomeNetworkInfo homeInfo;
+    bool dadInProgress;
 
-	bool dadInProgress;
   public:
-	bool isDADInProgress() {return dadInProgress;};
-	void setDADInProgress(bool val) {dadInProgress = val;};
+    bool isDADInProgress() {return dadInProgress;};
+    void setDADInProgress(bool val) {dadInProgress = val;};
 
   private:
     // addresses
@@ -315,9 +314,9 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
          */
         bool advOtherConfigFlag;// also false as not disseminating other config info from routers
 
-	/**
+        /**
          *  The TRUE/FALSE value to be placed in the "Home Agent"
-         *  flag field in the Router Advertisement.  See [ADDRCONF].
+         *  flag field in the Router Advertisement. See [ADDRCONF].
          *
          *  Default: FALSE
          */
@@ -398,7 +397,7 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
      * Called from  IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(
      *                      IPv6NDPrefixInformation& prefixInfo, InterfaceEntry* ie, bool hFlag).
      * Relevant only when MIPv6 is supported. (Zarrar Yousaf 20.07.07)
-     **/
+     */
     virtual void assignAddress(const IPv6Address& addr, bool tentative,
                                simtime_t expiryTime, simtime_t prefExpiryTime, bool hFlag = false);
 
@@ -426,15 +425,15 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
     bool isTentativeAddress(int i) const;
 
     /**
-      * Returns the address type (HoA, CoA) of the ith address of the interface.
-      * 4.9.07 - CB
-      */
+     * Returns the address type (HoA, CoA) of the ith address of the interface.
+     * 4.9.07 - CB
+     */
     AddressType getAddressType(int i) const;
 
     /**
-      * Returns the address type (HoA, CoA) of the provided address of the interface.
-      * 27.9.07 - CB
-      */
+     * Returns the address type (HoA, CoA) of the provided address of the interface.
+     * 27.9.07 - CB
+     */
     AddressType getAddressType(const IPv6Address& addr) const;
 
 
@@ -657,6 +656,7 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
      * or UNSPECIFIED_ADDRESS if there's none.
      */
     const IPv6Address& getGlobalAddress(AddressType type = HoA) const; // 24.9.07 - CB
+
     /**
      * This function autoconfigures a global scope address for the router only,
      * if and only the prefix is provided via some exernal method, For instance
@@ -664,6 +664,7 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
      *initialization.
      */
     const IPv6Address autoConfRouterGlobalScopeAddress(int i); // // removed return-by-reference - CB
+
     void autoConfRouterGlobalScopeAddress(AdvPrefix &p);
 
     void deduceAdvPrefix();
@@ -684,9 +685,9 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
 	 */
 	IPv6Address removeAddress(IPv6InterfaceData::AddressType type); // update 06.08.08 - CB
 
-protected:
+  protected:
 	RoutingTable6* rt6; // A pointer variable, specifically used to access the type of node (MN, HA, Router, CN). Used in info(). (Zarrar Yousaf 20.07.07)
-  };
+};
 
 #endif
 
