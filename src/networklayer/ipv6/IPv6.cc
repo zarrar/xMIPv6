@@ -249,28 +249,6 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
     IPv6Address nextHop;
 
     // restructured code from below due for mobility - CB
-    /*if ( datagram->srcAddress().isUnspecified() )
-    {
-    	if ( !determineOutputInterface(destAddress, nextHop, interfaceId, datagram) )
-    		// no interface found; sent to ND or to ICMP for error processing
-    		opp_error("No interface found!");//return;
-    		return;
-    	// TODO: don't raise error if sent to ND or ICMP!
-
-    	// else we can set the source address of the datagram with the
-    	// preferred address from the interface we've just specified
-    	InterfaceEntry *ie = ift->interfaceAt(interfaceId);
-    	//IPv6Address sourceAddr = ie->ipv6()->preferredAddress();
-    	IPv6Address sourceAddr = ie->ipv6()->globalAddress(IPv6InterfaceData::HoA);
-
-    	if ( sourceAddr.isUnspecified() )
-    		sourceAddr = ie->ipv6()->preferredAddress();
-
-    	ASSERT( !sourceAddr.isUnspecified() );
-    	datagram->setSrcAddress(sourceAddr);
-    	EV << "Source address of datagram was set to " << sourceAddr << endl;
-    }*/
-
 
     // tunneling support - CB
     // check if destination is covered by tunnel lists
