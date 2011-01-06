@@ -60,8 +60,8 @@ module NetworkLayer6
                 protocolMapping = "6:0,17:1,46:2,89:3";
                 @display("p=84,129");
             gates:
-                transportIn[5];
-                transportOut[5];
+                transportIn[4];
+                transportOut[4];
                 queueIn[sizeof(ifIn)];
                 queueOut[sizeof(ifIn)];
         }
