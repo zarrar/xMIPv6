@@ -215,10 +215,7 @@ IPv6InterfaceData::AddressType IPv6InterfaceData::getAddressType(int i) const
 
 IPv6InterfaceData::AddressType IPv6InterfaceData::getAddressType(const IPv6Address& addr) const
 {
-	int address = findAddress(addr);
-
-	ASSERT(address!=-1);
-    return getAddressType(address);
+    return getAddressType(findAddress(addr));
 }
 
 bool IPv6InterfaceData::hasAddress(const IPv6Address& addr) const
