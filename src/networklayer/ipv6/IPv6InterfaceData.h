@@ -162,7 +162,7 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
      * or CoA, based upon the status of the H-Flag recieved in the RA. This is
      */
     enum AddressType {HoA, CoA}; // to tag a MN's address as Home-Address or Care-of-Address. Zarrar Yousaf 20.07.07
-  private:
+  protected:
     /**
      * Zarrar 03.09.07: Home Network Information maintains home network information like the MN's home address
      * (HoA) and the HA's address and its prefix. The information from this list will be used by the MN in
@@ -188,7 +188,7 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
     bool isDADInProgress() {return dadInProgress;};
     void setDADInProgress(bool val) {dadInProgress = val;};
 
-  private:
+  protected:
     // addresses
     struct AddressData
     {
