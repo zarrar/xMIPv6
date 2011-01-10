@@ -19,6 +19,7 @@
 #ifndef IPV6NEIGHBOURDISCOVERY_H
 #define IPV6NEIGHBOURDISCOVERY_H
 
+
 #include <stdio.h>
 #include <string.h>
 #include <vector>
@@ -142,13 +143,13 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
         // address, after DAD was succesfully performed
         struct DADGlobalEntry
         {
-        	bool hFlag; // home network flag from RA
+            bool hFlag; // home network flag from RA
             simtime_t validLifetime; // valid lifetime of the received prefix
             simtime_t preferredLifetime; // preferred lifetime of the received prefix
             IPv6Address addr; // the address with scope > link local that the interface will get
 
-        	//bool returnedHome; // MIPv6-related: whether we returned home after a visit in a foreign network
-        	IPv6Address CoA; // MIPv6-related: the old CoA, in case we returned home
+            //bool returnedHome; // MIPv6-related: whether we returned home after a visit in a foreign network
+            IPv6Address CoA; // MIPv6-related: the old CoA, in case we returned home
         };
         typedef std::map<InterfaceEntry*, DADGlobalEntry> DADGlobalList;
         DADGlobalList dadGlobalList;
@@ -347,12 +348,12 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
         virtual void processRedirectPacket(IPv6Redirect *redirect, IPv6ControlInfo *ctrlInfo);
         /************End Of Redirect Message Stuff*****************************/
 
-		/* To determine whether a Router's Ethernet Interface is connected to
-		 * a WLAN AP or not (Zarrar Yousaf (23.09.07)
-		 *
-		 * Moved here from InterfaceEntry.h by BT.
-		 */
-		virtual bool isConnectedToWirelessAP(InterfaceEntry *ie);
+        /* To determine whether a Router's Ethernet Interface is connected to
+         * a WLAN AP or not (Zarrar Yousaf (23.09.07)
+         *
+         * Moved here from InterfaceEntry.h by BT.
+         */
+        virtual bool isConnectedToWirelessAP(InterfaceEntry *ie);
 
         /**
          *  RFC2463 Section 3.1: Destination Unreachable Message
@@ -363,9 +364,11 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
             const IPv6Address& destAddress, InterfaceEntry *ie);*/
 
     public:
-		void invalidateNeigbourCache();
+        void invalidateNeigbourCache();
 
-	protected:
-		void routersUnreachabilityDetection(const InterfaceEntry* ie); // 3.9.07 - CB
+    protected:
+        void routersUnreachabilityDetection(const InterfaceEntry* ie); // 3.9.07 - CB
 };
+
 #endif //IPV6NEIGHBOURDISCOVERY_H
+

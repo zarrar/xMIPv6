@@ -1,10 +1,10 @@
 /**
- * Copyright (C) 2007 
+ * Copyright (C) 2007
  * Faqir Zarrar Yousaf
  * Communication Networks Institute, Dortmund University of Technology (TU Dortmund), Germany.
  * Christian Bauer
  * Institute of Communications and Navigation, German Aerospace Center (DLR)
- 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -31,10 +31,8 @@ Register_Class(HomeAddressOption);
 /*
 HomeAddressOption& HomeAddressOption::operator=(const HomeAddressOption& other)
 {
-	HomeAddressOption_Base::operator=(other);
+    HomeAddressOption_Base::operator=(other);
 
     return *this;
 }
 */
-
-//---

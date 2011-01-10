@@ -66,7 +66,7 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addNeighbour(const IPv6Addres
     nbor.nceKey = lookupKeyAddr(key);//a ptr that links to the key.-WEI for convenience.
     nbor.isRouter = false;
     nbor.isDefaultRouter = false;
-    nbor.isHomeAgent = false; 		//Zarrar 09.03.07
+    nbor.isHomeAgent = false;         //Zarrar 09.03.07
     nbor.reachabilityState = INCOMPLETE;
     nbor.reachabilityExpires = 0;
     nbor.numProbesSent = 0;
@@ -86,7 +86,7 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addNeighbour(const IPv6Addres
     nbor.macAddress = macAddress;
     nbor.isRouter = false;
     nbor.isDefaultRouter = false;
-    nbor.isHomeAgent = false; 		//Zarrar 09.03.07    
+    nbor.isHomeAgent = false;         //Zarrar 09.03.07
     nbor.reachabilityState = STALE;
     nbor.reachabilityExpires = 0;
     nbor.numProbesSent = 0;
@@ -95,9 +95,9 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addNeighbour(const IPv6Addres
     return &nbor;
 }
 
-/** 
+/**
  * Creates and initializes a router entry (isRouter=isDefaultRouter=true), state=INCOMPLETE.
- * 
+ *
  * Update by CB: Added an optional parameter which is false by default. Specifies whether a router is also a home agent.
  */
 IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addRouter(const IPv6Address& addr, int interfaceID, simtime_t expiryTime, bool isHomeAgent)
@@ -109,7 +109,7 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addRouter(const IPv6Address& 
     nbor.nceKey = lookupKeyAddr(key);//a ptr that links to the key.-WEI for convenience.
     nbor.isRouter = true;
     nbor.isDefaultRouter = true;//FIXME: a router may advertise itself it self as a router but not as a default one.-WEI
-    nbor.isHomeAgent = isHomeAgent; //Zarrar 09.03.07 --- FIXME: NOT EVERY ROUTER IS A HOME AGENT // update 3.9.07 - CB    
+    nbor.isHomeAgent = isHomeAgent; //Zarrar 09.03.07 --- FIXME: NOT EVERY ROUTER IS A HOME AGENT // update 3.9.07 - CB
     nbor.reachabilityState = INCOMPLETE;
     nbor.reachabilityExpires = 0;
     nbor.numProbesSent = 0;
@@ -118,9 +118,9 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addRouter(const IPv6Address& 
     return &nbor;
 }
 
-/** 
- * Creates and initializes a router entry (isRouter=isDefaultRouter=true), MAC address and state=STALE. 
- * 
+/**
+ * Creates and initializes a router entry (isRouter=isDefaultRouter=true), MAC address and state=STALE.
+ *
  * Update by CB: Added an optional parameter which is false by default. Specifies whether a router is also a home agent.
  */
 IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addRouter(const IPv6Address& addr, int interfaceID, MACAddress macAddress, simtime_t expiryTime, bool isHomeAgent)
@@ -133,7 +133,7 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addRouter(const IPv6Address& 
     nbor.macAddress = macAddress;
     nbor.isRouter = true;
     nbor.isDefaultRouter = true;
-    nbor.isHomeAgent = isHomeAgent; //Zarrar 09.03.07 --- FIXME: NOT EVERY ROUTER IS A HOME AGENT // update 3.9.07 - CB    
+    nbor.isHomeAgent = isHomeAgent; //Zarrar 09.03.07 --- FIXME: NOT EVERY ROUTER IS A HOME AGENT // update 3.9.07 - CB
     nbor.reachabilityState = STALE;
     nbor.reachabilityExpires = 0;
     nbor.numProbesSent = 0;
@@ -167,11 +167,11 @@ void IPv6NeighbourCache::invalidateEntriesForInterfaceID(int interfaceID)
     for (NeighbourMap::iterator it=neighbourMap.begin(); it!=neighbourMap.end(); it++)
     {
         if ( it->first.interfaceID == interfaceID )
-        {	
+        {
             it->second.reachabilityState = PROBE; // we make sure this neighbour is not used anymore in the future, unless reachability can be confirmed
             neighbourDiscovery.cancelAndDelete(it->second.nudTimeoutEvent); // 20.9.07 - CB
             it->second.nudTimeoutEvent = NULL;
-        }			
+        }
     }
 }
 
@@ -188,7 +188,7 @@ void IPv6NeighbourCache::invalidateAllEntries()
     EV << "size: " << size << endl;
     for (NeighbourMap::iterator it=neighbourMap.begin(); it!=neighbourMap.end(); it++)
     {
-        it->second.reachabilityState = PROBE; // we make sure this neighbour is not used anymore in the future, unless reachability can be confirmed			
+        it->second.reachabilityState = PROBE; // we make sure this neighbour is not used anymore in the future, unless reachability can be confirmed
     }
     */
 }

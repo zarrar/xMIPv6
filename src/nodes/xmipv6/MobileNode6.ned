@@ -21,7 +21,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-// Same as StandardHost6.ned except with the new parameter isMobileNode = true/false 
+// Same as StandardHost6.ned except with the new parameter isMobileNode = true/false
 // & isHomeAgent = true/false
 // Also replaced the NetworkLayer6 with MobileIPLayer6 (which is the same as Network Layer6 except with a MIP engine)
 

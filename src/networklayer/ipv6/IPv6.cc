@@ -75,32 +75,32 @@ void IPv6::updateDisplayString()
 
 void IPv6::endService(cPacket *msg)
 {
-	// 28.09.07 - CB
-	// support for rescheduling datagrams which are supposed to be sent over
-	// a tentative address.
-	if ( msg->isSelfMessage() )
-	{
-		ScheduledDatagram* sDgram = check_and_cast<ScheduledDatagram*>(msg);
+    // 28.09.07 - CB
+    // support for rescheduling datagrams which are supposed to be sent over
+    // a tentative address.
+    if ( msg->isSelfMessage() )
+    {
+        ScheduledDatagram* sDgram = check_and_cast<ScheduledDatagram*>(msg);
 
-		// take care of datagram which was supposed to be sent over a tentative address
-		if ( sDgram->ie->ipv6Data()->isTentativeAddress(sDgram->datagram->getSrcAddress()) )
+        // take care of datagram which was supposed to be sent over a tentative address
+        if ( sDgram->ie->ipv6Data()->isTentativeAddress(sDgram->datagram->getSrcAddress()) )
         {
-			// address is still tentative - enqueue again
-			queue.insert(sDgram);
-		}
-		else
-		{
-			// address is not tentative anymore - send out datagram
-		    numForwarded++;
-		    sendDatagramToOutput(sDgram->datagram, sDgram->ie, sDgram->macAddr);
-		    delete sDgram;
-		}
-	}
-	else if (msg->getArrivalGate()->isName("transportIn") ||
-	   (msg->getArrivalGate()->isName("upperTunnelingIn")) || // for tunneling support-CB
-	   (msg->getArrivalGate()->isName("ndIn") && dynamic_cast<IPv6NDMessage*>(msg)) ||
-	   (msg->getArrivalGate()->isName("icmpIn") && dynamic_cast<ICMPv6Message*>(msg)) || //Added this for ICMP msgs from ICMP module-WEI
-	   (msg->getArrivalGate()->isName("xMIPv6In") && dynamic_cast<MobilityHeader*>(msg))) // Zarrar
+            // address is still tentative - enqueue again
+            queue.insert(sDgram);
+        }
+        else
+        {
+            // address is not tentative anymore - send out datagram
+            numForwarded++;
+            sendDatagramToOutput(sDgram->datagram, sDgram->ie, sDgram->macAddr);
+            delete sDgram;
+        }
+    }
+    else if (msg->getArrivalGate()->isName("transportIn") ||
+       (msg->getArrivalGate()->isName("upperTunnelingIn")) || // for tunneling support-CB
+       (msg->getArrivalGate()->isName("ndIn") && dynamic_cast<IPv6NDMessage*>(msg)) ||
+       (msg->getArrivalGate()->isName("icmpIn") && dynamic_cast<ICMPv6Message*>(msg)) || //Added this for ICMP msgs from ICMP module-WEI
+       (msg->getArrivalGate()->isName("xMIPv6In") && dynamic_cast<MobilityHeader*>(msg))) // Zarrar
     {
         // packet from upper layers, tunnel link-layer output or ND: encapsulate and send out
         handleMessageFromHL( msg );
@@ -167,9 +167,9 @@ void IPv6::handleMessageFromHL(cPacket *msg)
 
     if (datagram == NULL)
     {
-    	EV << "Encapsulation failed - dropping packet." << endl;
-    	delete msg;
-    	return;
+        EV << "Encapsulation failed - dropping packet." << endl;
+        delete msg;
+        return;
     }
 
     // possibly fragment (in IPv6, only the source node does that), then route it
@@ -253,40 +253,40 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
     // tunneling support - CB
     // check if destination is covered by tunnel lists
     if ( (datagram->getTransportProtocol() != IP_PROT_IPv6) && // if datagram was already tunneled, don't tunnel again
-    	 (datagram->getExtensionHeaderArraySize() == 0 ) && // we do not already have extension headers - FIXME: check for RH2 existence
-    	  ( (rt->isMobileNode() && rt->isHomeAddress( datagram->getSrcAddress() ) ) || // for MNs: only if source address is a HoA // 27.08.07 - CB
-    		 rt->isHomeAgent() || // but always check for tunnel if node is a HA
-    		 !rt->isMobileNode() // or if it is a correspondent or non-MIP node
-    	  )
-    	)
+         (datagram->getExtensionHeaderArraySize() == 0 ) && // we do not already have extension headers - FIXME: check for RH2 existence
+          ( (rt->isMobileNode() && rt->isHomeAddress( datagram->getSrcAddress() ) ) || // for MNs: only if source address is a HoA // 27.08.07 - CB
+             rt->isHomeAgent() || // but always check for tunnel if node is a HA
+             !rt->isMobileNode() // or if it is a correspondent or non-MIP node
+          )
+        )
     {
-    	if ( datagram->getTransportProtocol() == IP_PROT_IPv6EXT_MOB )
-    		// in case of mobility header we can only search for "real" tunnels
-    		// as T2RH or HoA Opt. are not allowed with these messages
-    		interfaceId = tunneling->getVIfIndexForDest(destAddress, IPv6Tunneling::NORMAL); // 10.06.08 - CB
-    		//getVIfIndexForDestForXSplitTunnel(destAddress);
-    	else
-    		// otherwise we can search for everything
-    		interfaceId = tunneling->getVIfIndexForDest(destAddress);
+        if ( datagram->getTransportProtocol() == IP_PROT_IPv6EXT_MOB )
+            // in case of mobility header we can only search for "real" tunnels
+            // as T2RH or HoA Opt. are not allowed with these messages
+            interfaceId = tunneling->getVIfIndexForDest(destAddress, IPv6Tunneling::NORMAL); // 10.06.08 - CB
+            //getVIfIndexForDestForXSplitTunnel(destAddress);
+        else
+            // otherwise we can search for everything
+            interfaceId = tunneling->getVIfIndexForDest(destAddress);
     }
     //else
-    	//interfaceId = -1;
+        //interfaceId = -1;
 
-	if ( interfaceId > ift->getNumInterfaces() )
+    if ( interfaceId > ift->getNumInterfaces() )
     {
-		// a virtual tunnel interface provides a path to the destination: do tunneling
-		EV << "tunneling: src addr=" << datagram->getSrcAddress() << ", dest addr=" << destAddress << std::endl;
+        // a virtual tunnel interface provides a path to the destination: do tunneling
+        EV << "tunneling: src addr=" << datagram->getSrcAddress() << ", dest addr=" << destAddress << std::endl;
 
-		//EV << "sending datagram to encapsulation..." << endl;
-		send(datagram, "lowerTunnelingOut");
+        //EV << "sending datagram to encapsulation..." << endl;
+        send(datagram, "lowerTunnelingOut");
             return;
     }
 
-	if (interfaceId == -1)
-		if ( !determineOutputInterface(destAddress, nextHop, interfaceId, datagram) )
-			// no interface found; sent to ND or to ICMP for error processing
-			//opp_error("No interface found!");//return;
-			return; // don't raise error if sent to ND or ICMP!
+    if (interfaceId == -1)
+        if ( !determineOutputInterface(destAddress, nextHop, interfaceId, datagram) )
+            // no interface found; sent to ND or to ICMP for error processing
+            //opp_error("No interface found!");//return;
+            return; // don't raise error if sent to ND or ICMP!
 
     InterfaceEntry *ie = ift->getInterfaceById(interfaceId);
     ASSERT(ie!=NULL);
@@ -294,18 +294,18 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
     ASSERT(!nextHop.isUnspecified() && ie!=NULL);
 
 
-	 if ( rt->isMobileNode() )
-	 {
-	 	 // if the source address is the HoA and we have a CoA then drop the packet
-	 	 // (address is topologically incorrect!)
-		 if ( datagram->getSrcAddress() == ie->ipv6Data()->getMNHomeAddress() && !ie->ipv6Data()->getGlobalAddress(IPv6InterfaceData::CoA).isUnspecified() )
-		 {
-		 	 EV << "Using HoA instead of CoA... dropping datagram" << endl;
-			 delete datagram;
-			 numDropped++;
-			 return;
-		 }
-	 }
+     if ( rt->isMobileNode() )
+     {
+          // if the source address is the HoA and we have a CoA then drop the packet
+          // (address is topologically incorrect!)
+         if ( datagram->getSrcAddress() == ie->ipv6Data()->getMNHomeAddress() && !ie->ipv6Data()->getGlobalAddress(IPv6InterfaceData::CoA).isUnspecified() )
+         {
+              EV << "Using HoA instead of CoA... dropping datagram" << endl;
+             delete datagram;
+             numDropped++;
+             return;
+         }
+     }
 
 
     MACAddress macAddr = nd->resolveNeighbour(nextHop, interfaceId);
@@ -328,13 +328,13 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
         // as it can not be sent before the address' tentative status is cleared - CB
         if ( ie->ipv6Data()->isTentativeAddress(srcAddr) )
         {
-        	EV << "Source address is tentative - enqueueing datagram for later resubmission." << endl;
-        	ScheduledDatagram* sDgram = new ScheduledDatagram();
-        	sDgram->datagram = datagram;
-        	sDgram->ie = ie;
-        	sDgram->macAddr = macAddr;
-        	queue.insert(sDgram);
-        	return;
+            EV << "Source address is tentative - enqueueing datagram for later resubmission." << endl;
+            ScheduledDatagram* sDgram = new ScheduledDatagram();
+            sDgram->datagram = datagram;
+            sDgram->ie = ie;
+            sDgram->macAddr = macAddr;
+            queue.insert(sDgram);
+            return;
         }
     }
 
@@ -493,14 +493,14 @@ void IPv6::isLocalAddress(IPv6Datagram *datagram)
         EV << "This fragment completes the datagram.\n";
     }
 */
-	// #### 29.08.07 - CB
-	// check for extension headers
-	if ( ! processExtensionHeaders(datagram) )
-		// ext. header processing not yet finished
-		// datagram was sent to another module or dropped
-		// -> interrupt local delivery process
-		return;
-	// #### end CB
+    // #### 29.08.07 - CB
+    // check for extension headers
+    if ( ! processExtensionHeaders(datagram) )
+        // ext. header processing not yet finished
+        // datagram was sent to another module or dropped
+        // -> interrupt local delivery process
+        return;
+    // #### end CB
 
     // decapsulate and send on appropriate output gate
     int protocol = datagram->getTransportProtocol();
@@ -635,9 +635,9 @@ IPv6Datagram *IPv6::encapsulate(cPacket *transportPacket, InterfaceEntry *&destI
         if (rt->getInterfaceByAddress(src)==NULL)
         {
             //opp_error("Wrong source address %s in (%s)%s: no interface with such address",
-            //		src.str().c_str(), transportPacket->getClassName(), transportPacket->getFullName());
-        	delete datagram;
-        	return NULL;
+            //        src.str().c_str(), transportPacket->getClassName(), transportPacket->getFullName());
+            delete datagram;
+            return NULL;
         }
         datagram->setSrcAddress(src);
     }

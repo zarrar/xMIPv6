@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2007 
+// Copyright (C) 2007
 // Faqir Zarrar Yousaf
 // Communication Networks Institute, Dortmund University of Technology (TU Dortmund), Germany.
 // Christian Bauer
@@ -19,7 +19,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 
 
 cplusplus {{
@@ -59,12 +58,12 @@ packet BindingUpdate extends MobilityHeader
 {
     unsigned int lifetime;
     unsigned int sequence;
-    bool ackFlag;				//A-Flag (Acknowledge Flag)
-    bool homeRegistrationFlag;		//H-Flag (Home Registration Flag)
-    bool linkLocalAddressCompatibilityFlag;	//L-Flag (Link Local Address Compatibility Flag)
-    bool keyManagementFlag = false;		//K-Flag (Key Management Flag)
+    bool ackFlag;                //A-Flag (Acknowledge Flag)
+    bool homeRegistrationFlag;        //H-Flag (Home Registration Flag)
+    bool linkLocalAddressCompatibilityFlag;    //L-Flag (Link Local Address Compatibility Flag)
+    bool keyManagementFlag = false;        //K-Flag (Key Management Flag)
     //Mobility Options not defined
-    IPv6Address homeAddressMN;		//As BU is supposed to be sent with Home Address Option, therefore i make this part of BU Msg.
+    IPv6Address homeAddressMN;        //As BU is supposed to be sent with Home Address Option, therefore i make this part of BU Msg.
 
     // for CN communication; value different from 0 shows that it is used
     int bindingAuthorizationData = 0; // 28.08.07 - CB
@@ -100,7 +99,7 @@ packet BindingAcknowledgement extends MobilityHeader
     unsigned int sequenceNumber;
     unsigned int lifetime;
     bool keyManagementFlag = false;//K-Flag (Key Management Flag)
-	//Mobility Options not defined
+    //Mobility Options not defined
 
     // for CN communication; value different from 0 shows that it is used
     int bindingAuthorizationData = 0; // 28.08.07 - CB
@@ -121,7 +120,7 @@ packet BindingError extends MobilityHeader
 {
     int status enum(BEStatus);
     IPv6Address homeAddress;
-	//Mobility Options not defined
+    //Mobility Options not defined
 
 }
 
@@ -138,7 +137,7 @@ packet HomeTest extends MobilityHeader
 {
     unsigned int homeInitCookie;
     unsigned int homeKeyGenToken;
-	// home nonce index not modelled
+    // home nonce index not modelled
 }
 
 //=============Message definition of Care-of Test Init Message ==========
@@ -154,7 +153,7 @@ packet CareOfTest extends MobilityHeader
 {
     unsigned int careOfInitCookie;
     unsigned int careOfKeyGenToken;
-	// care-of nonce index not modelled
+    // care-of nonce index not modelled
 }
 
 

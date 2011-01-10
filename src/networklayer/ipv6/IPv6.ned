@@ -90,12 +90,12 @@ simple IPv6
         input ndIn;
         output ndOut;
         // tunneling gates - CB
-	    input upperTunnelingIn;
-	    output upperTunnelingOut;
-	    input lowerTunnelingIn;
-	    output lowerTunnelingOut;
+        input upperTunnelingIn;
+        output upperTunnelingOut;
+        input lowerTunnelingIn;
+        output lowerTunnelingOut;
         //the following gates are added by Zarrar Yousaf on 19.06.07
-	    input xMIPv6In;
-	    output xMIPv6Out;
+        input xMIPv6In;
+        output xMIPv6Out;
 }
 

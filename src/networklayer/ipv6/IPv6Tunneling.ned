@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2007 
+// Copyright (C) 2007
 // Christian Bauer
 // Institute of Communications and Navigation, German Aerospace Center (DLR)
 //
@@ -27,10 +27,10 @@ package inet.networklayer.ipv6;
 //
 simple IPv6Tunneling
 {
-	gates:
-		input upperLayerIn;
-		output upperLayerOut;
-		input linkLayerIn;
-		output linkLayerOut;
+    gates:
+        input upperLayerIn;
+        output upperLayerOut;
+        input linkLayerIn;
+        output linkLayerOut;
 }
 

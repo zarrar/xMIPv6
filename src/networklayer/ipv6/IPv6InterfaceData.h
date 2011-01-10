@@ -33,7 +33,7 @@
  * regarding type of address is not required (Zarrar Yousaf 20.07.07)
  */
 #include "RoutingTable6Access.h" //Zarrar Yousaf 20.07.07
-#include "RoutingTable6.h"	//Zarrar Yousaf 20.07.07
+#include "RoutingTable6.h"      //Zarrar Yousaf 20.07.07
 #include "IPv6NeighbourDiscovery.h" // CB 4.9.07
 
 #define IPv6_DEFAULT_DUPADDRDETECTTRANSMITS 1   // send NS once (RFC2462:Section 5.1)
@@ -109,10 +109,10 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
         short prefixLength;
         bool advOnLinkFlag;     //L-flag
         bool advAutonomousFlag; //A-flag
-        bool advRtrAddr; 	//R-flag (Zarrar Yousaf 09.07.07)
+        bool advRtrAddr;        //R-flag (Zarrar Yousaf 09.07.07)
         simtime_t advValidLifetime; // see comment above
         simtime_t advPreferredLifetime; // see comment above
-        IPv6Address prefix;	//default in RA's
+        IPv6Address prefix;     //default in RA's
         IPv6Address rtrAddress; //global scope, present when advRtrAddr is true (Zarrar Yousaf 09.07.07)
     };
 
@@ -669,24 +669,24 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
 
     void deduceAdvPrefix();
 
-	/**
-	 * 03.09.07
-	 * This updates the struct HomeNetwork Info with the MN's Home Address(HoA), the global
-	 * scope address of the MNs Home Agent (HA) and the home network prefix.
-	 */
-	void updateHomeNetworkInfo(const IPv6Address& hoa, const IPv6Address& ha, const IPv6Address& prefix, const int prefixLength);
+    /**
+     * 03.09.07
+     * This updates the struct HomeNetwork Info with the MN's Home Address(HoA), the global
+     * scope address of the MNs Home Agent (HA) and the home network prefix.
+     */
+    void updateHomeNetworkInfo(const IPv6Address& hoa, const IPv6Address& ha, const IPv6Address& prefix, const int prefixLength);
 
-	const IPv6Address& getHomeAgentAddress() const {return homeInfo.homeAgentAddr;} // Zarrar 03.09.07
-	const IPv6Address& getMNHomeAddress() const {return homeInfo.HoA;} // Zarrar 03.09.07
-	const IPv6Address& getMNPrefix() const {return homeInfo.prefix/*.prefix()*/;} // Zarrar 03.09.07
+    const IPv6Address& getHomeAgentAddress() const {return homeInfo.homeAgentAddr;} // Zarrar 03.09.07
+    const IPv6Address& getMNHomeAddress() const {return homeInfo.HoA;} // Zarrar 03.09.07
+    const IPv6Address& getMNPrefix() const {return homeInfo.prefix/*.prefix()*/;} // Zarrar 03.09.07
 
-	/**
-	 * Removes a CoA address from the interface if one exists.
-	 */
-	IPv6Address removeAddress(IPv6InterfaceData::AddressType type); // update 06.08.08 - CB
+    /**
+     * Removes a CoA address from the interface if one exists.
+     */
+    IPv6Address removeAddress(IPv6InterfaceData::AddressType type); // update 06.08.08 - CB
 
   protected:
-	RoutingTable6* rt6; // A pointer variable, specifically used to access the type of node (MN, HA, Router, CN). Used in info(). (Zarrar Yousaf 20.07.07)
+    RoutingTable6* rt6; // A pointer variable, specifically used to access the type of node (MN, HA, Router, CN). Used in info(). (Zarrar Yousaf 20.07.07)
 };
 
 #endif

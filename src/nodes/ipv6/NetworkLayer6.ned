@@ -79,7 +79,7 @@ module NetworkLayer6
         }
         iptunneling: IPv6Tunneling {
             parameters:
-		@display("p=204,254;i=block/network");
+                @display("p=204,254;i=block/network");
         }
     connections allowunconnected:  // FIXME remove 'nocheck'!
         // IPv6 to transport Layer

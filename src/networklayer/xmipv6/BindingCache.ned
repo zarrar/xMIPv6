@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2007 
+// Copyright (C) 2007
 // Faqir Zarrar Yousaf
 // Communication Networks Institute, Dortmund University of Technology (TU Dortmund), Germany.
 // Christian Bauer

@@ -146,7 +146,7 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
     virtual void assignRequiredNodeAddresses(InterfaceEntry *ie);
     // internal
     virtual void configureInterfaceFromXML(InterfaceEntry *ie, cXMLElement *cfg);
-    // internal 
+    // internal
     virtual void configureTunnelFromXML(cXMLElement* cfg);
 
   protected:
@@ -353,7 +353,7 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
 
     /**
      * Removes all routes from the routing table.
-     */	
+     */
     void removeAllRoutes();
 
     /**

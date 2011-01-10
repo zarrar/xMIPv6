@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2007 
+// Copyright (C) 2007
 // Faqir Zarrar Yousaf
 // Communication Networks Institute, Dortmund University of Technology (TU Dortmund), Germany.
 // Christian Bauer
@@ -27,14 +27,14 @@ package inet.networklayer.xmipv6;
 //
 simple xMIPv6
 {
-	parameters:
-		//string homePrefix;
-		//string CNAddress;
-		//string CNAddress1;
-		bool isHomeAgent;
-		bool isMobileNode;
-	gates:
-		input fromIPv6;
-		output toIPv6;
+    parameters:
+        //string homePrefix;
+        //string CNAddress;
+        //string CNAddress1;
+        bool isHomeAgent;
+        bool isMobileNode;
+    gates:
+        input fromIPv6;
+        output toIPv6;
 }
 

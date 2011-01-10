@@ -153,7 +153,7 @@ class INET_API IPv6 : public QueueBase
      * Determines the correct interface for the specified destination address.
      */
     bool determineOutputInterface(const IPv6Address& destAddress, IPv6Address& nextHop, int& interfaceId,
-    		IPv6Datagram* datagram);
+            IPv6Datagram* datagram);
 
     /**
      * Process the extension headers of the datagram.
