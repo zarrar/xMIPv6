@@ -107,7 +107,7 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
     struct AdvPrefix
     {
         short prefixLength;
-        bool advOnLinkFlag; 	//L-flag
+        bool advOnLinkFlag;     //L-flag
         bool advAutonomousFlag; //A-flag
         bool advRtrAddr; 	//R-flag (Zarrar Yousaf 09.07.07)
         simtime_t advValidLifetime; // see comment above
