@@ -24,11 +24,10 @@
 #include "RoutingTable6.h"
 #include "ICMPv6.h"
 #include "IPv6NeighbourDiscovery.h"
-#include "IPv6TunnelingAccess.h"
+#include "IPv6Tunneling.h"
 #include "IPv6Datagram.h"
 #include "IPv6FragBuf.h"
 #include "ProtocolMap.h"
-#include "xMIPv6.h"
 
 class ICMPv6Message;
 

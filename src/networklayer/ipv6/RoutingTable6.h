@@ -26,9 +26,6 @@
 #include "IPv6Address.h"
 #include "IInterfaceTable.h"
 #include "NotificationBoard.h"
-//added by zarrar on 12.06.07
-#include "MobilityHeader_m.h"
-#include "IPv6ExtensionHeaders_m.h"
 
 
 /**
