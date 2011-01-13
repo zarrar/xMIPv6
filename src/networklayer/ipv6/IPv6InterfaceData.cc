@@ -18,7 +18,10 @@
 
 #include <sstream>
 #include <algorithm>
+
 #include "IPv6InterfaceData.h"
+
+#include "RoutingTable6Access.h"
 
 //FIXME invoked changed() from state-changing methods, to trigger notification...
 

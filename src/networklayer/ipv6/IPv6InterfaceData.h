@@ -22,19 +22,16 @@
 
 
 #include <vector>
+
 #include <omnetpp.h>
-#include "INETDefs.h"
+
 #include "IPv6Address.h"
 #include "InterfaceEntry.h"
-/**
- * Including the RouitngTable6Access.h and RoutingTable6.h as node information, whether it is a MN, HA,
- * router or CN, is needed in the Ipv6InterfaceData::info(). The interface information displayed for the MN is
- * different, as the address gets tagged to be either of type HoA or CoA, from HA, router and CN, where info
- * regarding type of address is not required (Zarrar Yousaf 20.07.07)
- */
-#include "RoutingTable6Access.h" //Zarrar Yousaf 20.07.07
-#include "RoutingTable6.h"      //Zarrar Yousaf 20.07.07
-#include "IPv6NeighbourDiscovery.h" // CB 4.9.07
+
+
+//Forward declarations:
+class RoutingTable6;
+
 
 #define IPv6_DEFAULT_DUPADDRDETECTTRANSMITS 1   // send NS once (RFC2462:Section 5.1)
 

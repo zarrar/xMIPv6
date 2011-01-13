@@ -23,36 +23,23 @@
 #ifndef __XMIPV6_H__
 #define __XMIPV6_H__
 
-#include <stdio.h>
-#include <string.h>
 #include <vector>
-#include <set>
+#include <map>
+
 #include <omnetpp.h>
+
 #include "IPv6Address.h"
 #include "IPv6Datagram.h"
-#include "IPv6NDMessage_m.h"
 #include "IPv6ControlInfo.h"
-#include "IPv6InterfaceData.h"
-#include "IPv6ExtensionHeaders.h"
 #include "InterfaceEntry.h"
-#include "InterfaceTable.h"
-#include "InterfaceTableAccess.h"
 #include "RoutingTable6.h"
-#include "RoutingTable6Access.h"
-#include "IPv6NeighbourCache.h"
-#include "ICMPv6.h"
-#include "ICMPv6Access.h"
 #include "IPv6NeighbourDiscovery.h"
 //###### ADDITIONAL HEADERS ADDED BY ZARRAR YOUSAF @ CNI, UNI Dortmund on 23.05.07 ######
 #include "MobilityHeader.h"
-#include "IPAddressResolver.h"
-#include "IPv6NeighbourDiscoveryAccess.h"
 #include "BindingUpdateList.h"
-#include "BindingUpdateListAccess.h"
 #include "BindingCache.h"
-#include "BindingCacheAccess.h"
 // Added by CB
-#include "IPv6TunnelingAccess.h"
+#include "IPv6Tunneling.h"
 // 14.01.08 - CB
 #include "NotificationBoard.h"
 
@@ -91,7 +78,7 @@ class INET_API xMIPv6 : public cSimpleModule
     BindingUpdateList* bul; //31.07.07
     BindingCache* bc; //31.07.07
     IPv6Tunneling* tunneling; // 21.08.07 - CB
-    class INET_API IPv6NeighbourDiscovery* ipv6nd;
+    IPv6NeighbourDiscovery* ipv6nd;
 
     // statistic collection
     cOutVector statVectorBUtoHA, statVectorBUtoCN, statVectorBUtoMN;

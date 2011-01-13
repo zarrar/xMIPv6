@@ -21,7 +21,15 @@
  */
 
 #include "xMIPv6.h"
+
 #include <algorithm>
+
+#include "BindingCacheAccess.h"
+#include "BindingUpdateListAccess.h"
+#include "IPv6InterfaceData.h"
+#include "IPv6NeighbourDiscoveryAccess.h"
+#include "IPv6TunnelingAccess.h"
+
 
 #define MK_SEND_PERIODIC_BU            1
 // 18.09.07 - CB
