@@ -24,7 +24,6 @@
 #include "InterfaceTableAccess.h"
 #include "IPv6TunnelingAccess.h"
 
-
 Define_Module(RoutingTable6);
 
 

@@ -20,6 +20,8 @@
 
 #include "ICMPv6Access.h"
 #include "IPv6InterfaceData.h"
+#include "InterfaceTableAccess.h"
+#include "RoutingTable6Access.h"
 #include "xMIPv6Access.h"
 
 

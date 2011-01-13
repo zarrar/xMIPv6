@@ -18,7 +18,9 @@
 
 
 #include <omnetpp.h>
+
 #include "IPv6.h"
+
 #include "InterfaceTableAccess.h"
 #include "RoutingTable6Access.h"
 #include "ICMPv6Access.h"
@@ -31,7 +33,6 @@
 #include "MobilityHeader_m.h"
 #include "IPv6ExtensionHeaders.h"
 #include "IPv6InterfaceData.h"
-
 
 #define FRAGMENT_TIMEOUT 60   // 60 sec, from IPv6 RFC
 
