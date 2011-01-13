@@ -698,8 +698,8 @@ void xMIPv6::sendMobilityMessageToIPv6Module(cMessage *msg, const IPv6Address& d
 /*
 void xMIPv6::sendMobilityMessageToIPv6Module(cMessage *msg, const IPv6Address& destAddr)
 {
+    EV <<"\n<<======THIS IS THE (SMALL) ROUTINE FOR APPENDING CONTROL INFO TO MOBILITY MESSAGES =====>>\n";
 
-EV <<"\n<<======THIS IS THE (SMALL) ROUTINE FOR APPENDING CONTROL INFO TO MOBILITY MESSAGES =====>>\n";
     IPv6ControlInfo *controlInfo = new IPv6ControlInfo();
     controlInfo->setProtocol(IP_PROT_IPv6EXT_MOB); //specifies the next header value = 135 for the Mobility Header
     controlInfo->setDestAddr(destAddr);
@@ -712,7 +712,7 @@ EV <<"\n<<======THIS IS THE (SMALL) ROUTINE FOR APPENDING CONTROL INFO TO MOBILI
     EV << "controlInfo: DestAddr=" << controlInfo->destAddr()
        << "SrcAddr=" << controlInfo->srcAddr()
        << "InterfaceId=" << controlInfo->interfaceId() << endl;
-    /*
+
     // TODO solve the HA DAD problem in a different way
     if( dynamic_cast<BindingAcknowledgement*>(msg) && rt6->isHomeAgent() )
     {
@@ -725,7 +725,6 @@ EV <<"\n<<======THIS IS THE (SMALL) ROUTINE FOR APPENDING CONTROL INFO TO MOBILI
             return;
         }
     }
-
 
     send(msg,"toIPv6");
 }
@@ -1541,7 +1540,6 @@ void xMIPv6::initReturnRoutability(const IPv6Address& cnDest, InterfaceEntry* ie
         }
     //}
 
-
     if ( sendHoTI && !bul->recentlySentHOTI(cnDest, ie) )
     {
         // no entry for this CN available: create Home Test Init message to be sent via HA
@@ -1714,7 +1712,6 @@ void xMIPv6::sendTestInit(cMessage* msg)
     entry->nextScheduledTime = simTime() + MAX_TOKEN_LIFETIME * TEST_INIT_RETRANS_FACTOR;
     scheduleAt(entry->nextScheduledTime, entry->timer);
 
-
     EV << "Updated TestTransmitIfEntry and corresponding timer.\n";
 
     // TODO check for token expiry in BUL
@@ -1745,7 +1742,6 @@ void xMIPv6::sendTestInit(cMessage* msg)
     // and then we reschedule again for the time when the token expires
     entry->nextScheduledTime = simTime() + MAX_TOKEN_LIFETIME * TEST_INIT_RETRANS_FACTOR;
     scheduleAt(entry->nextScheduledTime, entry->timer);
-
 
     EV << "Updated TestTransmitIfEntry and corresponding timer.\n";
 
@@ -1907,7 +1903,6 @@ bool xMIPv6::validateHoTMessage(const HomeTest& HoT, const IPv6ControlInfo* ctrl
         return false; // no entry in BUL
     }
 
-
     /* The Binding Update List indicates that no home keygen token has
        been received yet. */
     // TODO reactivate this code as soon as token expiry is available in the BUL
@@ -1916,7 +1911,6 @@ bool xMIPv6::validateHoTMessage(const HomeTest& HoT, const IPv6ControlInfo* ctrl
         EV << "Invalid HoT: Home keygen token already exists." << endl;
         return false; // 0 is expected to indicate "undefined"
     }*/
-
 
     /* The Destination Address of the packet has the home address of the
        mobile node, and the packet has been received in a tunnel from the
@@ -1929,7 +1923,6 @@ bool xMIPv6::validateHoTMessage(const HomeTest& HoT, const IPv6ControlInfo* ctrl
         return false; // TODO check whether packet was received from HA tunnel
     }
 
-
     /* The Home Init Cookie field in the message matches the value stored
        in the Binding Update List. */
     if ( bulEntry->cookieHoTI != HoT.getHomeInitCookie() )
@@ -1937,7 +1930,6 @@ bool xMIPv6::validateHoTMessage(const HomeTest& HoT, const IPv6ControlInfo* ctrl
         EV << "Invalid HoT: Cookie value different from the stored one." << endl;
         return false;
     }
-
 
     // if we have come that far, the HoT is valid
     return true;
@@ -2013,7 +2005,6 @@ bool xMIPv6::validateCoTMessage(const CareOfTest& CoT, const IPv6ControlInfo* ct
         return false; // no RR procedure started for this entry
     }
 
-
     /* The Binding Update List indicates that no care-of keygen token has
        been received yet.. */
     // TODO reactive this code as soon as token expiry is available in the BUL
@@ -2022,7 +2013,6 @@ bool xMIPv6::validateCoTMessage(const CareOfTest& CoT, const IPv6ControlInfo* ct
         EV << "Invalid CoT: Already received a care-of keygen token." << endl;
         return false; // 0 is expected to indicate "undefined"
     }*/
-
 
     /* The Destination Address of the packet is the current care-of
        address of the mobile node. */
@@ -2033,7 +2023,6 @@ bool xMIPv6::validateCoTMessage(const CareOfTest& CoT, const IPv6ControlInfo* ct
         return false;
     }
 
-
     /* The Care-of Init Cookie field in the message matches the value
        stored in the Binding Update List. */
     if ( bulEntry->cookieCoTI != CoT.getCareOfInitCookie() )
@@ -2041,7 +2030,6 @@ bool xMIPv6::validateCoTMessage(const CareOfTest& CoT, const IPv6ControlInfo* ct
         EV << "Invalid CoT: Cookie value different from the stored one." << endl;
         return false;
     }
-
 
     // if we have come that far, the CoT is valid
     return true;
@@ -2145,7 +2133,6 @@ void xMIPv6::processType2RH(IPv6Datagram* datagram, IPv6RoutingHeader* rh)
         return;
     }
 
-
     bool validRH2 = false;
     IPv6Address& HoA = rh->getAddress(0);
 
@@ -2167,7 +2154,6 @@ void xMIPv6::processType2RH(IPv6Datagram* datagram, IPv6RoutingHeader* rh)
         delete datagram;
         return;
     }
-
 
     // probably datagram from CN to MN
 
@@ -2192,7 +2178,6 @@ void xMIPv6::processType2RH(IPv6Datagram* datagram, IPv6RoutingHeader* rh)
         EV << "Invalid RH2 - not a HoA. Dropping packet." << endl;
     }
 
-
     delete rh;
 
     if ( validRH2 )
@@ -2213,7 +2198,6 @@ bool xMIPv6::validateType2RH(const IPv6Datagram& datagram, const IPv6RoutingHead
         EV << "Invalid RH2 header: no HoA provided!" << endl;
         return false;
     }
-
 
     IPv6Address CoA = datagram.getSrcAddress();
     IPv6Address HoA = rh.getAddress(0);
@@ -2271,7 +2255,6 @@ void xMIPv6::processHoAOpt(IPv6Datagram* datagram, HomeAddressOption* hoaOpt)
         BEStatus status = UNKNOWN_BINDING_FOR_HOME_ADDRESS_DEST_OPTION;
         createAndSendBEMessage(CoA, status);
     }
-
 
     delete hoaOpt;
 
@@ -2546,7 +2529,6 @@ void xMIPv6::createBRRTimer(const IPv6Address& brDest, InterfaceEntry* ie, const
         transmitIfList.insert( std::make_pair(key, brIfEntry) );
     }
 
-
     brIfEntry->dest = brDest;
     brIfEntry->ifEntry = ie;
     brIfEntry->timer = brTriggerMsg;
@@ -2661,7 +2643,6 @@ void xMIPv6::createBULEntryExpiryTimer(BindingUpdateList::BindingUpdateListEntry
     EV << "Scheduled BUL expiry (" << entry->bindingExpiry << "s) for time " << scheduledTime << "s" << endl;
     // WAS SCHEDULED FOR EXPIRY, NOT 2 SECONDS BEFORE!?!?!?
 }
-
 
 /*BULExpiryIfEntry* xMIPv6::createBULEntryExpiryTimer(Key& key, IPv6Adress& dest, IPv6Adress& HoA, IPv6Adress& CoA, InterfaceEntry* ie, cMessage* bulExpiryMsg)
 {

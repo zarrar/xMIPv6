@@ -470,9 +470,9 @@ const IPv6Route *RoutingTable6::doLongestPrefixMatch(const IPv6Address& dest)
 
     // bugfix - CB
     RouteList::iterator it=routeList.begin();
-    while ( it!=routeList.end() )
+    while (it!=routeList.end())
     {
-        if ( dest.matches((*it)->getDestPrefix(),(*it)->getPrefixLength()) )
+        if (dest.matches((*it)->getDestPrefix(),(*it)->getPrefixLength()))
         {
             if (simTime() > (*it)->getExpiryTime() && (*it)->getExpiryTime() != 0)//since 0 represents infinity.
             {
@@ -524,8 +524,6 @@ void RoutingTable6::purgeDestCacheEntriesToNeighbour(const IPv6Address& nextHopA
         if (it->second.interfaceId==interfaceId && it->second.nextHopAddr==nextHopAddr)
         {
             // move the iterator past this element before removing it
-            //DestCache::iterator oldIt = it++;
-            //destCache.erase(oldIt);
             destCache.erase(it++);
         }
         else
