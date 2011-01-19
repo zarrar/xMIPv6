@@ -330,8 +330,10 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
             const IPv6Address& nsSrcAddr, const IPv6Address& nsDestAddr, InterfaceEntry *ie);
         virtual void sendSolicitedNA(IPv6NeighbourSolicitation *ns,
             IPv6ControlInfo *nsCtrlInfo, InterfaceEntry *ie);
+
     public: // update 12.9.07 - CB
         virtual void sendUnsolicitedNA(InterfaceEntry *ie);
+
     protected: // update 12.9.07 - CB
         virtual void processNAPacket(IPv6NeighbourAdvertisement *na, IPv6ControlInfo *naCtrlInfo);
         virtual bool validateNAPacket(IPv6NeighbourAdvertisement *na, IPv6ControlInfo *naCtrlInfo);

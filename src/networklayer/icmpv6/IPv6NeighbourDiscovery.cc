@@ -1275,13 +1275,7 @@ void IPv6NeighbourDiscovery::processRAPacket(IPv6RouterAdvertisement *ra,
             IPv6NDPrefixInformation& prefixInfo = ra->getPrefixInformation(i);
             if (prefixInfo.getAutoAddressConfFlag() == true)//If auto addr conf is set
             {
-                // code update - overloaded function is not required anymore
-                // 3.9.07 - CB
-
-                //if ( ! rt6->isMobileNode() ) // If auto addr conf is set and node is not MN (Zarrar Yousaf 20.07.07)
-                    //processRAPrefixInfoForAddrAutoConf(prefixInfo, ie); // We process prefix Info and form an addr for all nodes except MN
-                //else // but if the node is a MN
-                    processRAPrefixInfoForAddrAutoConf( prefixInfo, ie, ra->getHomeAgentFlag() ); // then calling the overloaded function for address configuration. The address conf for MN is different from other nodes as it needs to classify the newly formed address as HoA or CoA, depending on the status of the H-Flag. (Zarrar Yousaf 20.07.07)
+                processRAPrefixInfoForAddrAutoConf(prefixInfo, ie, ra->getHomeAgentFlag() ); // then calling the overloaded function for address configuration. The address conf for MN is different from other nodes as it needs to classify the newly formed address as HoA or CoA, depending on the status of the H-Flag. (Zarrar Yousaf 20.07.07)
             }
 
             // When in foreign network(s), the MN needs info about its HA address and its own Home Address (HoA), when sending BU to HA and CN(s). Therefore while in the home network I intialise struct HomeNetworkInfo{} with HoA and HA address, which will eventually be used by the MN while sending BUs from within visit networks. (Zarrar Yousaf 12.07.07)
@@ -1318,7 +1312,6 @@ void IPv6NeighbourDiscovery::processRAForRouterUpdates(IPv6RouterAdvertisement *
     the list, and initialize its invalidation timer value from the advertisement's
     Router Lifetime field.*/
     Neighbour *neighbour = neighbourCache.lookup(raSrcAddr, ifID);
-
 
     // update 3.9.07 - CB // if (neighbour == NULL && (ra->homeAgentFlag()==true)) //the RA is from a Router acting as a Home Agent as well
     if (neighbour == NULL)
@@ -1676,34 +1669,12 @@ void IPv6NeighbourDiscovery::sendPeriodicRA(cMessage *msg)
     reset to a uniformly-distributed random value between the interface's
     configured MinRtrAdvInterval and MaxRtrAdvInterval; expiration of the timer
     causes the next advertisement to be sent and a new random value to be chosen.*/
-// /*
+
     simtime_t interval;
     EV<<"\n+=+=+= MIPv6 Feature: "<< rt6->hasMIPv6Support()<<" +=+=+=\n";
 
-    // update 13.9.07 - CB
-    /*
-    //if ( rt6->hasMIPv6Support() )
-    //if(mobileIPv6Enabled()) //If MIPv6 Supoprt is enabled then set the min and max of RtrAdvInterval to 0.03 and 0.07 seconds as per Section 7.5 RFC 3775
-    // if(!(mipv6-> mIPv6Enabled()))
-    {
-        EV<<"\n+=+=+= Getting min RA Interval from omneptp.ini =+=+=\n";
-        ie->ipv6Data()->setMinRtrAdvInterval(IPv6NeighbourDiscovery::getMinRAInterval()); //should be 0.07 for MIPv6 Support
-        EV<<"\n+=+=+= Getting max RA Interval from omneptp.ini =+=+=\n";
-        ie->ipv6Data()->setMaxRtrAdvInterval(IPv6NeighbourDiscovery::getMaxRAInterval()); //should be 0.03 for MIPv6 Support
-        //simtime_t lb = ie->ipv6Data()->getMinRtrAdvInterval();
-        //simtime_t ub = ie->ipv6Data()->getMaxRtrAdvInterval();
-        //EV<<"\n +=+=+= The random calculated interval is bounded by[" << lb << "," << ub << "] +=+=+=\n";
-        //interval  = uniform(lb,ub);
-         //EV<<"\n +=+=+= The random calculated interval is: "<< interval<<" +=+=+=\n";
-        }
-    // */
-    //     simtime_t interval
-    //else
-    //{
-    //EV<<"\n+=+=+= Using default min/max RA Interval from IPv6 Interface Data =+=+=\n";
-    interval = uniform(ie->ipv6Data()->getMinRtrAdvInterval(),ie->ipv6Data()->getMaxRtrAdvInterval());
+    interval = uniform(ie->ipv6Data()->getMinRtrAdvInterval(), ie->ipv6Data()->getMaxRtrAdvInterval());
     EV<<"\n +=+=+= The random calculated interval is: "<< interval<<" +=+=+=\n";
-    //}
 
     nextScheduledTime = simTime() + interval;
 
@@ -1792,7 +1763,7 @@ IPv6NeighbourSolicitation *IPv6NeighbourDiscovery::createAndSendNSPacket(
     MACAddress myMacAddr = ie->getMacAddress();
 
     //Construct a Neighbour Solicitation message
-    IPv6NeighbourSolicitation *ns = new IPv6NeighbourSolicitation("NSpacket!");
+    IPv6NeighbourSolicitation *ns = new IPv6NeighbourSolicitation("NSpacket");
     ns->setType(ICMPv6_NEIGHBOUR_SOL);
 
     //Neighbour Solicitation Specific Information
