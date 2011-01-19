@@ -98,11 +98,13 @@ void IPv6::endService(cPacket *msg)
             delete sDgram;
         }
     }
-    else if (msg->getArrivalGate()->isName("transportIn") ||
-       (msg->getArrivalGate()->isName("upperTunnelingIn")) || // for tunneling support-CB
-       (msg->getArrivalGate()->isName("ndIn") && dynamic_cast<IPv6NDMessage*>(msg)) ||
-       (msg->getArrivalGate()->isName("icmpIn") && dynamic_cast<ICMPv6Message*>(msg)) || //Added this for ICMP msgs from ICMP module-WEI
-       (msg->getArrivalGate()->isName("xMIPv6In") && dynamic_cast<MobilityHeader*>(msg))) // Zarrar
+    else
+    if (msg->getArrivalGate()->isName("transportIn")
+       || (msg->getArrivalGate()->isName("upperTunnelingIn")) // for tunneling support-CB
+       || (msg->getArrivalGate()->isName("ndIn") && dynamic_cast<IPv6NDMessage*>(msg))
+       || (msg->getArrivalGate()->isName("icmpIn") && dynamic_cast<ICMPv6Message*>(msg)) //Added this for ICMP msgs from ICMP module-WEI
+       || (msg->getArrivalGate()->isName("xMIPv6In") && dynamic_cast<MobilityHeader*>(msg)) // Zarrar
+       )
     {
         // packet from upper layers, tunnel link-layer output or ND: encapsulate and send out
         handleMessageFromHL( msg );

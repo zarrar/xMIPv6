@@ -28,9 +28,9 @@ std::ostream& operator<<(std::ostream& os, const IPv6NeighbourCache::Key& e)
 std::ostream& operator<<(std::ostream& os, const IPv6NeighbourCache::Neighbour& e)
 {
     os << e.macAddress;
-    if (e.isRouter) os << " [ ROUTER : ";
-    if (e.isDefaultRouter) os << "DefaultRtr : ";
-    if(e.isHomeAgent) os <<"Home Agent ]";
+    if (e.isRouter) os << " ROUTER";
+    if (e.isDefaultRouter) os << "DefaultRtr";
+    if(e.isHomeAgent) os <<" Home Agent";
     os << " " << IPv6NeighbourCache::stateName(e.reachabilityState);
     os << " reachabilityExp:"  << e.reachabilityExpires;
     if (e.numProbesSent) os << " probesSent:" << e.numProbesSent;
