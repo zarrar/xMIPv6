@@ -127,9 +127,9 @@ std::string IPv6InterfaceData::info() const
 
     // the following is for MIPv6 support
     // 4.9.07 - Zarrar, CB
-       if ( rt6->isMobileNode() )
-           os << "\tHome Network Info: " << " HoA="<< homeInfo.HoA << ", HA=" << homeInfo.homeAgentAddr
-              << ", home prefix=" << homeInfo.prefix/*.prefix()*/ << "\n";
+    if ( rt6->isMobileNode() )
+        os << "\tHome Network Info: " << " HoA="<< homeInfo.HoA << ", HA=" << homeInfo.homeAgentAddr
+           << ", home prefix=" << homeInfo.prefix/*.prefix()*/ << "\n";
 
     if (rtrVars.advSendAdvertisements)
     {
@@ -280,6 +280,9 @@ bool IPv6InterfaceData::addrLess(const AddressData& a, const AddressData& b)
         return !a.tentative; // tentative=false is better
     if (a.address.getScope()!=b.address.getScope())
         return a.address.getScope()>b.address.getScope(); // bigger scope is better
+
+    // FIXME  check a.address.isGlobal() != b.address.isGlobal()
+
     if ( a.address.isGlobal() && b.address.isGlobal() && a.addrType != b.addrType)
         return a.addrType == CoA; // HoA is better than CoA, 24.9.07 - CB
     return (a.expiryTime==0 && b.expiryTime!=0) || a.expiryTime>b.expiryTime;  // longer expiry time is better
