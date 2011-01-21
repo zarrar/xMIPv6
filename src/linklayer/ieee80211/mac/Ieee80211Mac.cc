@@ -16,8 +16,10 @@
 //
 
 #include <algorithm>
-#include "opp_utils.h"
+
 #include "Ieee80211Mac.h"
+
+#include "opp_utils.h"
 #include "RadioState.h"
 #include "IInterfaceTable.h"
 #include "InterfaceTableAccess.h"
