@@ -1407,7 +1407,9 @@ void SCTPAssociation::process_TIMEOUT_INIT_REXMIT(SCTPEventCode& event)
     {
         case SCTP_S_COOKIE_WAIT: retransmitInit(); break;
         case SCTP_S_COOKIE_ECHOED: retransmitCookieEcho(); break;
-        default:     opp_error("Internal error: INIT-REXMIT timer expired while in state %s", stateName(fsm->getState()));
+        default:
+            throw cRuntimeError(this, "Internal error: INIT-REXMIT timer expired while in state %s",
+                    stateName(fsm->getState()));
     }
     state->initRexmitTimeout *= 2;
     if (state->initRexmitTimeout > SCTP_TIMEOUT_INIT_REXMIT_MAX)
@@ -1615,7 +1617,7 @@ int32 SCTPAssociation::process_TIMEOUT_RTX(SCTPPathVariables* path)
 
     }
     else {
-        if (path->pathErrorCount >= (uint32)sctpMain->par("pathMaxRetrans")) {
+        if (path->pathErrorCount > (uint32)sctpMain->par("pathMaxRetrans")) {
             bool notifyUlp = false;
 
             sctpEV3 << "pathErrorCount exceeded\n";

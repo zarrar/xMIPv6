@@ -19,16 +19,18 @@
 #ifndef __INET_ETHER_MAC_BASE_H
 #define __INET_ETHER_MAC_BASE_H
 
-#include <omnetpp.h>
 #include "INETDefs.h"
-#include "Ethernet.h"
-#include "EtherFrame_m.h"
-#include "InterfaceEntry.h"
+
+#include "INotifiable.h"
+#include "MACAddress.h"
 #include "TxNotifDetails.h"
-#include "NotificationBoard.h"
 
-
+// Forward declarations:
+class EtherFrame;
+class EtherTraffic;
+class InterfaceEntry;
 class IPassiveQueue;
+class NotificationBoard;
 
 /**
  * Base class for ethernet MAC implementations.
@@ -46,6 +48,7 @@ class INET_API EtherMACBase : public cSimpleModule, public INotifiable, public c
         BACKOFF_STATE,
         PAUSE_STATE
     };
+
     enum MACReceiveState
     {
         RX_IDLE_STATE = 1,
@@ -95,11 +98,18 @@ class INET_API EtherMACBase : public cSimpleModule, public INotifiable, public c
       public:
         InnerQueue * innerQueue;
         IPassiveQueue *extQueue;
+
         MacQueue() : innerQueue(NULL), extQueue(NULL) {};
+
         ~MacQueue() { delete innerQueue; };
+
         bool isEmpty();
-        void setExternalQueue(IPassiveQueue *_extQueue) { delete innerQueue; innerQueue = NULL; extQueue = _extQueue; };
-        void setInternalQueue(const char* name=NULL, int limit=0) { delete innerQueue; innerQueue = new InnerQueue(name, limit); extQueue = NULL; };
+
+        void setExternalQueue(IPassiveQueue *_extQueue)
+                { delete innerQueue; innerQueue = NULL; extQueue = _extQueue; };
+
+        void setInternalQueue(const char* name=NULL, int limit=0)
+                { delete innerQueue; innerQueue = new InnerQueue(name, limit); extQueue = NULL; };
     };
 
     MACAddress address;             // own MAC address
@@ -231,3 +241,4 @@ class INET_API EtherMACBase : public cSimpleModule, public INotifiable, public c
 };
 
 #endif
+

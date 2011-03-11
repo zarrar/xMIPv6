@@ -30,7 +30,7 @@ module IGMP
         @display("i=block/cogwheel_s");
     gates:
         input localIn @labels(IPControlInfo/up);  // delivered IGMP packets
-        output sendOut @labels(IPControlInfo/down); // to IP
+        output sendOut @labels(IPControlInfo/down); // to ~IP
     connections allowunconnected:
 }
 

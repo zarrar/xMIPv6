@@ -19,16 +19,17 @@
 
 package inet.linklayer.ppp;
 
-import inet.networklayer.queue.OutputQueue;
+import inet.networklayer.queue.IOutputQueue;
+import inet.linklayer.IWiredNic;
 
 
 //
-// \PPP interface. Complements the PPP module with an output queue
+// PPP interface. Complements the ~PPP module with an output queue
 // for QoS and RED support.
 //
-// @see PPPInterfaceNoQueue
+// @see ~PPPInterfaceNoQueue
 //
-module PPPInterface
+module PPPInterface like IWiredNic
 {
     parameters:
         string queueType = default("DropTailQueue");
@@ -38,7 +39,7 @@ module PPPInterface
         output netwOut;
         inout phys @labels(PPPFrame);
     submodules:
-        queue: <queueType> like OutputQueue {
+        queue: <queueType> like IOutputQueue {
             parameters:
                 @display("p=60,85;q=l2queue");
         }

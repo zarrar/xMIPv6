@@ -17,32 +17,32 @@
 //
 // Edited with OMNeT++ Academic/Noncommercial Edition.
 //
-
-
-
-
 package inet.nodes.ipv6;
 
-import inet.networklayer.icmpv6.ICMPv6;
-import inet.networklayer.icmpv6.IPv6NeighbourDiscovery;
-import inet.networklayer.ipv6.IPv6;
-import inet.networklayer.ipv6.IPv6ErrorHandling;
 import inet.networklayer.ipv6.IPv6Tunneling;
-
+import inet.networklayer.ipv6.IPv6ErrorHandling;
+import inet.networklayer.ipv6.IPv6;
+import inet.networklayer.icmpv6.IPv6NeighbourDiscovery;
+import inet.networklayer.icmpv6.ICMPv6;
+import inet.base.IHook;
 
 //
 // Represents an IPv6 network layer (L3).
 //
-// The module has ports to connect to a higher layer (TCP,UDP) and
+// The module has ports to connect to a higher layer (TCP, UDP) and
 // several network interfaces.
 //
 module NetworkLayer6
 {
     parameters:
         @display("i=block/fork");
+        string outputHookType = default("Nop");
+        string inputHookType = default("Nop");
     gates:
         input ifIn[] @labels(IPv6Datagram);
         output ifOut[] @labels(IPv6Datagram);
+        input sctpIn @labels(IPControlInfo/down,SCTPPacket);
+        output sctpOut @labels(IPControlInfo/up,SCTPPacket);
         input tcpIn @labels(TCPSegment,IPv6ControlInfo/down);
         output tcpOut @labels(TCPSegment,IPv6ControlInfo/up);
         input udpIn @labels(UDPPacket,IPv6ControlInfo/down);
@@ -53,21 +53,20 @@ module NetworkLayer6
         output ospfOut @labels(IPv6ControlInfo/up);
         input pingIn;
         output pingOut;
-        output errorOut;
     submodules:
         ipv6: IPv6 {
             parameters:
-                protocolMapping = "6:0,17:1,46:2,89:3";
+                protocolMapping = "6:0,17:1,46:2,89:3,132:4"; // TODO register 132 as sctp in ipv6 code
                 @display("p=84,129");
             gates:
-                transportIn[4];
-                transportOut[4];
+                transportIn[5];
+                transportOut[5];
                 queueIn[sizeof(ifIn)];
                 queueOut[sizeof(ifIn)];
         }
         icmpv6: ICMPv6 {
             parameters:
-                @display("p=208,79");
+                @display("p=189,79");
         }
         ipv6ErrorHandling: IPv6ErrorHandling {
             parameters:
@@ -75,7 +74,15 @@ module NetworkLayer6
         }
         neighbourDiscovery: IPv6NeighbourDiscovery {
             parameters:
-                @display("p=208,171");
+                @display("p=239,154");
+        }
+        // a placeholder in the traffic coming from the network interfaces 
+        inputHook[sizeof(ifIn)]: <inputHookType> like IHook {
+            @display("p=84,247");
+        }
+        // a placeholder if traffic going to the network interfaces
+        outputHook[sizeof(ifOut)]: <outputHookType> like IHook {
+            @display("p=227,247");
         }
         iptunneling: IPv6Tunneling {
             parameters:
@@ -94,6 +101,9 @@ module NetworkLayer6
 
         ipv6.transportOut[3] --> { @display("m=n"); } --> ospfOut;
         ipv6.transportIn[3] <-- { @display("m=n"); } <-- ospfIn;
+
+        ipv6.transportOut[4] --> { @display("m=n"); } --> sctpOut;
+        ipv6.transportIn[4] <-- { @display("m=n"); } <-- sctpIn;
 
         // IPv6 to IPv6 Tunneling
         iptunneling.upperLayerIn <-- ipv6.upperTunnelingOut;
@@ -117,9 +127,13 @@ module NetworkLayer6
         ipv6.ndIn <-- neighbourDiscovery.ipv6Out;
 
         // IPv6 to L2
+        for i=0..sizeof(ifIn)-1 {
+            ifIn[i] --> inputHook[i].in;
+            inputHook[i].out --> ipv6.queueIn[i];
+        }
         for i=0..sizeof(ifOut)-1 {
-            ifIn[i] --> { @display("m=s"); } --> ipv6.queueIn[i];
-            ifOut[i] <-- { @display("m=s"); } <-- ipv6.queueOut[i];
+            ipv6.queueOut[i] --> outputHook[i].in;
+            outputHook[i].out --> ifOut[i];
         }
 }
 

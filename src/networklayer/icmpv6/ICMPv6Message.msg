@@ -26,7 +26,6 @@ cplusplus {{
 //# TODO consolidate this file's contents with ICMPMessage.msg
 //
 
-
 enum ICMPv6Type
 {
 

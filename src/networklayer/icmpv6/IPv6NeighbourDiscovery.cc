@@ -475,7 +475,8 @@ void IPv6NeighbourDiscovery::processNUDTimeout(cMessage *timeoutMsg)
     Neighbour *nce = (Neighbour *) timeoutMsg->getContextPointer();
     const Key *nceKey = nce->nceKey;
     if ( nceKey == NULL )
-        opp_error("The nceKey is NULL at nce->MAC=%s, isRouter=%d", nce->macAddress.str().c_str(), nce->isRouter);
+        throw cRuntimeError(this, "The nceKey is NULL at nce->MAC=%s, isRouter=%d",
+                nce->macAddress.str().c_str(), nce->isRouter);
 
     InterfaceEntry *ie = ift->getInterfaceById(nceKey->interfaceID);
 
@@ -1878,8 +1879,10 @@ void IPv6NeighbourDiscovery::processNSForTentativeAddress(IPv6NeighbourSolicitat
         if (rt6->isLocalAddress(nsSrcAddr))
             EV << "NS comes from myself. Ignoring NS\n";
         else
+        {
             EV << "NS comes from another node. Address is duplicate!\n";
             error("Duplicate Address Detected! Manual Attention Required!");
+        }
     }
     else if (nsSrcAddr.isUnicast())
     {

@@ -18,14 +18,84 @@
 
 #include "TCPSegment.h"
 
+
+Register_Class(Sack);
+
+bool Sack::empty() const
+{
+    return (start_var == 0 && end_var == 0);
+}
+
+bool Sack::contains(const Sack & other) const
+{
+    return seqLE(start_var, other.start_var) && seqLE(other.end_var, end_var);
+}
+
+void Sack::clear()
+{
+    start_var = end_var = 0;
+}
+
+void Sack::setSegment(unsigned int start_par, unsigned int end_par)
+{
+    setStart(start_par);
+    setEnd(end_par);
+}
+
+std::string Sack::str() const
+{
+    std::stringstream out;
+
+    out << "[" << start_var << ".." << end_var << ")";
+    return out.str();
+}
+
 Register_Class(TCPSegment);
 
+void TCPSegment::truncateSegment(uint32 firstSeqNo, uint32 endSeqNo)
+{
+    ASSERT(payloadLength_var > 0);
+
+    // must have common part:
+#ifndef NDEBUG
+    if (!(seqLess(sequenceNo_var, endSeqNo) && seqLess(firstSeqNo, sequenceNo_var + payloadLength_var)))
+    {
+        throw cRuntimeError(this, "truncateSegment(%u,%u) called on [%u, %u) segment\n",
+                firstSeqNo, endSeqNo, sequenceNo_var, sequenceNo_var + payloadLength_var);
+    }
+#endif
+
+    unsigned int truncleft = 0;
+    unsigned int truncright = 0;
+
+    if (seqLess(sequenceNo_var, firstSeqNo))
+    {
+        truncleft = firstSeqNo - sequenceNo_var;
+    }
+
+    if (seqGreater(sequenceNo_var + payloadLength_var, endSeqNo))
+    {
+        truncright = sequenceNo_var + payloadLength_var - endSeqNo;
+    }
+
+    truncateData(truncleft, truncright);
+}
+
+unsigned short TCPSegment::getOptionsArrayLength()
+{
+    unsigned short usedLength = 0;
+
+    for (uint i = 0; i < getOptionsArraySize(); i++)
+        usedLength += getOptions(i).getLength();
+
+    return usedLength;
+}
 
 TCPSegment& TCPSegment::operator=(const TCPSegment& other)
 {
     TCPSegment_Base::operator=(other);
 
-    for (std::list<TCPPayloadMessage>::const_iterator i=other.payloadList.begin(); i!=other.payloadList.end(); ++i)
+    for (PayloadList::const_iterator i = other.payloadList.begin(); i != other.payloadList.end(); ++i)
         addPayloadMessage(i->msg->dup(), i->endSequenceNo);
 
     return *this;
@@ -41,42 +111,31 @@ TCPSegment::~TCPSegment()
     }
 }
 
-void TCPSegment::truncateSegment(uint32 firstSeqNo, uint32 endSeqNo)
+void TCPSegment::truncateData(unsigned int truncleft, unsigned int truncright)
 {
-    if(seqLess(sequenceNo_var, firstSeqNo))
+    ASSERT(payloadLength_var >= truncleft + truncright);
+
+    if (0 != byteArray_var.getDataArraySize())
+    	byteArray_var.truncateData(truncleft, truncright);
+
+    while (!payloadList.empty() && (payloadList.front().endSequenceNo - sequenceNo_var) <= truncleft)
     {
-        unsigned int truncleft = firstSeqNo - sequenceNo_var;
-
-        while (!payloadList.empty())
-        {
-            if (seqGE(payloadList.front().endSequenceNo, firstSeqNo))
-                break;
-
-            cPacket *msg = payloadList.front().msg;
-            payloadList.pop_front();
-            dropAndDelete(msg);
-        }
-
-        payloadLength_var -= truncleft;
-        sequenceNo_var = firstSeqNo;
-        //TODO truncate data correctly if need
+        cPacket *msg = payloadList.front().msg;
+        payloadList.pop_front();
+        dropAndDelete(msg);
     }
 
-    if(seqGreater(sequenceNo_var+payloadLength_var, endSeqNo))
+
+    sequenceNo_var += truncleft;
+    payloadLength_var -= truncleft + truncright;
+
+
+    // truncate payload data correctly
+    while (!payloadList.empty() && (payloadList.back().endSequenceNo - sequenceNo_var) > payloadLength_var)
     {
-        unsigned int truncright = sequenceNo_var + payloadLength_var - endSeqNo;
-
-        while (!payloadList.empty())
-        {
-            if (seqLE(payloadList.back().endSequenceNo, endSeqNo))
-                break;
-
-            cPacket *msg = payloadList.back().msg;
-            payloadList.pop_back();
-            dropAndDelete(msg);
-        }
-        payloadLength_var -= truncright;
-        //TODO truncate data correctly if need
+        cPacket *msg = payloadList.back().msg;
+        payloadList.pop_back();
+        dropAndDelete(msg);
     }
 }
 
@@ -104,7 +163,7 @@ unsigned int TCPSegment::getPayloadArraySize() const
 
 TCPPayloadMessage& TCPSegment::getPayload(unsigned int k)
 {
-    std::list<TCPPayloadMessage>::iterator i = payloadList.begin();
+    PayloadList::iterator i = payloadList.begin();
     while (k>0 && i!=payloadList.end())
         (++i, --k);
     return *i;

@@ -19,20 +19,23 @@
 
 package inet.linklayer.ppp;
 
+import inet.linklayer.IWiredNic;
+
+
 //
-// \PPP implementation.
+// PPP implementation.
 //
-// Packets are encapsulated in PPPFrame.
+// Packets are encapsulated in ~PPPFrame.
 //
-// \PPP is a complex protocol with strong support for link configuration
+// PPP is a complex protocol with strong support for link configuration
 // and maintenance. This model ignores those details, and only performs
 // simple encapsulation/decapsulation and queuing.
 //
-// In routers, \PPP relies on an external queue module (see OutputQueue)
+// In routers, PPP relies on an external queue module (see ~IOutputQueue)
 // to model finite buffer, implement QoS and/or RED, and requests packets
 // from this external queue one-by-one.
 //
-// In hosts, no such queue is used, so \PPP contains an internal
+// In hosts, no such queue is used, so PPP contains an internal
 // queue named txQueue to queue up packets waiting for transmission.
 // Conceptually, txQueue is of infinite size, but for better diagnostics
 // one can specify a hard limit in the txQueueLimit parameter -- if this is
@@ -41,16 +44,16 @@ package inet.linklayer.ppp;
 // There is no buffering done on received packets -- they are just decapsulated
 // and sent up immediately.
 //
-// @see PPPInterface, OutputQueue, PPPFrame
+// @see ~PPPInterface, ~IOutputQueue, ~PPPFrame
 //
-simple PPP
+simple PPP like IWiredNic
 {
     parameters:
         int txQueueLimit = default(1000);  // only used if queueModule==""; zero means infinite
         string queueModule = default("");  // name of external (QoS,RED,etc) queue module
         int mtu = default(4470);
         @display("i=block/rxtx");
-        @statistic[txState](title="TX State"; record=timeavg,vector;interpolationmode=sample-hold);
+        @statistic[txState](title="TX State"; record=timeavg,vector; interpolationmode=sample-hold);
         @statistic[txPkBytes](title="TX packet bytes"; record=sum,count,vector);
         @statistic[rxPkBytesOk](title="RX packet bytes OK"; record=sum,count,vector);
         @statistic[droppedPkBytesBitError](title="Dropped packet bytes bit error"; record=sum,count,vector);

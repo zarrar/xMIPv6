@@ -23,7 +23,7 @@ package inet.applications.tcpapp;
 // you'll probably have to customize it in C++ according to
 // what you want to send and when you want to send it.
 //
-// Compatible with both IPv4 and IPv6.
+// Compatible with both IPv4 (~IP) and ~IPv6.
 //
 simple TCPSpoof
 {

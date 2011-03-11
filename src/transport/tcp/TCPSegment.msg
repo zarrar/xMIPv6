@@ -20,11 +20,12 @@
 cplusplus {{
 #include <iostream>
 #include "INETDefs.h"
+#include "ByteArray.h"
 
     // default TCP header length: 20 bytes
     #define TCP_HEADER_OCTETS  20    // without options
 
-    // maximum TCP header length (base+options): 60 = 4 * 15 bytes
+    // maximum TCP header length (base + options): 60 = 4 * 15 bytes
     const unsigned int TCP_MAX_HEADER_OCTETS = 60;
 
     // maximum allowed sack entry number, if no other options are used
@@ -41,14 +42,14 @@ cplusplus {{
     inline void doUnpacking(cCommBuffer *b, cPacketPtr& msg) {msg->parsimUnpack(b);}
 }}
 
-
 struct cPacketPtr;
 
+class noncobject ByteArray;
 
 struct TCPPayloadMessage
 {
     unsigned int endSequenceNo;
-    cPacketPtr msg;
+    cPacketPtr msg;      // pointer to payload msg
 }
 
 //
@@ -100,6 +101,7 @@ enum TCPOptionNumbers
 //
 class Sack
 {
+    @customize(true);
     unsigned int start;     // start seq no. of sack block
     unsigned int end;       // end seq no. of sack block
 }
@@ -113,9 +115,9 @@ class TCPOption
 }
 
 //
-// Represents a \TCP segment, to be used with the TCP module.
+// Represents a TCP segment, to be used with the ~TCP module.
 //
-// \TCP header fields not explicitly modelled: work on going
+// TCP header fields not explicitly modelled: work on going
 // - Data Offset (number of 32 bit words in the header): represented
 //   by cMessage::length().
 // - Reserved (reserved for future use)
@@ -138,7 +140,7 @@ packet TCPSegment
     // Sequence Number: first sequence number of the first data octet
     // in the respective segment (except if SYN is set; then the the
     // seq. number is the initial seq. number (ISS) and the first data
-    // octet is ISS+1)
+    // octet is ISS + 1)
     unsigned int sequenceNo;
 
     // Acknowledgement Number: if ACK flag is set, this field contains
@@ -147,7 +149,7 @@ packet TCPSegment
     unsigned int ackNo;
 
     // TCP Header Length - default: 20 bytes
-    // if header options are used the headerLength is greater then 20 bytes (default)
+    // if header options are used the headerLength is greater than 20 bytes (default)
     unsigned short headerLength = TCP_HEADER_OCTETS; // TCP_HEADER_OCTETS = 20
 
     bool urgBit; // URG: urgent pointer field significant if set
@@ -173,20 +175,23 @@ packet TCPSegment
     // Currently only EOL, NOP, MSS, WS, SACK_PERMITTED, SACK and TS are implemented
     TCPOption options[];
 
-    // Payload length in octets (not an actual \TCP header field).
+    // Payload length in octets (not an actual TCP header field).
     // This may not always be the same as encapsulatedPacket()->getByteLength();
     // e.g. when simulating a virtual data stream there's no encapsulated
     // packet at all.
     unsigned long payloadLength;
 
     // Message objects (cMessages) that travel in this segment as data.
-    // (This field is used only with TCPMsgBasedSendQueue/RcvQueue and
-    // not with TCPVirtualBytesSendQueue/RcvQueue.)  Every message object
-    // is put into the TCPSegment that would (in real life) carry its
-    // last octet. That is, if message object 'msg' with length=100 bytes
-    // occupies sequence number range 10000..10099, it will travel in the
-    // TCPSegment which carries the octet 10099. This way it is easily achieved
+    // This field is used only when the ~TCPDataTransferMode is TCP_TRANSFER_OBJECT.
+    // Every message object is put into the TCPSegment that would (in real life)
+    // carry its first octet. That is, if message object 'msg' with length=100 bytes
+    // occupies stream offset number range 10000..10099, it will travel in the
+    // TCPSegment which carries the octet 10000. This way it is easily achieved
     // that the receiving TCP passes up the message object to its client
     // when the last byte of the message has arrived.
     abstract TCPPayloadMessage payload[];
+
+    // Message bytes that travel in this segment as data.
+    // This field is used only when the ~TCPDataTransferMode is TCP_TRANSFER_BYTESTREAM.
+    ByteArray byteArray;
 }

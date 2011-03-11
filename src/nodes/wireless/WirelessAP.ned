@@ -27,12 +27,14 @@ import inet.linklayer.ieee80211.Ieee80211NicAP;
 
 //
 // Models a 802.11 Access Point. It can be used in conjunction with
-// WirelessHost, or any other host model containing WirelessNicSTA.
+// ~WirelessHost, or any other host model containing WirelessNicSTA.
 //
-// @see WirelessAP, WirelessAPSimplified, WirelessAPWithEth, WirelessAPWithEthSimplified
-// @see WirelessHost, WirelessHostSimplified
-// @see MobileHost, MFMobileHost
+// @see ~WirelessAP, ~WirelessAPSimplified, ~WirelessAPWithEth, ~WirelessAPWithEthSimplified
+// @see ~WirelessHost, ~WirelessHostSimplified
+// @see ~MobileHost, ~MFMobileHost
 //
+// @deprecated: use AccessPoint instead 
+// 
 module WirelessAP
 {
     parameters:
@@ -46,7 +48,7 @@ module WirelessAP
             parameters:
                 @display("p=79,74");
         }
-        wlan: Ieee80211NicAP { // see also Ieee80211NicAPSimplified
+        wlan: Ieee80211NicAP { // see also ~Ieee80211NicAPSimplified
             parameters:
                 @display("p=110,179;q=queue");
         }

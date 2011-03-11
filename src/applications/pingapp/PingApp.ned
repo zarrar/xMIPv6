@@ -34,9 +34,9 @@ package inet.applications.pingapp;
 // out-of-sequence arrival. So the number of really lost pings will be
 // "lost" minus "out-of-order" (assuming there's no duplicate or bogus reply).
 //
-// Uses PingPayload as payload for the ICMP(v6) Echo Request/Reply packets.
+// Uses ~PingPayload as payload for the ICMP(v6) Echo Request/Reply packets.
 //
-// @see PingPayload, ICMP, ICMPv6Core
+// @see ~PingPayload, ~ICMP, ~ICMPv6Core
 //
 simple PingApp
 {

@@ -17,31 +17,33 @@
 
 package inet.nodes.wireless;
 
-import inet.applications.pingapp.PingApp;
-import inet.applications.tcpapp.TCPApp;
-import inet.applications.udpapp.UDPApp;
-import inet.base.NotificationBoard;
-import inet.linklayer.ethernet.EthernetInterface;
-import inet.linklayer.ieee80211.Ieee80211NicSTASimplified;
-import inet.linklayer.ppp.PPPInterface;
-import inet.mobility.BasicMobility;
-import inet.networklayer.common.InterfaceTable;
-import inet.networklayer.ipv4.RoutingTable;
-import inet.nodes.inet.NetworkLayer;
-import inet.transport.tcp.TCP;
 import inet.transport.udp.UDP;
+import inet.transport.tcp.TCP;
+import inet.nodes.inet.NetworkLayer;
+import inet.networklayer.ipv4.RoutingTable;
+import inet.networklayer.common.InterfaceTable;
+import inet.linklayer.ppp.PPPInterface;
+import inet.linklayer.ieee80211.Ieee80211NicSTASimplified;
+import inet.linklayer.ethernet.EthernetInterface;
+import inet.base.mobility.IMobility;
+import inet.base.NotificationBoard;
+import inet.applications.udpapp.IUDPApp;
+import inet.applications.tcpapp.ITCPApp;
+import inet.applications.pingapp.PingApp;
 
 
 //
 // Models a host with one wireless (802.11b) card in infrastructure mode,
 // but using a simplified NIC that does not support handovers.
-// This module is basically a StandardHost with an Ieee80211NicSTASimplified
-// added. It should be used in conjunction with WirelessAPSimplified,
-// or any other AP model which contains Ieee80211NicAPSimplified.
+// This module is basically a ~StandardHost with an ~Ieee80211NicSTASimplified
+// added. It should be used in conjunction with ~WirelessAPSimplified,
+// or any other AP model which contains ~Ieee80211NicAPSimplified.
 //
-// @see WirelessAP, WirelessAPSimplified, WirelessAPWithEth, WirelessAPWithEthSimplified
-// @see WirelessHost, WirelessHostSimplified
-// @see MobileHost, MFMobileHost
+// @see ~WirelessAP, ~WirelessAPSimplified, ~WirelessAPWithEth, ~WirelessAPWithEthSimplified
+// @see ~WirelessHost, ~WirelessHostSimplified
+// @see ~MobileHost, ~MFMobileHost
+//
+// @deprecated: use StandardHost with numRadios=1 and wlanNicType=Ieee80211eNicSTASimplified instead
 //
 module WirelessHostSimplified
 {
@@ -51,8 +53,8 @@ module WirelessHostSimplified
         @display("i=device/wifilaptop");
         int numTcpApps = default(0);
         int numUdpApps = default(0);
-        string tcpAppType = default("");
-        string udpAppType = default("");
+        // string tcpAppType = default(""); // Obsolete
+        // string udpAppType = default(""); // Obsolete
         bool IPForward = default(false);
         string routingFile = default("");
         string mobilityType = default("NullMobility");
@@ -76,7 +78,7 @@ module WirelessHostSimplified
                 routingFile = routingFile;
                 @display("p=60,230");
         }
-        tcpApp[numTcpApps]: <tcpAppType> like TCPApp {
+        tcpApp[numTcpApps]: <> like ITCPApp {
             parameters:
                 @display("p=163,67");
         }
@@ -84,7 +86,7 @@ module WirelessHostSimplified
             parameters:
                 @display("p=163,154");
         }
-        udpApp[numUdpApps]: <udpAppType> like UDPApp {
+        udpApp[numUdpApps]: <> like IUDPApp {
             parameters:
                 @display("p=272,67");
         }
@@ -116,7 +118,7 @@ module WirelessHostSimplified
             parameters:
                 @display("p=120,350;q=queue");
         }
-        mobility: <mobilityType> like BasicMobility {
+        mobility: <mobilityType> like IMobility {
             parameters:
                 @display("p=58,301");
         }

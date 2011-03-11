@@ -1,7 +1,7 @@
 //***************************************************************************
 //* file:        Mac80211.ned
 //*
-//* author:      Marc Löbbers
+//* author:      Marc Lï¿½bbers
 //*
 //* copyright:   (C) 2004 Telecommunication Networks Group (TKN) at
 //*              Technische Universitaet Berlin, Germany.
@@ -23,7 +23,7 @@ package inet.linklayer.mf80211.macLayer;
 
 //
 // Implementation of the 802.11b MAC protocol. This module is intended
-// to be used in combination with the SnrEval80211 and Decider80211
+// to be used in combination with the ~SnrEval80211 and ~Decider80211
 // modules as physical layer.
 //
 // This module supports ad-hoc mode only (does not generate or handle

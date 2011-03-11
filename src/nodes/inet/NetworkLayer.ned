@@ -16,19 +16,18 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-
-
 package inet.nodes.inet;
 
-import inet.networklayer.arp.ARP;
-import inet.networklayer.ipv4.ErrorHandling;
-import inet.networklayer.ipv4.ICMP;
-import inet.networklayer.ipv4.IGMP;
 import inet.networklayer.ipv4.IP;
+import inet.networklayer.ipv4.IGMP;
+import inet.networklayer.ipv4.ICMP;
+import inet.networklayer.ipv4.ErrorHandling;
+import inet.networklayer.arp.ARP;
+import inet.base.IHook;
 
 
 //
-// Network layer of an \IP node.
+// Network layer of an IP node.
 //
 // Interfaces to transport layer: TCP, UDP, echo/ping, RSVP
 //
@@ -36,6 +35,9 @@ module NetworkLayer
 {
     parameters:
         bool proxyARP = default(true);
+        string outputHookType = default("Nop");
+        string inputHookType = default("Nop");
+
         @display("i=block/fork");
     gates:
         input ifIn[] @labels(IPDatagram);
@@ -69,7 +71,7 @@ module NetworkLayer
         arp: ARP {
             parameters:
                 proxyARP = proxyARP;
-                @display("p=163,206;q=pendingQueue");
+                @display("p=202,142;q=pendingQueue");
             gates:
                 nicOut[sizeof(ifOut)];
         }
@@ -79,11 +81,20 @@ module NetworkLayer
         }
         igmp: IGMP {
             parameters:
-                @display("p=160,122");
+                @display("p=85,30");
         }
         errorHandling: ErrorHandling {
             parameters:
                 @display("p=239,63");
+        }
+
+        // a placeholder in the traffic coming from the network interfaces 
+        inputHook[sizeof(ifIn)]: <inputHookType> like IHook {
+            @display("p=85,254");
+        }
+        // a placeholder if traffic going to the network interfaces
+        outputHook[sizeof(ifOut)]: <outputHookType> like IHook {
+            @display("p=202,232");
         }
     connections allowunconnected:
         // transport Layer
@@ -115,10 +126,13 @@ module NetworkLayer
 
         ip.queueOut --> arp.ipIn;
 
-        // L2 interfaces to IP and from ARP
+        for i=0..sizeof(ifIn)-1 {
+            ifIn[i] --> inputHook[i].in;
+            inputHook[i].out --> ip.queueIn[i];
+        }
         for i=0..sizeof(ifOut)-1 {
-            ifIn[i] --> { @display("m=s"); } --> ip.queueIn[i];
-            ifOut[i] <-- { @display("m=s"); } <-- arp.nicOut[i];
+            arp.nicOut[i] --> outputHook[i].in;
+            outputHook[i].out --> ifOut[i];
         }
 }
 

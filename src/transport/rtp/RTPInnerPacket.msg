@@ -29,7 +29,7 @@ class noncobject IPAddress;
 
 //
 // This enumeration is a list of all possibly types of
-// an RTPInnerPacket.
+// an ~RTPInnerPacket.
 //
 enum RTP_INP_TYPE
 {
@@ -53,48 +53,48 @@ enum RTP_INP_TYPE
 };
 
 //
-// This class is used for communication between submodules of the rtp layer module.
+// This class is used for communication between submodules of the RTP layer module.
 //
 packet RTPInnerPacket
 {
     @customize(true);  // see the generated C++ header for more info
 
-    // The type of this RTPInnerPacket.
+    // The type of this ~RTPInnerPacket.
     short type enum(RTP_INP_TYPE) = RTP_INP_UNDEF;
 
-    // The CNAME stored in this RTPInnerPacket.
+    // The CNAME
     string commonName;
 
-    // The mtu stored in this RTPInnerPacket.
+    // The MTU
     int mtu;
 
-    // The bandwidth stored in this RTPInnerPacket.
+    // The Bandwidth
     int bandwidth;
 
-    // The rtcp percentage stored in this RTPInnerPacket.
+    // The RTCP percentage
     int rtcpPercentage;
 
-    // The address stored this RTPInnerPacket.
+    // The IP address
     IPAddress address = IPAddress::UNSPECIFIED_ADDRESS;
 
-    // The port stored this RTPInnerPacket.
+    // The port number
     int port = PORT_UNDEF;
 
-    // The ssrc identifier stored in this RTPInnerPacket.
+    // The SSRC identifier
     uint32 ssrc;
 
-    // The payload type stored in this RTPInnerPacket.
+    // The payload type
     int payloadType;
 
-    // The file name stored in this RTPInnerPacket.
+    // The file name
     string fileName;
 
-    // The clock rate stored in this RTPInnerPacket.
+    // The clock rate
     int clockRate;
 
-    // The rtp time stamp base stored in this RTPInnerPacket.
+    // The RTP time stamp base
     int timeStampBase;
 
-    // The rtp sequence number base stored in this RTPInnerPacket.
+    // The RTP sequence number base
     int sequenceNumberBase;
 };

@@ -18,15 +18,17 @@
 
 package inet.mobility;
 
+import inet.base.mobility.IMobility;
+
 //
 // This is a linear mobility model with speed, angle and acceleration parameters.
 // Angle only changes when the mobile node hits a wall: then it reflects
 // off the wall at the same angle.
 //
-// @see ChannelControl
+// @see ~ChannelControl
 // @author Emin Ilker Cetinbas
 //
-simple LinearMobility like BasicMobility
+simple LinearMobility like IMobility
 {
     parameters:
         bool debug = default(false); // debug switch

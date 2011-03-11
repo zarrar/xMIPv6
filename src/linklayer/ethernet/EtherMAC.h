@@ -18,12 +18,8 @@
 #ifndef __INET_ETHERMAC_H
 #define __INET_ETHERMAC_H
 
-#include <stdio.h>
-#include <string.h>
-#include <omnetpp.h>
 #include "INETDefs.h"
-#include "Ethernet.h"
-#include "EtherFrame_m.h"
+
 #include "EtherMACBase.h"
 
 
@@ -57,11 +53,9 @@ class INET_API EtherMAC : public EtherMACBase
     // statistics
     simtime_t totalCollisionTime;      // total duration of collisions on channel
     simtime_t totalSuccessfulRxTxTime; // total duration of successful transmissions on channel
-    simtime_t channelBusySince;        // needed for computing totalCollisionTime/totalSuccessfulRxTxTime
+    simtime_t channelBusySince;  // needed for computing totalCollisionTime/totalSuccessfulRxTxTime
     unsigned long numCollisions;       // collisions (NOT number of collided frames!) sensed
     unsigned long numBackoffs;         // number of retransmissions
-//    cOutVector numCollisionsVector;
-//    cOutVector numBackoffsVector;
     simsignal_t collisionSignal;
     simsignal_t backoffSignal;
 
@@ -87,5 +81,4 @@ class INET_API EtherMAC : public EtherMACBase
 };
 
 #endif
-
 

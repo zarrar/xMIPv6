@@ -16,47 +16,62 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-
 package inet.nodes.inet;
 
-import inet.applications.pingapp.PingApp;
-import inet.applications.sctpapp.SCTPApp;
-import inet.applications.tcpapp.TCPApp;
-import inet.applications.udpapp.UDPApp;
-import inet.base.NotificationBoard;
-import inet.linklayer.ethernet.EthernetInterface;
-import inet.linklayer.ext.ExtInterface;
-import inet.linklayer.ppp.PPPInterface;
-import inet.networklayer.common.InterfaceTable;
-import inet.networklayer.ipv4.RoutingTable;
-import inet.transport.sctp.SCTP;
-import inet.transport.tcp.ITCP;
-import inet.transport.udp.UDP;
 import inet.util.NAMTraceWriter;
-import inet.util.TCPDump;
+import inet.transport.udp.UDP;
+import inet.transport.tcp.ITCP;
+import inet.transport.sctp.SCTP;
+import inet.networklayer.ipv4.RoutingTable;
+import inet.networklayer.common.InterfaceTable;
+import inet.linklayer.ext.ExtInterface;
+import inet.linklayer.IWirelessNic;
+import inet.linklayer.IWiredNic;
+import inet.base.mobility.IMobility;
+import inet.base.NotificationBoard;
+import inet.applications.udpapp.IUDPApp;
+import inet.applications.tcpapp.ITCPApp;
+import inet.applications.sctpapp.ISCTPApp;
+import inet.applications.pingapp.PingApp;
 
 
 //
-// \IP host with SCTP, TCP, UDP layers and applications.
+// IP host with SCTP, TCP, UDP layers and applications.
+// IP forwarding is disabled by default (see IPForward).
+// - Can be connected via ethernet interface to other nodes using
+//   the ethg gate. By default full duplex connections are supported
+//   only (twisted pair). Set ethNicType to "EthernetInterface" for
+//   a full/half duplex CSMA/CD implementation (coaxial cable)
+// - By default contains no wireless cards, however it can be configured
+//   by the numRadios parameter. Wirless card type is configured by the
+//   wlanNicType parameter.
+// - Also external interfaces can be configured for HW in the loop simulation
+//   using the numExtInterfaces
 //
 module StandardHost
 {
     parameters:
         @node();
-        @labels(node,ethernet-node);
+        @labels(node,ethernet-node,wireless-node);
         @display("i=device/pc2");
         int numTcpApps = default(0);
         int numUdpApps = default(0);
         int numSctpApps = default(0);
-        string tcpAppType = default("n/a");
-        string udpAppType = default("n/a");
-        string sctpAppType = default("n/a");
-        string tcpType = default("TCP");  // tcp implementation (e.g. TCP, TCP_old, TCP_NSC)
+        // string tcpAppType = default(""); // Obsolete!
+        // string udpAppType = default(""); // Obsolete!
+        // string sctpAppType = default(""); // Obsolete!
+        string tcpType = default("TCP");  // tcp implementation (e.g. ~TCP, ~TCP_lwip, ~TCP_NSC)
+        int numExtInterfaces = default(0);
+        int numRadios = default(0);               // the number of radios in the standard host. by default no wireless
+        string mobilityType = default("NoMobility"); // how the node moves around. MUST be specified if the host contains a wireless interface. see: inet.mobility
+        string wlanNicType = default("Ieee80211NicSTA"); // used wireless interfaces. see:  inet.linklayer.ieee80211 or other modules implementing ~IWirelessNic
+        string ethNicType = default("EthernetInterfaceFullDuplex"); // used ethernet interfaces. see: ~EtherInterface (full/half duplex) or ~EtherInterface2 for simplified, full duplex only
+        string pppNicType = default("PPPInterface"); // used ppp interfaces. see: ~PPPInerface and ~PPPInterfaceNoQueue
         bool IPForward = default(false);
         int namid = default(-1);
         string routingFile = default("");
-        int numExtInterfaces = default(0);
     gates:
+        input radioIn[numRadios] @directIn;
         inout pppg[] @labels(PPPFrame-conn);
         inout ethg[] @labels(EtherFrame-conn);
     submodules:
@@ -80,7 +95,11 @@ module StandardHost
                 routingFile = routingFile;
                 @display("p=57,214");
         }
-        tcpApp[numTcpApps]: <tcpAppType> like TCPApp {
+        mobility: <mobilityType> like IMobility {
+            parameters:
+                @display("p=57,368");
+        }
+        tcpApp[numTcpApps]: <> like ITCPApp {
             parameters:
                 @display("p=186,54");
         }
@@ -88,7 +107,7 @@ module StandardHost
             parameters:
                 @display("p=186,141");
         }
-        udpApp[numUdpApps]: <udpAppType> like UDPApp {
+        udpApp[numUdpApps]: <> like IUDPApp {
             parameters:
                 @display("p=336,54");
         }
@@ -96,7 +115,7 @@ module StandardHost
             parameters:
                 @display("p=336,141");
         }
-        sctpApp[numSctpApps]: <sctpAppType> like SCTPApp {
+        sctpApp[numSctpApps]: <> like ISCTPApp {
             parameters:
                 @display("p=501,54");
         }
@@ -111,30 +130,22 @@ module StandardHost
             parameters:
                 proxyARP = false;
                 @display("p=336,230;q=queue");
-            gates:
-                ifIn[sizeof(pppg)+sizeof(ethg)+numExtInterfaces];
-                ifOut[sizeof(pppg)+sizeof(ethg)+numExtInterfaces];
         }
-        ppp[sizeof(pppg)]: PPPInterface {
+        wlan[numRadios]: <wlanNicType> like IWirelessNic {
             parameters:
-                @display("p=186,390,row,90;q=txQueue");
+                @display("p=132,390;q=queue");
         }
-        eth[sizeof(ethg)]: EthernetInterface {
+        eth[sizeof(ethg)]: <ethNicType> like IWiredNic {
             parameters:
-                @display("p=336,390,row,90;q=txQueue");
+                @display("p=250,390,row,90;q=txQueue");
+        }
+        ppp[sizeof(pppg)]: <pppNicType> like IWiredNic {
+            parameters:
+                @display("p=369,390,row,90;q=txQueue");
         }
         ext[numExtInterfaces]: ExtInterface {
             parameters:
                 @display("p=501,390,row,90;q=txQueue;i=block/ifcard");
-        }
-        tcpdump: TCPDump {
-            parameters:
-                @display("p=336,302;i=abstract/cache_s");
-            gates:
-                ifIn[sizeof(pppg)+sizeof(ethg)+numExtInterfaces];
-                in2[sizeof(pppg)+sizeof(ethg)+numExtInterfaces];
-                ifOut[sizeof(pppg)+sizeof(ethg)+numExtInterfaces];
-                out2[sizeof(pppg)+sizeof(ethg)+numExtInterfaces];
         }
     connections allowunconnected:
         for i=0..numTcpApps-1 {
@@ -164,26 +175,26 @@ module StandardHost
         networkLayer.pingIn <-- pingApp.pingOut;
 
         // connections to network outside
-        for i=0..sizeof(pppg)-1 {
-            pppg[i] <--> ppp[i].phys;
-            ppp[i].netwOut --> tcpdump.ifIn[i];
-            tcpdump.out2[i] --> networkLayer.ifIn[i];
-            ppp[i].netwIn <-- tcpdump.ifOut[i];
-            tcpdump.in2[i] <-- networkLayer.ifOut[i];
+        for i=0..sizeof(radioIn)-1 {
+            radioIn[i] --> wlan[i].radioIn;
+            wlan[i].uppergateOut --> networkLayer.ifIn++;
+            wlan[i].uppergateIn <-- networkLayer.ifOut++;
         }
 
         for i=0..sizeof(ethg)-1 {
             ethg[i] <--> eth[i].phys;
-            eth[i].netwOut --> tcpdump.ifIn[sizeof(pppg)+i];
-            tcpdump.out2[sizeof(pppg)+i] --> networkLayer.ifIn[sizeof(pppg)+i];
-            eth[i].netwIn <-- tcpdump.ifOut[sizeof(pppg)+i];
-            tcpdump.in2[sizeof(pppg)+i] <-- networkLayer.ifOut[sizeof(pppg)+i];
+            eth[i].netwOut --> networkLayer.ifIn++;
+            eth[i].netwIn <-- networkLayer.ifOut++;
+        }
+
+        for i=0..sizeof(pppg)-1 {
+            pppg[i] <--> ppp[i].phys;
+            ppp[i].netwOut --> networkLayer.ifIn++;
+            ppp[i].netwIn <-- networkLayer.ifOut++;
         }
 
         for i=0..numExtInterfaces-1 {
-            ext[i].netwOut --> tcpdump.ifIn[sizeof(pppg)+sizeof(ethg)+i];
-            tcpdump.out2[sizeof(pppg)+sizeof(ethg)+i] --> networkLayer.ifIn[sizeof(pppg)+sizeof(ethg)+i];
-            ext[i].netwIn <-- tcpdump.ifOut[sizeof(pppg)+sizeof(ethg)+i];
-            tcpdump.in2[sizeof(pppg)+sizeof(ethg)+i] <-- networkLayer.ifOut[sizeof(pppg)+sizeof(ethg)+i];
+            ext[i].netwOut --> networkLayer.ifIn++;
+            ext[i].netwIn <-- networkLayer.ifOut++;
         }
 }

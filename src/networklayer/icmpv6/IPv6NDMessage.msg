@@ -65,7 +65,7 @@ class MIPv6HAInformation
 // Neighbour Discovery for IPv6.
 // RFC 2461
 //
-// ICMP fields inherited from ICMPv6Message:
+// ICMP fields inherited from ~ICMPv6Message:
 //    - Type
 //
 // ICMP fields not implemented:

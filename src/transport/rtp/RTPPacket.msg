@@ -21,49 +21,49 @@ cplusplus {{
 #include "INETDefs.h"
 }}
 
-//
-// This class represents an rtp data packet. Real data can either
-// be encapsulated, or simulated by adding length.
-//
-// The following rtp header fields exist but aren't used:
-// padding, extension, csrcCount. The csrcList can't be used
-// because csrcCount is always 0.
-//
 enum RTPPacketEnums
 {
     RTPPACKET_FIX_HEADERLENGTH = 12;
 }
 
+//
+// This class represents an RTP data packet. Real data can either
+// be encapsulated, or simulated by adding length.
+//
+// The following RTP header fields exist but aren't used:
+// padding, extension, csrcCount. The csrcList can't be used
+// because csrcCount is always 0.
+//
 packet RTPPacket
 {
     @customize(true);  // see the generated C++ header for more info
 
     byteLength = RTPPACKET_FIX_HEADERLENGTH;  // 12-byte fixed header
 
-    // The rtp version of this RTPPacket.
+    // The rtp version of this ~RTPPacket.
     uint8 version = 2;
 
-    // Set to 1 if padding is used in this RTPPacket, 0 otherwise.
+    // Set to 1 if padding is used in this ~RTPPacket, 0 otherwise.
     // This implementation doesn't use padding bytes, so it is always 0.
     bool padding = false;
 
-    // Set to 1, if this RTPPacket contains an rtp header extension, 0 otherwise.
+    // Set to 1, if this ~RTPPacket contains an rtp header extension, 0 otherwise.
     // This implementation doesn't support rtp header extensions, so it is always 0.
     bool extension = false;
 
-    // The marker of this RTPPacket.
+    // The marker.
     bool marker = false;
 
-    // The type of payload carried in this RTPPacket.
+    // The type of payload carried in this ~RTPPacket.
     int8 payloadType;
 
-    // The sequence number of this RTPPacket.
+    // The sequence number of this ~RTPPacket.
     uint16 sequenceNumber;
 
-    // The rtp time stamp of this RTPPacket.
+    // The rtp time stamp of this ~RTPPacket.
     uint32 timeStamp;
 
-    // The ssrc identifier of the creator of this RTPPacket.
+    // The ssrc identifier of the creator of this ~RTPPacket.
     uint32 ssrc;
 
     // no mixers, no contributing sources

@@ -19,15 +19,15 @@
 
 package inet.linklayer.ppp;
 
-import inet.linklayer.INetworkInterface;
+import inet.linklayer.IWiredNic;
 
 
 //
-// \PPP interface. Assumes inifinite queue.
+// PPP interface. Assumes infinite queue.
 //
-// @see PPPInterface
+// @see ~PPPInterface
 //
-module PPPInterfaceNoQueue like INetworkInterface
+module PPPInterfaceNoQueue like IWiredNic
 {
     parameters:
         @display("i=block/ifcard");

@@ -184,14 +184,15 @@ void RoutingTable6::updateDisplayString()
     if (!ev.isGUI())
         return;
 
-    char buf[80];
-    sprintf(buf, "%d routes\n%d destcache entries", getNumRoutes(), destCache.size());
-    getDisplayString().setTagArg("t",0,buf);
+    std::stringstream os;
+
+    os << getNumRoutes() << " routes\n" << destCache.size() << " destcache entries";
+    getDisplayString().setTagArg("t", 0, os.str().c_str());
 }
 
 void RoutingTable6::handleMessage(cMessage *msg)
 {
-    opp_error("This module doesn't process messages");
+    throw cRuntimeError(this, "This module doesn't process messages");
 }
 
 void RoutingTable6::receiveChangeNotification(int category, const cPolymorphic *details)
@@ -289,7 +290,7 @@ static const char *getRequiredAttr(cXMLElement *elem, const char *attrName)
 {
     const char *s = elem->getAttribute(attrName);
     if (!s)
-        opp_error("element <%s> misses required attribute %s at %s",
+        throw cRuntimeError("element <%s> misses required attribute %s at %s",
                   elem->getTagName(), attrName, elem->getSourceLocation());
     return s;
 }
@@ -345,7 +346,7 @@ void RoutingTable6::configureInterfaceFromXML(InterfaceEntry *ie, cXMLElement *c
         // 0 should be treated as infinity
         int pfxLen;
         if (!prefix.prefix.tryParseAddrWithPrefix(node->getNodeValue(),pfxLen))
-            opp_error("element <%s> at %s: wrong IPv6Address/prefix syntax %s",
+            throw cRuntimeError(this, "element <%s> at %s: wrong IPv6Address/prefix syntax %s",
                       node->getTagName(), node->getSourceLocation(), node->getNodeValue());
 
         prefix.prefixLength = pfxLen;

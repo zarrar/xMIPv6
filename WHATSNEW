@@ -1,6 +1,173 @@
 Recent changes in the INET Framework
 ====================================
 
+INET-1.99.0
+----------
+This is a beta of a major feature release, with new models and also incompatible
+changes. If you are upgrading from an earlier INET version, expect to have
+to revise your existing omnetpp.ini files and possibly NED/C++ files as well.
+
+The most significant changes:
+
+- replaced cOutVector and recordScalar() with signal-based statistics
+  recording in most places (see @statistic properties in NED files)
+
+- support for more than one type of tcpApp and udpApp in StandardHost
+  (elimination of tcpAppType/udpAppType parameters)
+
+- Interfaces renamed to start with letter "I". BasicMobility -> IMobility, 
+  TCPApp->ITCPApp, UDPApp->IUDPApp, SCTPApp->ISCTPApp, MacRelayUnit->IMacRelayUnit,
+  Radio->IRadio, Ieee80211Mgmt->IIeee80211Mgmt, OutputQueue->IOutputQueue,
+  INetworkInterface->IWiredNic
+
+- added new AdhocHost for basic node types used in adhoc networks. Supports
+  mobility and multiple wireless radios. It obsoletes the MFMobileHost
+  (use AdhocHost with wlanNicType=Nic80211) and MobileHost (use AdhocHost
+  with default parameters)
+
+- added new AccessPoint module with support for mobility, relaying between
+  wireless and ethernet ports and cofigurable wireless, ethernet and relay type.
+  obsoletes: WirelessAP and WirelessAPWithEth (use AccessPoint), WirelessAPSimplified and 
+  WirelessAPWithEthSimplified (use AccessPoint with wlanNicType=Ieee80211NicAPSimplified),
+  WirelessHost (use StandardHost with numRadios=1) and WirelessHostSimplified (use 
+  StandardHost with numRadios=1 and wlanNicType=Ieee80211NicSTASimplified)
+
+- in StandardHost and Router it is now possible to configure what wireless, ethernet, ppp
+  or external interfaces are used. Wired interfaces must implement IWiredNic while wireless 
+  modules implement IWirlessNic. Mobility type and number of wireless cards (default=0)
+  can be also configured via parameters. The use of interfaces obsoletes several older modules
+  which differed only in interface types (like WirelessHost or ExtRouter)
+
+- enhanced Router to support external interfaces, ppp, wireless, ethernet etc. This module
+  is similar to StandarHost except it does not contain the transport layer and application layer
+  protocols (plus IPForwarding is enabled by default). Obsoletes the ExtRouter module (use Router) 
+
+- in NetworkLayer and NetworkLayer6 added dummy modules implementing IHook interface 
+  that can be inserted at the bottom of network layer (above link layer). 
+  This allows to insert thruput metering, packet drop and duplication modules etc. 
+  without modifying the module. New modules implementing IHook: 
+  ThruputMeter, DropsGenerator, DuplicatesGenerator and Nop.
+  use **.networkLayer.outputHookType = "ThruputMeter" to configure it. (use inputHookType
+  for incoming traffic)
+
+- added global ARP optimization. If you are not interested in modeling the traffic of ARP protocol, 
+  it is now possible to use a much faster implementation by specifying (by Alfonso Ariza Quintana): 
+  **.networkLayer.arp.globalARP=true
+
+- multi radios per host (multi channel) are supported by StandardHost, AdhocHost and Router if
+  ChannelControllerExtended is used in the network.
+
+- point-to-point Ethernet links can now use normal DatarateChannels
+  (EtherMAC's txrate parameter was removed)
+
+- added a new TCP model that directly wraps the lwIP stack (without
+  NetworkSimulationCradle (NSC) overhead)
+
+- TCP transfer mode (bytecount / cPacket / bytestream) is now
+  controlled by the app via a control info field (the sendQueueClass/
+  receiveQueueClass TCP module parameters were removed); this works across
+  all three TCP models (native OMNeT++, NSC, lwIP)
+
+- experimental support for application-imposed TCP flow control (i.e.
+  implementation of "socket read" calls; this is not yet in the
+  "integration" branch)
+
+- brand new BGPv4 model, contributed by Helene Lageber
+
+- OSPF model: mass renaming and code formatting to make code conform
+  to the rest of INET in coding style
+
+- fix: Ieee80211DataFrame was missing the LLC SNAP header, so all
+  802.11 data frames were simulated with 8 bytes less length than
+  they should have (this will slightly modify simulation results)
+
+- RTP model refactoring to make it use msg files and a control info
+  based interface toward apps
+
+- some improvements INETMANET implemented have been taken over into
+  INET (also to decrease INETMANET maintenance cost)
+
+- started taking over xMIPv6's modification to the base INET, so
+  xMIPv6 won't need to patch INET
+
+- added basic "New INET simulation" wizards which appear under
+  File|New in the IDE
+
+- started working on an INET User Manual (see inet.omnetpp.org)
+
+- added an initial test suite with tests for Ethernet, 802.11 and TCP
+  (uses OMNeT++'s opp_test utility and the "omnetpp" R plugin for
+  scripted checking of simulation results; not yet in "integration")
+
+- many smaller bug fixes and refactoring, mostly invisible for users
+
+In more details:
+
+* Reorganized StandardHost:
+ 
+Several changes were introduced to make the basic building blocks of
+simulation (StandardHost, AdhocHost, Router etc.) more configurable,
+without the need to copy and modify the modules or derive a new module
+type. Applications, tcp type, nic, mobility, routing protocols can be 
+configured using paramaters or the **.type-name=typename in the .ini file.
+
+* Ethernet point-to-point links:
+
+In the old code, datarate of Ethernet channels were to be set to zero, and
+the real datarate given in the txrate parameter of EtherMAC. This was to
+work around a limitation in OMNeT++ 3.x's channel support. In the new code,
+the txrate parameter is gone, and the datarate should be set on the
+channel. This is consistent with e.g. PPP. This requires non-backward
+compatible changes to models.
+
+* Support for several different TCP/UDP apps in StandardHost
+
+In the old code, tcpApp[] is declared as
+  tcpApp[numTcpApps]: <tcpAppType> like TCPApp;
+which has the side effect that when using StandardHost, all apps have to be
+the same type (the one in the tcpAppType parameter). OMNeT++ 4.x supports
+setting the types one-by-one, using the following syntax:
+  tcpApp[numTcpApps]: <> like TCPApp;
+and in the ini file, you have to write
+  **.tcpApp[0].type-name = "inet.applications.tcpapp.TCPBasicClientApp"
+  **.tcpApp[1].type-name = "inet.applications.tcpapp.TCPEchoApp"
+  **.tcpApp[*].type-name = "inet.applications.tcpapp.TCPSinkApp"
+  etc.
+The existing tcpAppType/udpAppType/sctpAppType parameters would be removed.
+However, this also means that existing ini files have to be changed.
+If they are not updated, the simulation will not work.
+
+* Multiple TCP implementations, and related parameterization changes
+
+INET now supports Network Simulation Cradle (NSC; wraps several FreeBSD,
+Linux and lwIP stacks), and we have an lwIP-based TCP module as well
+(without the NSC limitations and overhead); the NED types are TCP, TCP_NSC,
+TCP_lwip. Any of them can be selected in StandardHost, via the tcpType
+parameter (the tcp module is now declared as "tcp: <tcpType> like ITCP").
+tcpType defaults to the native OMNeT++ TCP module.
+
+The sendQueueClass/rcvQueueClass parameters are gone. They were used to
+select what to transmit inside TCP segments: C++ objects (cPacket) or byte
+counts only. Now, this can (must) be specified per-connection by the app
+layer, because the app knows best what it requires. Also, instead of two
+class names now there is a single enum value; it should be put into the
+dataTransferMode field of TCPOpenCommand. Potential values are:
+
+   TCP_TRANSFER_UNDEFINED = 0;  // Invalid value
+   TCP_TRANSFER_BYTECOUNT = 1;  // Transmit byte counts only
+   TCP_TRANSFER_OBJECT = 2;     // Transmit the application packet C++ objects
+   TCP_TRANSFER_BYTESTREAM = 3; // Transmit actual bytes
+
+Ideally, all 3 TCP implementations should understand all 3 transfer modes;
+currently OBJECT support is missing from TCP_NSC.
+
+
+INET-20110225
+-------------
+- additional statistics in the SCTP module (Alberto Cortes)
+- Fix for SCTP Path.Max.Retrans threshold problem (Alberto Cortes)
+- minor changes in #includes to ensure compatibility with upcoming OMNeT++ 4.2
+
 
 INET-20100723
 -------------
@@ -23,8 +190,8 @@ INET-20100723
   input for the NetAnim program (http://www.nsnam.org/wiki/index.php/NetAnim)
 
 - Ieee80211Radio: added a shadowing component for the path loss reception model
-  (Nikos Simantirakis). This is a random variable has a normal distribution 
-  in dB and results to -normal distribution in mW. This is a widespread and 
+  (Nikos Simantirakis). This is a random variable has a normal distribution
+  in dB and results to -normal distribution in mW. This is a widespread and
   common model used for reproducing shadowing effects (Rappaport, T. S. (2002),
   Communications - Principles and Practice, Prentice Hall PTR).
 
@@ -43,14 +210,14 @@ INET-20100323
   Thomas Dreibholz
 
 - added support for Sam Jensen's Network Simulation Cradle,
-  http://www.wand.net.nz/~stj2/nsc/, which makes real-world TCP stacks available 
-  in simulations. Currently NSC supports the FreeBSD, OpenBSD, lwIP and Linux 
-  stacks. The TCP_NSC module (transport/tcp_nsc) is a drop-in replacement for the 
-  normal TCP module (transport/tcp), and can be activated with a single parameter 
-  setting in StandardHost. See src/transport/tcp_nsc, 3rdparty/README, and 
+  http://www.wand.net.nz/~stj2/nsc/, which makes real-world TCP stacks available
+  in simulations. Currently NSC supports the FreeBSD, OpenBSD, lwIP and Linux
+  stacks. The TCP_NSC module (transport/tcp_nsc) is a drop-in replacement for the
+  normal TCP module (transport/tcp), and can be activated with a single parameter
+  setting in StandardHost. See src/transport/tcp_nsc, 3rdparty/README, and
   examples/inet/tcpclientserver.
 
-- added TCP SACK and New Reno implementation by Thomas Reschka. The original TCP 
+- added TCP SACK and New Reno implementation by Thomas Reschka. The original TCP
   version is still available as TCP_old. See src/transport/tcp/ChangeLog for details.
 
 INET-20090325
@@ -478,5 +645,6 @@ created and developed at University of Karlsruhe, Germany.
 
         * CREDITS: Put your name here if you have contributed to the
         OMNeT++ Internet Protocol Suite
+
 
 

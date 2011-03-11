@@ -93,7 +93,6 @@ enum LSAType
 //
 // Represents an OSPF LSA header
 //
-//class OSPFLSAHeader extends cObject
 class OSPFLSAHeader
 {
     unsigned short lsAge = 0;
@@ -109,7 +108,6 @@ class OSPFLSAHeader
 //
 // common ancestor type for all LSAs
 //
-//class OSPFLSA extends cObject
 class OSPFLSA
 {
     OSPFLSAHeader header;
@@ -129,7 +127,6 @@ struct TOSData
     unsigned char tosMetric[3];
 }
 
-//class Link extends cObject
 class Link
 {
     IPAddress linkID;
