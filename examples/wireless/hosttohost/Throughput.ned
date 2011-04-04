@@ -19,15 +19,20 @@
 
 package inet.examples.wireless.hosttohost;
 
-import inet.applications.ethernet.EtherAppCli;
-import inet.base.NotificationBoard;
-import inet.base.Sink;
-import inet.mobility.CircleMobility;
+import inet.world.ChannelControlExtended;
+import inet.nodes.wireless.AccessPoint;
 import inet.mobility.NullMobility;
+import inet.mobility.CircleMobility;
 import inet.linklayer.ieee80211.Ieee80211NicSTASimplified;
-import inet.nodes.wireless.WirelessAPSimplified;
-import inet.world.ChannelControl;
+import inet.base.Sink;
+import inet.base.NotificationBoard;
+import inet.applications.ethernet.EtherAppCli;
 
+
+module WirelessAPSimplified extends AccessPoint
+{
+    wlanNicType = "Ieee80211NicAPSimplified";
+}
 
 module ThroughputClient
 {
@@ -108,7 +113,7 @@ network Throughput
             parameters:
                 @display("p=200,200;r=,,#707070");
         }
-        channelcontrol: ChannelControl {
+        channelcontrol: ChannelControlExtended {
             parameters:
                 playgroundSizeX = playgroundSizeX;
                 playgroundSizeY = playgroundSizeY;

@@ -18,10 +18,14 @@
 
 #include "IPAddressResolver.h"
 #include "IInterfaceTable.h"
-#include "IPv4InterfaceData.h"
-#include "IRoutingTable.h"
 #include "NotificationBoard.h"
-#ifndef WITHOUT_IPv6
+
+#ifdef WITH_IPv4
+#include "IRoutingTable.h"
+#include "IPv4InterfaceData.h"
+#endif
+
+#ifdef WITH_IPv6
 #include "IPv6InterfaceData.h"
 #include "RoutingTable6.h"
 #endif
@@ -94,8 +98,12 @@ bool IPAddressResolver::tryResolve(const char *s, IPvXAddress& result, int addrT
 
 IPAddress IPAddressResolver::routerIdOf(cModule *host)
 {
+#ifdef WITH_IPv4
     IRoutingTable *rt = routingTableOf(host);
     return rt->getRouterId();
+#else
+    throw cRuntimeError("INET compiled without IPv4 features!");
+#endif
 }
 
 IPvXAddress IPAddressResolver::addressOf(cModule *host, int addrType)
@@ -140,21 +148,33 @@ IPvXAddress IPAddressResolver::getAddressFrom(IInterfaceTable *ift, int addrType
 IPvXAddress IPAddressResolver::getAddressFrom(InterfaceEntry *ie, int addrType)
 {
     IPvXAddress ret;
+
+#ifdef WITH_IPv6
     if (addrType==ADDR_IPv6 || addrType==ADDR_PREFER_IPv6)
     {
         if (ie->ipv6Data())
             ret = getInterfaceIPv6Address(ie);
+
+#ifdef WITH_IPv4
         if (ret.isUnspecified() && addrType==ADDR_PREFER_IPv6 && ie->ipv4Data())
             ret = ie->ipv4Data()->getIPAddress();
+#endif
     }
-    else if (addrType==ADDR_IPv4 || addrType==ADDR_PREFER_IPv4)
+    else
+#endif
+#ifdef WITH_IPv4
+    if (addrType==ADDR_IPv4 || addrType==ADDR_PREFER_IPv4)
     {
         if (ie->ipv4Data())
             ret = ie->ipv4Data()->getIPAddress();
+
+#ifdef WITH_IPv6
         if (ret.isUnspecified() && addrType==ADDR_PREFER_IPv4 && ie->ipv6Data())
             ret = getInterfaceIPv6Address(ie);
+#endif
     }
     else
+#endif
     {
         throw cRuntimeError("IPAddressResolver: unknown addrType %d", addrType);
     }
@@ -164,6 +184,7 @@ IPvXAddress IPAddressResolver::getAddressFrom(InterfaceEntry *ie, int addrType)
 
 IPAddress IPAddressResolver::getIPv4AddressFrom(IInterfaceTable *ift)
 {
+#ifdef WITH_IPv4
     IPAddress addr;
     if (ift->getNumInterfaces()==0)
         throw cRuntimeError("IPAddressResolver: interface table `%s' has no interface registered "
@@ -180,11 +201,14 @@ IPAddress IPAddressResolver::getIPv4AddressFrom(IInterfaceTable *ift)
         }
     }
     return addr;
+#else
+    throw cRuntimeError("INET compiled without IPv4 features!");
+#endif
 }
 
 IPv6Address IPAddressResolver::getIPv6AddressFrom(IInterfaceTable *ift)
 {
-#ifndef WITHOUT_IPv6
+#ifdef WITH_IPv6
     // browse interfaces and pick a globally routable address
     if (ift->getNumInterfaces()==0)
         throw cRuntimeError("IPAddressResolver: interface table `%s' has no interface registered "
@@ -210,7 +234,7 @@ IPv6Address IPAddressResolver::getIPv6AddressFrom(IInterfaceTable *ift)
 
 IPv6Address IPAddressResolver::getInterfaceIPv6Address(InterfaceEntry *ie)
 {
-#ifndef WITHOUT_IPv6
+#ifdef WITH_IPv6
     if (!ie->ipv6Data())
         return IPv6Address();
     return ie->ipv6Data()->getPreferredAddress();
@@ -232,6 +256,7 @@ IInterfaceTable *IPAddressResolver::interfaceTableOf(cModule *host)
 
 IRoutingTable *IPAddressResolver::routingTableOf(cModule *host)
 {
+#ifdef WITH_IPv4
     // find IRoutingTable
     cModule *mod = host->getSubmodule("routingTable");
     if (!mod)
@@ -239,11 +264,14 @@ IRoutingTable *IPAddressResolver::routingTableOf(cModule *host)
                   " `routingTable' in host/router `%s'", host->getFullPath().c_str());
 
     return check_and_cast<IRoutingTable *>(mod);
+#else
+    throw cRuntimeError("INET compiled without IPv4 features!");
+#endif
 }
 
-#ifndef WITHOUT_IPv6
 RoutingTable6 *IPAddressResolver::routingTable6Of(cModule *host)
 {
+#ifdef WITH_IPv6
     // find IRoutingTable
     cModule *mod = host->getSubmodule("routingTable6");
     if (!mod)
@@ -251,8 +279,10 @@ RoutingTable6 *IPAddressResolver::routingTable6Of(cModule *host)
                   " `routingTable6' in host/router `%s'", host->getFullPath().c_str());
 
     return check_and_cast<RoutingTable6 *>(mod);
-}
+#else
+    throw cRuntimeError("INET compiled without IPv6 features!");
 #endif
+}
 
 NotificationBoard *IPAddressResolver::notificationBoardOf(cModule *host)
 {
@@ -273,17 +303,23 @@ IInterfaceTable *IPAddressResolver::findInterfaceTableOf(cModule *host)
 
 IRoutingTable *IPAddressResolver::findRoutingTableOf(cModule *host)
 {
+#ifdef WITH_IPv4
     cModule *mod = host->getSubmodule("routingTable");
     return dynamic_cast<IRoutingTable *>(mod);
+#else
+    throw cRuntimeError("INET compiled without IPv4 features!");
+#endif
 }
 
-#ifndef WITHOUT_IPv6
 RoutingTable6 *IPAddressResolver::findRoutingTable6Of(cModule *host)
 {
+#ifdef WITH_IPv6
     cModule *mod = host->getSubmodule("routingTable6");
     return dynamic_cast<RoutingTable6 *>(mod);
-}
+#else
+    throw cRuntimeError("INET compiled without IPv6 features!");
 #endif
+}
 
 NotificationBoard *IPAddressResolver::findNotificationBoardOf(cModule *host)
 {

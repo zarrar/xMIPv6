@@ -18,9 +18,9 @@
 
 package inet.examples.adhoc.ieee80211;
 
-import inet.networklayer.autorouting.FlatNetworkConfigurator;
+import inet.world.ChannelControlExtended;
 import inet.nodes.adhoc.MobileHost;
-import inet.world.ChannelControl;
+import inet.networklayer.autorouting.ipv4.FlatNetworkConfigurator;
 
 
 network Net80211
@@ -34,7 +34,7 @@ network Net80211
             parameters:
                 @display("r=,,#707070");
         }
-        channelcontrol: ChannelControl {
+        channelcontrol: ChannelControlExtended {
             parameters:
                 playgroundSizeX = playgroundSizeX;
                 playgroundSizeY = playgroundSizeY;

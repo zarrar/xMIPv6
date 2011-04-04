@@ -18,12 +18,12 @@
 package inet.examples.bgpv4.BGPOpen;
 
 import inet.util.MessageChecker;
-import inet.transport.tcp.TCP;
+import inet.transport.ITCP;
 import inet.nodes.inet.NetworkLayer;
 import inet.networklayer.ipv4.RoutingTable;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.bgpv4.BGPRouting;
-import inet.linklayer.ppp.PPPInterfaceNoQueue;
+import inet.linklayer.IWiredNic;
 import inet.base.NotificationBoard;
 
 
@@ -37,6 +37,7 @@ module BGPRouterSimple
         @labels(node,ethernet-node);
         @display("i=abstract/router");
         string routingFile;
+        string tcpType = default(haveClass("TCP")?"TCP":haveClass("TCP_lwip")?"TCP_lwip":haveClass("TCP_NSC")?"TCP_NSC":"TCP_None");  // tcp implementation (e.g. ~TCP, ~TCP_lwip, ~TCP_NSC) or ~TCPSpoof
     gates:
         inout pppg[] @labels(PPPFrame-conn);
     submodules:
@@ -67,7 +68,7 @@ module BGPRouterSimple
             parameters:
                 @display("i=block/downarrow_s;p=196,124");
         }
-        tcp: TCP {
+        tcp: <tcpType> like ITCP {
             parameters:
                 @display("p=160,202;i=block/transport");
         }
@@ -79,7 +80,7 @@ module BGPRouterSimple
                 ifIn[sizeof(pppg)];
                 ifOut[sizeof(pppg)];
         }
-        ppp[sizeof(pppg)]: PPPInterfaceNoQueue {
+        ppp[sizeof(pppg)]: <default("PPPInterfaceNoQueue")> like IWiredNic {
             parameters:
                 @display("p=74,369,row,110;q=l2queue;i=block/ifcard");
         }

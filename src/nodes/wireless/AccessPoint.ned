@@ -15,11 +15,12 @@
 
 package inet.nodes.wireless;
 
-import inet.linklayer.etherswitch.IMACRelayUnit;
-import inet.linklayer.ethernet.IEtherMAC;
 import inet.linklayer.IWirelessNic;
+import inet.linklayer.IMACRelayUnit;
+import inet.linklayer.IEtherMAC;
 import inet.base.mobility.IMobility;
 import inet.base.NotificationBoard;
+
 
 //
 // A generic access point supporting multiple wireless radios, and
@@ -35,7 +36,7 @@ module AccessPoint
         @labels(node,ethernet-node,wireless-node);
         @display("i=device/accesspoint");
         string mobilityType = default("NullMobility"); // how the node moves around. see: inet.mobility
-        string relayUnitType = default("MACRelayUnitNP"); // type of the IMACRelayUnit (MACRelayUnitNP, MACRelayUnitPP, etc)
+        string relayUnitType = default(haveClass("MACRelayUnitNP")?"MACRelayUnitNP":"MACRelayUnit_None"); // type of the IMACRelayUnit (MACRelayUnitNP, MACRelayUnitPP, etc)
         string wlanNicType = default("Ieee80211NicAP"); // used wireless interfaces. see:  inet.linklayer.ieee80211 or other modules implementing IWirelessNic. Use only the NICs for access points
         string ethMacType = default("EtherMACFullDuplex"); // used ethernet interfaces. see: IEtherMAC and IEtherMACFullDuplex for simplified, full dupley only mac
         int numRadios = default(1);               // the number of radios in the access point
@@ -52,7 +53,7 @@ module AccessPoint
             parameters:
                 @display("p=89,225;q=queue");
         }
-        eth[sizeof(ethg)]: <etherMacType> like IEtherMAC {
+        eth[sizeof(ethg)]: <ethMacType> like IEtherMAC {
             parameters:
                 promiscuous = true;
                 txQueueLimit = 1000; // increase if needed

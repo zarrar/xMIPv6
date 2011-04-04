@@ -19,6 +19,7 @@
 #define __INET_ETHERAPPSRV_H
 
 #include "INETDefs.h"
+
 #include "MACAddress.h"
 
 #define MAX_REPLY_CHUNK_SIZE   1497
@@ -36,9 +37,9 @@ class INET_API EtherAppSrv : public cSimpleModule
     // statistics
     long packetsSent;
     long packetsReceived;
-    simsignal_t endToEndDelaySignal;
-    simsignal_t sentPkBytesSignal;
-    simsignal_t rcvdPkBytesSignal;
+    static simsignal_t endToEndDelaySignal;
+    static simsignal_t sentPkBytesSignal;
+    static simsignal_t rcvdPkBytesSignal;
 
   protected:
     virtual void initialize();

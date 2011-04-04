@@ -20,6 +20,8 @@
 
 package inet.transport.udp;
 
+import inet.transport.IUDP;
+
 //
 // UDP protocol implementation, for IPv4 and IPv6.
 //
@@ -49,7 +51,7 @@ package inet.transport.udp;
 //
 // @see ~UDPPacket, ~UDPControlInfo, ~UDPCommandCode
 //
-simple UDP
+simple UDP like IUDP
 {
     parameters:
         @display("i=block/transport");
@@ -58,11 +60,11 @@ simple UDP
         @signal[passedUpPk](type=cPacket);
         @signal[droppedPkWrongPort](type=cPacket);
         @signal[droppedPkBadChecksum](type=cPacket);
-        @statistic[sentPk](title="packets sent";record=count,"vector(count)";interpolationmode=none);
-        @statistic[recvPk](title="packets received";record=count,"vector(count)";interpolationmode=none);
-        @statistic[passedUpPk](title="packets passed up";record=count,"vector(count)";interpolationmode=none);
-        @statistic[droppedPkWrongPort](title="packets dropped (wrong port)";record=count,"vector(count)";interpolationmode=none);
-        @statistic[droppedPkBadChecksum](title="packets dropped (checksum error)";record=count,"vector(count)";interpolationmode=none);
+        @statistic[sentPk](title="packets sent"; record=count,"vector(count)"; interpolationmode=none);
+        @statistic[recvPk](title="packets received"; record=count,"vector(count)"; interpolationmode=none);
+        @statistic[passedUpPk](title="packets passed up"; record=count,"vector(count)"; interpolationmode=none);
+        @statistic[droppedPkWrongPort](title="packets dropped (wrong port)"; record=count,"vector(count)"; interpolationmode=none);
+        @statistic[droppedPkBadChecksum](title="packets dropped (checksum error)"; record=count,"vector(count)"; interpolationmode=none);
 
     gates:
         input appIn[] @labels(UDPControlInfo/down);

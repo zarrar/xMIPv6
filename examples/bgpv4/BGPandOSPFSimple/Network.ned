@@ -1,28 +1,24 @@
 //
 package inet.examples.bgpv4.BGPandOSPFSimple;
 
-import inet.nodes.inet.BGPRouter;
-import inet.nodes.inet.OSPFRouter;
+import inet.util.ThruputMeteringChannel;
+import inet.nodes.ospfv2.OSPFRouter;
 import inet.nodes.inet.StandardHost;
-import inet.world.ChannelInstaller;
+import inet.nodes.bgp.BGPRouter;
+
 
 network BGPNet
 {
     types:
-        channel LINK_100 extends ned.DatarateChannel
+        channel LINK_100 extends ThruputMeteringChannel
         {
             parameters:
                 delay = 0;
                 datarate = 100Mbps;
+                thruputDisplayFormat = "#N";
         }
 
     submodules:
-        channelInstaller: ChannelInstaller {
-            parameters:
-                channelClass = "ThruputMeteringChannel";
-                channelAttrs = "format=#N";
-                @display("p=130,40;i=block/cogwheel_s");
-        }
         A: BGPRouter {
             parameters:
                 @display("p=226,109");

@@ -36,8 +36,6 @@ module NetworkLayer6
 {
     parameters:
         @display("i=block/fork");
-        string outputHookType = default("Nop");
-        string inputHookType = default("Nop");
     gates:
         input ifIn[] @labels(IPv6Datagram);
         output ifOut[] @labels(IPv6Datagram);
@@ -77,11 +75,11 @@ module NetworkLayer6
                 @display("p=239,154");
         }
         // a placeholder in the traffic coming from the network interfaces 
-        inputHook[sizeof(ifIn)]: <inputHookType> like IHook {
+        inputHook[sizeof(ifIn)]: <default("Nop")> like IHook {
             @display("p=84,247");
         }
         // a placeholder if traffic going to the network interfaces
-        outputHook[sizeof(ifOut)]: <outputHookType> like IHook {
+        outputHook[sizeof(ifOut)]: <default("Nop")> like IHook {
             @display("p=227,247");
         }
         iptunneling: IPv6Tunneling {

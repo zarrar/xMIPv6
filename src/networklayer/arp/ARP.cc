@@ -18,9 +18,22 @@
 
 
 #include "ARP.h"
-#include "IPv4InterfaceData.h"
-#include "Ieee802Ctrl_m.h"
 
+#include "Ieee802Ctrl_m.h"
+#include "IPControlInfo.h"
+#include "IPDatagram.h"
+#include "IPv4InterfaceData.h"
+#include "IRoutingTable.h"
+#include "RoutingTableAccess.h"
+#include "ARPPacket_m.h"
+#include "IInterfaceTable.h"
+#include "InterfaceTableAccess.h"
+
+
+simsignal_t ARP::sentReqSignal = SIMSIGNAL_NULL;
+simsignal_t ARP::sentReplySignal = SIMSIGNAL_NULL;
+simsignal_t ARP::failedResolutionSignal = SIMSIGNAL_NULL;
+simsignal_t ARP::initiatedResolutionSignal = SIMSIGNAL_NULL;
 
 static std::ostream& operator<< (std::ostream& out, cMessage *msg)
 {

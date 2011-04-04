@@ -17,10 +17,9 @@
 
 package inet.nodes.inet;
 
-import inet.util.NAMTraceWriter;
 import inet.networklayer.ipv4.RoutingTable;
 import inet.networklayer.common.InterfaceTable;
-import inet.linklayer.ext.ExtInterface;
+import inet.linklayer.IExtInterface;
 import inet.linklayer.IWirelessNic;
 import inet.linklayer.IWiredNic;
 import inet.base.mobility.IMobility;
@@ -30,6 +29,21 @@ import inet.base.NotificationBoard;
 // \IP router supporting wireless, ethernet, ppp and external interfaces.
 // by default no wireless and external if is configured. The number of
 // ethernet and ppp ports depend on the external connections.
+// - Can be connected via ethernet interface to other nodes using
+//   the ethg gate. By default full duplex connections are supported
+//   only (twisted pair). Set **.eth.type-name="EthernetInterface" for
+//   a full/half duplex CSMA/CD implementation (coaxial cable)
+// - By default contains no wireless cards, however it can be configured
+//   by the numRadios parameter. Wirless card type is configured by the
+//   **.wlan.type-name parameter. see:  inet.linklayer.ieee80211 or other 
+//   modules implementing ~IWirelessNic
+// - Also external interfaces can be configured for HW in the loop simulation
+//   using the numExtInterfaces parameter and setting the type using
+//   **.ext.type-name in the INI file. see: ~ExtInerface and ~IExtInterface
+// - PPP interface type can be set using **.ppp.type-name see: ~PPPInterface 
+//   and ~PPPInterfaceNoQueue
+// - If wireless card is present, node mobility can be set using **.mobility.type-name
+//   see: inet.mobility and ~IMobility
 //
 module Router
 {
@@ -39,22 +53,12 @@ module Router
         @display("i=abstract/router");
         int numExtInterfaces = default(0);
         int numRadios = default(0);               // the number of radios in the router. by default no wireless
-        string mobilityType = default("NoMobility"); // how the node moves around. MUST be specified if the host contains a wireless interface. see: inet.mobility
-        string wlanNicType = default("Ieee80211NicSTA"); // used wireless interfaces. see:  inet.linklayer.ieee80211 or other modules implementing IWirelessNic
-        string ethNicType = default("EthernetInterfaceFullDuplex"); // used ethernet interfaces. see: EtherInterface (full/half duplex) or EtherInterface2 for simplified, full duplex only
-        string pppNicType = default("PPPInterface"); // used pp interfaces. see: PPPInerface and PPPInterfaceNoQueue
-        int namid = default(-1);
         string routingFile = default("");
     gates:
         input radioIn[numRadios] @directIn;
         inout pppg[] @labels(PPPFrame-conn);
         inout ethg[] @labels(EtherFrame-conn);
     submodules:
-        namTrace: NAMTraceWriter {
-            parameters:
-                namid = namid;
-                @display("p=375,54");
-        }
         notificationBoard: NotificationBoard {
             parameters:
                 @display("p=57,54");
@@ -70,27 +74,27 @@ module Router
                 routingFile = routingFile;
                 @display("p=281,54");
         }
-        mobility: <mobilityType> like IMobility {
+        mobility: <default("NoMobility")> like IMobility {
             parameters:
-                @display("p=468,54");
+                @display("p=379,54");
         }
         networkLayer: NetworkLayer {
             parameters:
                 @display("p=242,143;q=queue");
         }
-        wlan[numRadios]: <wlanNicType> like IWirelessNic {
+        wlan[numRadios]: <default("Ieee80211NicSTA")> like IWirelessNic {
             parameters:
                 @display("p=72,242;q=queue");
         }
-        eth[sizeof(ethg)]: <ethNicType> like IWiredNic {
+        eth[sizeof(ethg)]: <default("EthernetInterfaceFullDuplex")> like IWiredNic {
             parameters:
                 @display("p=195,242,row,90;q=txQueue");
         }
-        ppp[sizeof(pppg)]: <pppNicType> like IWiredNic {
+        ppp[sizeof(pppg)]: <default("PPPInterface")> like IWiredNic {
             parameters:
                 @display("p=320,242,row,90;q=txQueue");
         }
-        ext[numExtInterfaces]: ExtInterface {
+        ext[numExtInterfaces]: <default("ExtInterface")> like IExtInterface {
             parameters:
                 @display("p=460,242,row,90;q=txQueue;i=block/ifcard");
         }

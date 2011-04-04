@@ -14,11 +14,11 @@
 
 package inet.examples.ethernet.arptest;
 
-import inet.networklayer.autorouting.FlatNetworkConfigurator;
-import inet.nodes.ethernet.EtherSwitch;
-import inet.nodes.inet.Router;
-import inet.nodes.inet.StandardHost;
 import ned.DatarateChannel;
+import inet.nodes.inet.StandardHost;
+import inet.nodes.inet.Router;
+import inet.nodes.ethernet.EtherSwitch;
+import inet.networklayer.autorouting.ipv4.FlatNetworkConfigurator;
 
 
 network ARPTest

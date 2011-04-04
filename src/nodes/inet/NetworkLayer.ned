@@ -35,22 +35,19 @@ module NetworkLayer
 {
     parameters:
         bool proxyARP = default(true);
-        string outputHookType = default("Nop");
-        string inputHookType = default("Nop");
-
         @display("i=block/fork");
     gates:
         input ifIn[] @labels(IPDatagram);
         input tcpIn @labels(TCPSegment,IPControlInfo/down);
         input udpIn @labels(UDPPacket,IPControlInfo/down);
-        input sctpIn @labels(IPControlInfo/down,SCTPPacket);   //I.R.
+        input sctpIn @labels(IPControlInfo/down,SCTPPacket);
         input rsvpIn @labels(IPControlInfo/down);
         input ospfIn @labels(IPControlInfo/down);
         input pingIn;
         output ifOut[];
         output tcpOut @labels(TCPSegment,IPControlInfo/up);
         output udpOut @labels(UDPPacket,IPControlInfo/up);
-        output sctpOut @labels(IPControlInfo/up,SCTPPacket); //I.R.
+        output sctpOut @labels(IPControlInfo/up,SCTPPacket);
         output rsvpOut @labels(IPControlInfo/up);
         output ospfOut @labels(IPControlInfo/up);
         output pingOut;
@@ -58,13 +55,10 @@ module NetworkLayer
     submodules:
         ip: IP {
             parameters:
-                timeToLive = 32;
-                multicastTimeToLive = 32;
-                fragmentTimeout = 60s;
-                protocolMapping = "6:0,17:1,1:2,2:3,46:4,89:5,132:6";   //I.R.
+                protocolMapping = "6:0,17:1,1:2,2:3,46:4,89:5,132:6";
                 @display("p=85,95;q=queue");
             gates:
-                transportIn[7]; //I.R.
+                transportIn[7];
                 transportOut[7];
                 queueIn[sizeof(ifIn)];
         }
@@ -89,11 +83,11 @@ module NetworkLayer
         }
 
         // a placeholder in the traffic coming from the network interfaces 
-        inputHook[sizeof(ifIn)]: <inputHookType> like IHook {
+        inputHook[sizeof(ifIn)]: <default("Nop")> like IHook {
             @display("p=85,254");
         }
         // a placeholder if traffic going to the network interfaces
-        outputHook[sizeof(ifOut)]: <outputHookType> like IHook {
+        outputHook[sizeof(ifOut)]: <default("Nop")> like IHook {
             @display("p=202,232");
         }
     connections allowunconnected:
@@ -116,7 +110,7 @@ module NetworkLayer
         ip.transportOut[5] --> ospfOut;
         ip.transportIn[5] <-- ospfIn;
 
-        ip.transportOut[6] --> sctpOut;     //I.R.
+        ip.transportOut[6] --> sctpOut;
         ip.transportIn[6] <-- sctpIn;
 
         icmp.pingOut --> pingOut;

@@ -14,11 +14,10 @@
 
 package inet.examples.mpls.testte_tunnel;
 
-import inet.networklayer.extras.FailureManager;
-import inet.nodes.inet.StandardHost;
-import inet.nodes.mpls.RSVP_LSR;
-import inet.world.NAMTrace;
 import inet.world.ScenarioManager;
+import inet.nodes.mpls.RSVP_LSR;
+import inet.nodes.inet.StandardHost;
+import inet.networklayer.extras.FailureManager;
 
 
 //
@@ -29,11 +28,6 @@ import inet.world.ScenarioManager;
 network RSVPTE4
 {
     submodules:
-        nam: NAMTrace {
-            parameters:
-                @display("p=152,280");
-
-        }
         LSR1: RSVP_LSR {
             parameters:
                 peers = "ppp0 ppp1";

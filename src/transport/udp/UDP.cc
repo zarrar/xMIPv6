@@ -24,18 +24,27 @@
 
 #include <omnetpp.h>
 #include <string.h>
-#include "UDPPacket.h"
+
 #include "UDP.h"
-#include "IPControlInfo.h"
-#include "IPv6ControlInfo.h"
+
+#include "UDPPacket.h"
+
+#ifdef WITH_IPv4
 #include "ICMPAccess.h"
+#include "ICMPMessage_m.h"
+#include "IPControlInfo.h"
+#include "IPDatagram_m.h"
+#endif
+
+#ifdef WITH_IPv6
 #include "ICMPv6Access.h"
+#include "ICMPv6Message_m.h"
+#include "IPv6ControlInfo.h"
+#include "IPv6Datagram_m.h"
+#endif
+
 
 // the following is only for ICMP error processing
-#include "ICMPMessage_m.h"
-#include "ICMPv6Message_m.h"
-#include "IPDatagram_m.h"
-#include "IPv6Datagram_m.h"
 
 
 #define EPHEMERAL_PORTRANGE_START 1024
@@ -44,6 +53,11 @@
 
 Define_Module( UDP );
 
+simsignal_t UDP::rcvdPkSignal = SIMSIGNAL_NULL;
+simsignal_t UDP::sentPkSignal = SIMSIGNAL_NULL;
+simsignal_t UDP::passedUpPkSignal = SIMSIGNAL_NULL;
+simsignal_t UDP::droppedPkWrongPortSignal = SIMSIGNAL_NULL;
+simsignal_t UDP::droppedPkBadChecksumSignal = SIMSIGNAL_NULL;
 
 static std::ostream & operator<<(std::ostream & os, const UDP::SockDesc& sd)
 {
@@ -203,7 +217,14 @@ void UDP::handleMessage(cMessage *msg)
     // received from IP layer
     if (msg->arrivedOn("ipIn") || msg->arrivedOn("ipv6In"))
     {
-        if (dynamic_cast<ICMPMessage *>(msg) || dynamic_cast<ICMPv6Message *>(msg))
+        if (false
+#ifdef WITH_IPv4
+                || dynamic_cast<ICMPMessage *>(msg)
+#endif
+#ifdef WITH_IPv6
+                || dynamic_cast<ICMPv6Message *>(msg)
+#endif
+        )
             processICMPError(PK(msg));
         else
             processUDPPacket(check_and_cast<UDPPacket *>(msg));
@@ -234,41 +255,58 @@ void UDP::updateDisplayString()
 
 bool UDP::matchesSocket(SockDesc *sd, UDPPacket *udp, IPControlInfo *ipCtrl)
 {
+#ifdef WITH_IPv4
     // IPv4 version
-    if (sd->remotePort!=0 && sd->remotePort!=udp->getSourcePort())
+    if (sd->remotePort != 0 && sd->remotePort != udp->getSourcePort())
         return false;
-    if (!sd->localAddr.isUnspecified() && sd->localAddr.get4()!=ipCtrl->getDestAddr())
+
+    if (!sd->localAddr.isUnspecified() && sd->localAddr.get4() != ipCtrl->getDestAddr())
         return false;
-    if (!sd->remoteAddr.isUnspecified() && sd->remoteAddr.get4()!=ipCtrl->getSrcAddr())
+
+    if (!sd->remoteAddr.isUnspecified() && sd->remoteAddr.get4() != ipCtrl->getSrcAddr())
         return false;
-    if (sd->interfaceId!=-1 && sd->interfaceId!=ipCtrl->getInterfaceId())
+
+    if (sd->interfaceId != -1 && sd->interfaceId != ipCtrl->getInterfaceId())
         return false;
+
     return true;
+#else
+        throw cRuntimeError("INET compiled without IPv4 features!");
+#endif
 }
 
 bool UDP::matchesSocket(SockDesc *sd, UDPPacket *udp, IPv6ControlInfo *ipCtrl)
 {
+#ifdef WITH_IPv6
     // IPv6 version
-    if (sd->remotePort!=0 && sd->remotePort!=udp->getSourcePort())
+    if (sd->remotePort != 0 && sd->remotePort != udp->getSourcePort())
         return false;
-    if (!sd->localAddr.isUnspecified() && sd->localAddr.get6()!=ipCtrl->getDestAddr())
+
+    if (!sd->localAddr.isUnspecified() && sd->localAddr.get6() != ipCtrl->getDestAddr())
         return false;
-    if (!sd->remoteAddr.isUnspecified() && sd->remoteAddr.get6()!=ipCtrl->getSrcAddr())
+
+    if (!sd->remoteAddr.isUnspecified() && sd->remoteAddr.get6() != ipCtrl->getSrcAddr())
         return false;
-    if (sd->interfaceId!=-1 && sd->interfaceId!=ipCtrl->getInterfaceId())
+
+    if (sd->interfaceId != -1 && sd->interfaceId != ipCtrl->getInterfaceId())
         return false;
+
     return true;
+#else
+        throw cRuntimeError("INET compiled without IPv6 features!");
+#endif
 }
 
 bool UDP::matchesSocket(SockDesc *sd, const IPvXAddress& localAddr, const IPvXAddress& remoteAddr, ushort remotePort)
 {
-    return (sd->remotePort==0 || sd->remotePort!=remotePort) &&
-           (sd->localAddr.isUnspecified() || sd->localAddr==localAddr) &&
-           (sd->remoteAddr.isUnspecified() || sd->remoteAddr==remoteAddr);
+    return (sd->remotePort == 0 || sd->remotePort != remotePort) &&
+           (sd->localAddr.isUnspecified() || sd->localAddr == localAddr) &&
+           (sd->remoteAddr.isUnspecified() || sd->remoteAddr == remoteAddr);
 }
 
 void UDP::sendUp(cPacket *payload, UDPPacket *udpHeader, IPControlInfo *ipCtrl, SockDesc *sd)
 {
+#ifdef WITH_IPv4
     // send payload with UDPControlInfo up to the application -- IPv4 version
     UDPControlInfo *udpCtrl = new UDPControlInfo();
     udpCtrl->setSockId(sd->sockId);
@@ -283,10 +321,14 @@ void UDP::sendUp(cPacket *payload, UDPPacket *udpHeader, IPControlInfo *ipCtrl, 
     emit(passedUpPkSignal, payload);
     send(payload, "appOut", sd->appGateIndex);
     numPassedUp++;
+#else
+        throw cRuntimeError("INET compiled without IPv4 features!");
+#endif
 }
 
 void UDP::sendUp(cPacket *payload, UDPPacket *udpHeader, IPv6ControlInfo *ipCtrl, SockDesc *sd)
 {
+#ifdef WITH_IPv6
     // send payload with UDPControlInfo up to the application -- IPv6 version
     UDPControlInfo *udpCtrl = new UDPControlInfo();
     udpCtrl->setSockId(sd->sockId);
@@ -301,6 +343,9 @@ void UDP::sendUp(cPacket *payload, UDPPacket *udpHeader, IPv6ControlInfo *ipCtrl
     emit(passedUpPkSignal, payload);
     send(payload, "appOut", sd->appGateIndex);
     numPassedUp++;
+#else
+        throw cRuntimeError("INET compiled without IPv6 features!");
+#endif
 }
 
 void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cPolymorphic *ctrl)
@@ -309,23 +354,32 @@ void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cPolymorphic *ctrl)
     numDroppedWrongPort++;
 
     // send back ICMP PORT_UNREACHABLE
-    if (dynamic_cast<IPControlInfo *>(ctrl)!=NULL)
+#ifdef WITH_IPv4
+    if (dynamic_cast<IPControlInfo *>(ctrl) != NULL)
     {
         if (!icmp)
             icmp = ICMPAccess().get();
+
         IPControlInfo *ctrl4 = (IPControlInfo *)ctrl;
+
         if (!ctrl4->getDestAddr().isMulticast())
             icmp->sendErrorMessage(udpPacket, ctrl4, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PORT_UNREACHABLE);
     }
-    else if (dynamic_cast<IPv6ControlInfo *>(udpPacket->getControlInfo())!=NULL)
+    else
+#endif
+#ifdef WITH_IPv6
+    if (dynamic_cast<IPv6ControlInfo *>(udpPacket->getControlInfo()) != NULL)
     {
         if (!icmpv6)
             icmpv6 = ICMPv6Access().get();
+
         IPv6ControlInfo *ctrl6 = (IPv6ControlInfo *)ctrl;
+
         if (!ctrl6->getDestAddr().isMulticast())
             icmpv6->sendErrorMessage(udpPacket, ctrl6, ICMPv6_DESTINATION_UNREACHABLE, PORT_UNREACHABLE);
     }
     else
+#endif
     {
         error("(%s)%s arrived from lower layer without control info", udpPacket->getClassName(), udpPacket->getName());
     }
@@ -338,6 +392,7 @@ void UDP::processICMPError(cPacket *msg)
     IPvXAddress localAddr, remoteAddr;
     ushort localPort, remotePort;
 
+#ifdef WITH_IPv4
     if (dynamic_cast<ICMPMessage *>(msg))
     {
         ICMPMessage *icmpMsg = (ICMPMessage *)msg;
@@ -352,7 +407,10 @@ void UDP::processICMPError(cPacket *msg)
         remotePort = packet->getDestinationPort();
         delete icmpMsg;
     }
-    else if (dynamic_cast<ICMPv6Message *>(msg))
+    else
+#endif
+#ifdef WITH_IPv6
+    if (dynamic_cast<ICMPv6Message *>(msg))
     {
         ICMPv6Message *icmpMsg = (ICMPv6Message *)msg;
         type = icmpMsg->getType();
@@ -366,6 +424,12 @@ void UDP::processICMPError(cPacket *msg)
         remotePort = packet->getDestinationPort();
         delete icmpMsg;
     }
+    else
+#endif
+    {
+        throw cRuntimeError("Not an ICMP error message!");
+    }
+
     EV << "ICMP error received: type=" << type << " code=" << code
        << " about packet " << localAddr << ":" << localPort << " > "
        << remoteAddr << ":" << remotePort << "\n";
@@ -379,14 +443,17 @@ void UDP::processICMPError(cPacket *msg)
     }
     SockDescList& list = it->second;
     SockDesc *srcSocket = NULL;
-    for (SockDescList::iterator it=list.begin(); it!=list.end(); ++it)
+
+    for (SockDescList::iterator it = list.begin(); it != list.end(); ++it)
     {
         SockDesc *sd = *it;
+
         if (sd->onlyLocalPortIsSet || matchesSocket(sd, localAddr, remoteAddr, remotePort))
         {
             srcSocket = sd; // FIXME what to do if there's more than one matching socket ???
         }
     }
+
     if (!srcSocket)
     {
         EV << "No matching socket, ignoring ICMP error\n";
@@ -418,12 +485,14 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
     emit(rcvdPkSignal, udpPacket);
     // simulate checksum: discard packet if it has bit error
     EV << "Packet " << udpPacket->getName() << " received from network, dest port " << udpPacket->getDestinationPort() << "\n";
+
     if (udpPacket->hasBitError())
     {
         EV << "Packet has bit error, discarding\n";
         emit(droppedPkBadChecksumSignal, udpPacket);
         numDroppedBadChecksum++;
         delete udpPacket;
+
         return;
     }
 
@@ -432,24 +501,31 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
 
     // send back ICMP error if no socket is bound to that port
     SocketsByPortMap::iterator it = socketsByPortMap.find(destPort);
-    if (it==socketsByPortMap.end())
+
+    if (it == socketsByPortMap.end())
     {
         EV << "No socket registered on port " << destPort << "\n";
         processUndeliverablePacket(udpPacket, ctrl);
+
         return;
     }
+
     SockDescList& list = it->second;
 
     int matches = 0;
 
     // deliver a copy of the packet to each matching socket
     cPacket *payload = udpPacket->getEncapsulatedPacket();
+
+#ifdef WITH_IPv4
     if (dynamic_cast<IPControlInfo *>(ctrl)!=NULL)
     {
         IPControlInfo *ctrl4 = (IPControlInfo *)ctrl;
-        for (SockDescList::iterator it=list.begin(); it!=list.end(); ++it)
+
+        for (SockDescList::iterator it = list.begin(); it != list.end(); ++it)
         {
             SockDesc *sd = *it;
+
             if (sd->onlyLocalPortIsSet || matchesSocket(sd, udpPacket, ctrl4))
             {
                 EV << "Socket sockId=" << sd->sockId << " matches, sending up a copy.\n";
@@ -458,12 +534,17 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
             }
         }
     }
-    else if (dynamic_cast<IPv6ControlInfo *>(ctrl)!=NULL)
+    else
+#endif
+#ifdef WITH_IPv6
+    if (dynamic_cast<IPv6ControlInfo *>(ctrl)!=NULL)
     {
         IPv6ControlInfo *ctrl6 = (IPv6ControlInfo *)ctrl;
-        for (SockDescList::iterator it=list.begin(); it!=list.end(); ++it)
+
+        for (SockDescList::iterator it = list.begin(); it != list.end(); ++it)
         {
             SockDesc *sd = *it;
+
             if (sd->onlyLocalPortIsSet || matchesSocket(sd, udpPacket, ctrl6))
             {
                 EV << "Socket sockId=" << sd->sockId << " matches, sending up a copy.\n";
@@ -473,12 +554,14 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         }
     }
     else
+#endif
     {
-        error("(%s)%s arrived from lower layer without control info", udpPacket->getClassName(), udpPacket->getName());
+        error("(%s)%s arrived from lower layer without control info",
+                udpPacket->getClassName(), udpPacket->getName());
     }
 
     // send back ICMP error if there is no matching socket
-    if (matches==0)
+    if (matches == 0)
     {
         EV << "None of the sockets on port " << destPort << " matches the packet\n";
         processUndeliverablePacket(udpPacket, ctrl);
@@ -504,6 +587,7 @@ void UDP::processMsgFromApp(cPacket *appData)
 
     if (!udpCtrl->getDestAddr().isIPv6())
     {
+#ifdef WITH_IPv4
         // send to IPv4
         EV << "Sending app packet " << appData->getName() << " over IPv4.\n";
         IPControlInfo *ipControlInfo = new IPControlInfo();
@@ -516,21 +600,28 @@ void UDP::processMsgFromApp(cPacket *appData)
 
         emit(sentPkSignal, udpPacket);
         send(udpPacket,"ipOut");
+#else
+        throw cRuntimeError("INET compiled without IPv4 features!");
+#endif
     }
     else
     {
+#ifdef WITH_IPv6
         // send to IPv6
         EV << "Sending app packet " << appData->getName() << " over IPv6.\n";
         IPv6ControlInfo *ipControlInfo = new IPv6ControlInfo();
         ipControlInfo->setProtocol(IP_PROT_UDP);
         ipControlInfo->setSrcAddr(udpCtrl->getSrcAddr().get6());
         ipControlInfo->setDestAddr(udpCtrl->getDestAddr().get6());
-        // ipControlInfo->setInterfaceId(udpCtrl->InterfaceId()); FIXME extend IPv6 with this!!!
+        ipControlInfo->setInterfaceId(udpCtrl->getInterfaceId());
         udpPacket->setControlInfo(ipControlInfo);
         delete udpCtrl;
 
         emit(sentPkSignal, udpPacket);
         send(udpPacket,"ipv6Out");
+#else
+        throw cRuntimeError("INET compiled without IPv6 features!");
+#endif
     }
     numSent++;
 }
@@ -543,17 +634,21 @@ UDPPacket *UDP::createUDPPacket(const char *name)
 void UDP::processCommandFromApp(cMessage *msg)
 {
     UDPControlInfo *udpCtrl = check_and_cast<UDPControlInfo *>(msg->removeControlInfo());
+
     switch (msg->getKind())
     {
         case UDP_C_BIND:
             bind(msg->getArrivalGate()->getIndex(), udpCtrl);
             break;
+
         case UDP_C_CONNECT:
             connect(udpCtrl->getSockId(), udpCtrl->getDestAddr(), udpCtrl->getDestPort());
             break;
+
         case UDP_C_UNBIND:
             unbind(udpCtrl->getSockId());
             break;
+
         default:
             error("unknown command code (message kind) %d received from app", msg->getKind());
     }
@@ -561,5 +656,4 @@ void UDP::processCommandFromApp(cMessage *msg)
     delete udpCtrl;
     delete msg;
 }
-
 

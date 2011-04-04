@@ -214,7 +214,7 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
         if (datagram->getSrcAddress().isUnspecified())
             datagram->setSrcAddress(destAddress); // allows two apps on the same host to communicate
         numLocalDeliver++;
-        isLocalAddress(datagram);
+        localDeliver(datagram);
         return;
     }
 
@@ -362,7 +362,7 @@ void IPv6::routeMulticastPacket(IPv6Datagram *datagram, InterfaceEntry *destIE, 
         {
             EV << "local delivery of multicast packet\n";
             numLocalDeliver++;
-            isLocalAddress((IPv6Datagram *)datagram->dup());
+            localDeliver((IPv6Datagram *)datagram->dup());
         }
 
         // if datagram arrived from input gate and IP forwarding is off, delete datagram
@@ -428,7 +428,7 @@ void IPv6::routeMulticastPacket(IPv6Datagram *datagram, InterfaceEntry *destIE, 
         // FIXME code from the MPLS model: set packet dest address to routerId (???)
         datagramCopy->setDestAddress(rt->getRouterId());
 
-        isLocalAddress(datagramCopy);
+        localDeliver(datagramCopy);
     }
 
     // forward datagram only if IP forward is enabled, or sent locally
@@ -472,7 +472,7 @@ void IPv6::routeMulticastPacket(IPv6Datagram *datagram, InterfaceEntry *destIE, 
 */
 }
 
-void IPv6::isLocalAddress(IPv6Datagram *datagram)
+void IPv6::localDeliver(IPv6Datagram *datagram)
 {
 /* FIXME revise and complete defragmentation
     // Defragmentation. skip defragmentation if datagram is not fragmented

@@ -19,6 +19,7 @@
 #define __INET_ETHERAPPCLI_H
 
 #include "INETDefs.h"
+
 #include "MACAddress.h"
 
 
@@ -41,9 +42,9 @@ class INET_API EtherAppCli : public cSimpleModule
     // receive statistics
     long packetsSent;
     long packetsReceived;
-    simsignal_t endToEndDelaySignal;
-    simsignal_t sentPkBytesSignal;
-    simsignal_t rcvdPkBytesSignal;
+    static simsignal_t endToEndDelaySignal;
+    static simsignal_t sentPkBytesSignal;
+    static simsignal_t rcvdPkBytesSignal;
 
   protected:
     virtual void initialize(int stage);

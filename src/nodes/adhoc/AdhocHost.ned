@@ -15,17 +15,18 @@
 
 package inet.nodes.adhoc;
 
-import inet.transport.udp.UDP;
-import inet.transport.tcp.TCP;
+
+import inet.transport.IUDP;
+import inet.transport.ITCP;
 import inet.nodes.inet.NetworkLayer;
 import inet.networklayer.ipv4.RoutingTable;
 import inet.networklayer.common.InterfaceTable;
 import inet.linklayer.IWirelessNic;
 import inet.base.mobility.IMobility;
 import inet.base.NotificationBoard;
-import inet.applications.udpapp.IUDPApp;
-import inet.applications.tcpapp.ITCPApp;
 import inet.applications.pingapp.PingApp;
+import inet.applications.IUDPApp;
+import inet.applications.ITCPApp;
 
 
 //
@@ -34,21 +35,26 @@ import inet.applications.pingapp.PingApp;
 // This is a typical mobile node which can participate in adhoc routing
 // and may have TCP/UDP applications installed. Supports ICMP (ping) too.
 //
-// The applications, the mobility type, the wireless interface can be
-// configured via parameters.
+// - By default contains a single wireless cards, however it can be configured
+//   by the numRadios parameter. Wirless card type is configured by the
+//   **.wlan.type-name parameter. see:  inet.linklayer.ieee80211 or other 
+//   modules implementing ~IWirelessNic
+// - Node mobility can be set using **.mobility.type-name
+//   see: inet.mobility and ~IMobility
 //
 module AdhocHost
 {
     @node();
+    @display("i=device/cellphone;bgb=525,394");
     int numTcpApps = default(0);
     int numUdpApps = default(0);
-    string tcpAppType = default("");
-    string udpAppType = default("");
-    string routingFile = default("");
-    string mobilityType = default("NullMobility"); // how the node moves around. see: inet.mobility
-    string wlanNicType = default("Ieee80211NicAdhoc"); // used wireless interfaces. see:  inet.linklayer.ieee80211 or other modules implementing IWirelessNic
+    // string tcpAppType = default(""); // Obsolete!
+    // string udpAppType = default(""); // Obsolete!
+    string tcpType = default(haveClass("TCP")?"TCP":haveClass("TCP_lwip")?"TCP_lwip":haveClass("TCP_NSC")?"TCP_NSC":"TCP_None");  // tcp implementation (e.g. ~TCP, ~TCP_lwip, ~TCP_NSC) or ~TCPSpoof
     int numRadios = default(1);
-    @display("i=device/cellphone;bgb=525,394");
+    string wlanNicType = default("Ieee80211NicAdhoc");
+    string routingFile = default("");
+    bool IPForward = default(true);
 
     gates:
         input radioIn[numRadios] @directIn;
@@ -63,24 +69,24 @@ module AdhocHost
         }
         routingTable: RoutingTable {
             parameters:
-                IPForward = true;
+                IPForward = IPForward;
                 routerId = "";
                 routingFile = routingFile;
                 @display("p=60,247");
         }
-        mobility: <mobilityType> like IMobility {
+        mobility: <default("NullMobility")> like IMobility {
             @display("p=60,331");
         }
-        tcpApp[numTcpApps]: <tcpAppType> like ITCPApp {
+        tcpApp[numTcpApps]: <> like ITCPApp {
             @display("p=198,67");
         }
-        tcp: TCP {
+        tcp: <tcpType> like ITCP {
             @display("p=198,154");
         }
-        udpApp[numUdpApps]: <udpAppType> like IUDPApp {
+        udpApp[numUdpApps]: <> like IUDPApp {
             @display("p=346,67");
         }
-        udp: UDP {
+        udp: <default(haveClass("UDP")?"UDP":"UDP_None")> like IUDP {
             @display("p=346,154");
         }
         pingApp: PingApp {

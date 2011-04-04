@@ -16,21 +16,22 @@
 //
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <algorithm>
-#include <sstream>
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <string.h>
+//#include <ctype.h>
+//#include <algorithm>
+//#include <sstream>
 
 #include "InterfaceEntry.h"
+
 #include "IInterfaceTable.h"
 
-#ifndef WITHOUT_IPv4
+#ifdef WITH_IPv4
 #include "IPv4InterfaceData.h"
 #endif
 
-#ifndef WITHOUT_IPv6
+#ifdef WITH_IPv6
 #include "IPv6InterfaceData.h"
 #endif
 
@@ -50,7 +51,6 @@ InterfaceEntry::InterfaceEntry()
     nwLayerGateIndex = -1;
     nodeOutputGateId = -1;
     nodeInputGateId = -1;
-    peernamid = -1;
 
     mtu = 0;
 
@@ -139,7 +139,7 @@ void InterfaceEntry::changed(int category)
 
 void InterfaceEntry::setIPv4Data(IPv4InterfaceData *p)
 {
-#ifndef WITHOUT_IPv4
+#ifdef WITH_IPv4
     ipv4data = p;
     p->ownerp = this;
     configChanged();
@@ -150,7 +150,7 @@ void InterfaceEntry::setIPv4Data(IPv4InterfaceData *p)
 
 void InterfaceEntry::setIPv6Data(IPv6InterfaceData *p)
 {
-#ifndef WITHOUT_IPv6
+#ifdef WITH_IPv6
     ipv6data = p;
     p->ownerp = this;
     configChanged();

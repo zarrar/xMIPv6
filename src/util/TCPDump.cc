@@ -19,15 +19,38 @@
 //
 
 
+#include <errno.h>
+
 #include "TCPDump.h"
-#include "IPControlInfo_m.h"
+
+#include "IPProtocolId_m.h"
+
+#ifdef WITH_UDP
+#include "UDPPacket_m.h"
+#endif
+
+#ifdef WITH_SCTP
 #include "SCTPMessage.h"
 #include "SCTPAssociation.h"
-#include "IPSerializer.h"
-#include "ICMPMessage.h"
-#include "UDPPacket_m.h"
+#endif
 
-#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32) && !defined(__CYGWIN__) && !defined(_WIN64)
+#ifdef WITH_TCP_BASE
+#include "TCPSegment.h"
+#endif
+
+#ifdef WITH_IPv4
+#include "ICMPMessage.h"
+#include "IPAddress.h"
+#include "IPControlInfo_m.h"
+#include "IPDatagram.h"
+#include "IPSerializer.h"
+#endif
+
+#ifdef WITH_IPv6
+#include "IPv6Datagram.h"
+#endif
+
+#if !defined(_WIN32) && !defined(__CYGWIN__) && !defined(_WIN64)
 #include <netinet/in.h>  // htonl, ntohl, ...
 #endif
 
@@ -44,6 +67,7 @@ TCPDumper::~TCPDumper()
 
 void TCPDumper::ipDump(const char *label, IPDatagram *dgram, const char *comment)
 {
+#ifdef WITH_SCTP
      if (dynamic_cast<SCTPMessage *>(dgram->getEncapsulatedPacket()))
      {
           SCTPMessage *sctpmsg = check_and_cast<SCTPMessage *>(dgram->getEncapsulatedPacket());
@@ -52,11 +76,13 @@ void TCPDumper::ipDump(const char *label, IPDatagram *dgram, const char *comment
           sctpDump(label, sctpmsg, dgram->getSrcAddress().str(), dgram->getDestAddress().str(), comment);
      }
      else
-          delete dgram;
+#endif
+     ;
 }
 
 void TCPDumper::sctpDump(const char *label, SCTPMessage *sctpmsg, const std::string& srcAddr, const std::string& destAddr, const char *comment)
 {
+#ifdef WITH_SCTP
      std::ostream& out = *outp;
      uint32 numberOfChunks;
      SCTPChunk* chunk;
@@ -70,18 +96,23 @@ void TCPDumper::sctpDump(const char *label, SCTPMessage *sctpmsg, const std::str
      out << srcAddr  << "." << sctpmsg->getSrcPort()  << " > ";
 
      out << destAddr << "." << sctpmsg->getDestPort() << ": ";
+
      if (sctpmsg->hasBitError())
      {
           sctpmsg->setChecksumOk(false);
      }
+
      numberOfChunks = sctpmsg->getChunksArraySize();
      out << "numberOfChunks="<<numberOfChunks<<" VTag="<<sctpmsg->getTag()<<"\n";
+
      if (sctpmsg->hasBitError())
           out << "Packet has bit error!!\n";
+
      for (uint32 i=0; i<numberOfChunks; i++)
      {
           chunk = (SCTPChunk*)sctpmsg->getChunks(i);
           type  = chunk->getChunkType();
+
           switch (type)
           {
                 case INIT:
@@ -313,6 +344,7 @@ void TCPDumper::sctpDump(const char *label, SCTPMessage *sctpmsg, const std::str
           out << "# " << comment;
 
      out << endl;
+#endif
 }
 
 TCPDump::~TCPDump()
@@ -358,12 +390,11 @@ Define_Module(TCPDump);
 
 TCPDump::TCPDump() : cSimpleModule(), tcpdump(ev.getOStream())
 {
-
-
 }
 
 void TCPDumper::udpDump(bool l2r, const char *label, IPDatagram *dgram, const char *comment)
 {
+#if defined(WITH_UDP) && defined(WITH_IPv4)
     cMessage *encapmsg = dgram->getEncapsulatedPacket();
     if (dynamic_cast<UDPPacket *>(encapmsg))
     {
@@ -391,61 +422,78 @@ void TCPDumper::udpDump(bool l2r, const char *label, IPDatagram *dgram, const ch
         out << "UDP: Payload length=" << udppkt->getByteLength()-8 << endl;
         if (udppkt->getSourcePort()==9899 || udppkt->getDestinationPort() == 9899)
         {
+#ifdef WITH_SCTP
             if (dynamic_cast<SCTPMessage *>(udppkt->getEncapsulatedPacket()))
                 sctpDump("", (SCTPMessage *)(udppkt->getEncapsulatedPacket()), std::string(l2r?"A":"B"),std::string(l2r?"B":"A"));
+#endif
         }
     }
+#endif
 }
 
 void TCPDumper::tcpDump(bool l2r, const char *label, IPDatagram *dgram, const char *comment)
 {
-     cMessage *encapmsg = dgram->getEncapsulatedPacket();
-     if (dynamic_cast<TCPSegment *>(encapmsg))
-     {
-          // if TCP, dump as TCP
-          tcpDump(l2r, label, (TCPSegment *)encapmsg, dgram->getSrcAddress().str(), dgram->getDestAddress().str(), comment);
-     }
-     else
-     {
-          // some other packet, dump what we can
-          std::ostream& out = *outp;
+#ifdef WITH_IPv4
+    cMessage *encapmsg = dgram->getEncapsulatedPacket();
 
-          // seq and time (not part of the tcpdump format)
-          char buf[30];
-          sprintf(buf,"[%.3f%s] ", SIMTIME_DBL(simTime()), label);
-          out << buf;
+#ifdef WITH_TCP_BASE
+    if (dynamic_cast<TCPSegment *>(encapmsg))
+    {
+         // if TCP, dump as TCP
+         tcpDump(l2r, label, (TCPSegment *)encapmsg, dgram->getSrcAddress().str(), dgram->getDestAddress().str(), comment);
+    }
+    else
+#endif
+    {
+         // some other packet, dump what we can
+         std::ostream& out = *outp;
 
-          // packet class and name
-          out << "? " << encapmsg->getClassName() << " \"" << encapmsg->getName() << "\"\n";
-     }
+         // seq and time (not part of the tcpdump format)
+         char buf[30];
+         sprintf(buf,"[%.3f%s] ", SIMTIME_DBL(simTime()), label);
+         out << buf;
+
+         // packet class and name
+         out << "? " << encapmsg->getClassName() << " \"" << encapmsg->getName() << "\"\n";
+    }
+#else
+    throw cRuntimeError("INET compiled without IPv4 features!");
+#endif
 }
 
-//FIXME: Temporary hack for Ipv6 support
-void TCPDumper::dumpIPv6(bool l2r, const char *label, IPv6Datagram_Base *dgram, const char *comment)
+void TCPDumper::dumpIPv6(bool l2r, const char *label, IPv6Datagram *dgram, const char *comment)
 {
-     cMessage *encapmsg = dgram->getEncapsulatedPacket();
-     if (dynamic_cast<TCPSegment *>(encapmsg))
-     {
-          // if TCP, dump as TCP
-          tcpDump(l2r, label, (TCPSegment *)encapmsg, dgram->getSrcAddress().str(), dgram->getDestAddress().str(), comment);
-     }
-     else
-     {
-          // some other packet, dump what we can
-          std::ostream& out = *outp;
+#ifdef WITH_IPv6
+    cMessage *encapmsg = dgram->getEncapsulatedPacket();
 
-          // seq and time (not part of the tcpdump format)
-          char buf[30];
-          sprintf(buf,"[%.3f%s] ", SIMTIME_DBL(simTime()), label);
-          out << buf;
+#ifdef WITH_TCP_BASE
+    if (dynamic_cast<TCPSegment *>(encapmsg))
+    {
+         // if TCP, dump as TCP
+         tcpDump(l2r, label, (TCPSegment *)encapmsg, dgram->getSrcAddress().str(), dgram->getDestAddress().str(), comment);
+    }
+    else
+#endif
+    {
+         // some other packet, dump what we can
+         std::ostream& out = *outp;
 
-          // packet class and name
-          out << "? " << encapmsg->getClassName() << " \"" << encapmsg->getName() << "\"\n";
-     }
+         // seq and time (not part of the tcpdump format)
+         char buf[30];
+         sprintf(buf,"[%.3f%s] ", SIMTIME_DBL(simTime()), label);
+         out << buf;
+
+         // packet class and name
+         out << "? " << encapmsg->getClassName() << " \"" << encapmsg->getName() << "\"\n";
+    }
+#else
+    throw cRuntimeError("INET compiled without IPv6 features!");
+#endif
 }
 
 void TCPDumper::tcpDump(bool l2r, const char *label, TCPSegment *tcpseg, const std::string& srcAddr, const std::string& destAddr, const char *comment)
 {
+#ifdef WITH_TCP_BASE
      std::ostream& out = *outp;
 
     // seq and time (not part of the tcpdump format)
@@ -515,6 +563,9 @@ void TCPDumper::tcpDump(bool l2r, const char *label, TCPSegment *tcpseg, const s
         out << "# " << comment;
 
      out << endl;
+#else
+    throw cRuntimeError("INET compiled without any TCP features!");
+#endif
 }
 
 void TCPDump::initialize()
@@ -554,9 +605,10 @@ void TCPDump::handleMessage(cMessage *msg)
     {
         bool l2r;
 
+#ifdef WITH_IPv4
         if (dynamic_cast<IPDatagram *>(msg))
         {
-            if (((IPDatagram *)msg)->getTransportProtocol()==132)
+            if (((IPDatagram *)msg)->getTransportProtocol() == IP_PROT_SCTP)
             {
                 tcpdump.ipDump("", (IPDatagram *)msg);
             }
@@ -568,20 +620,26 @@ void TCPDump::handleMessage(cMessage *msg)
                     return;
                 }
                 l2r = msg->arrivedOn("in1");
-                if (((IPDatagram *)msg)->getTransportProtocol()==6)
+                if (((IPDatagram *)msg)->getTransportProtocol() == IP_PROT_TCP)
                 {
                     tcpdump.tcpDump(l2r, "", (IPDatagram *)msg, "");
                 }
-                else if (((IPDatagram *)msg)->getTransportProtocol()==17)
+                else if (((IPDatagram *)msg)->getTransportProtocol() == IP_PROT_UDP)
                     tcpdump.udpDump(l2r, "", (IPDatagram *)msg, "");
             }
         }
-        else if (dynamic_cast<SCTPMessage *>(msg))
+        else
+#endif
+#ifdef WITH_SCTP
+        if (dynamic_cast<SCTPMessage *>(msg))
         {
             l2r = msg->arrivedOn("in1");
             tcpdump.sctpDump("", (SCTPMessage *)msg, std::string(l2r?"A":"B"),std::string(l2r?"B":"A"));
         }
-        else if (dynamic_cast<TCPSegment *>(msg))
+        else
+#endif
+#ifdef TCP_BASE
+        if (dynamic_cast<TCPSegment *>(msg))
         {
             if (PK(msg)->hasBitError())
             {
@@ -591,7 +649,10 @@ void TCPDump::handleMessage(cMessage *msg)
             l2r = msg->arrivedOn("in1");
             tcpdump.tcpDump(l2r, "", (TCPSegment *)msg, std::string(l2r?"A":"B"),std::string(l2r?"B":"A"));
         }
-        else if (dynamic_cast<ICMPMessage *>(msg))
+        else
+#endif
+#ifdef WITH_IPv4
+        if (dynamic_cast<ICMPMessage *>(msg))
         {
             if (PK(msg)->hasBitError())
             {
@@ -601,12 +662,25 @@ void TCPDump::handleMessage(cMessage *msg)
             std::cout<<"ICMPMessage\n";
         }
         else
+#endif
         {
             // search for encapsulated IP[v6]Datagram in it
             cPacket *encapmsg = PK(msg);
-            while (encapmsg && dynamic_cast<IPDatagram *>(encapmsg)==NULL && dynamic_cast<IPv6Datagram_Base *>(encapmsg)==NULL)
+
+            while (encapmsg
+#ifdef WITH_IPv4
+                    && dynamic_cast<IPDatagram *>(encapmsg) == NULL
+#endif
+#ifdef WITH_IPv6
+                    && dynamic_cast<IPv6Datagram_Base *>(encapmsg) == NULL
+#endif
+                )
+            {
                 encapmsg = encapmsg->getEncapsulatedPacket();
-                l2r = msg->arrivedOn("in1");
+            }
+
+            l2r = msg->arrivedOn("in1");
+
             if (!encapmsg)
             {
                 //We do not want this to end in an error if EtherAutoconf messages
@@ -615,17 +689,22 @@ void TCPDump::handleMessage(cMessage *msg)
             }
             else
             {
+#ifdef WITH_IPv4
                 if (dynamic_cast<IPDatagram *>(encapmsg))
                     tcpdump.tcpDump(l2r, "", (IPDatagram *)encapmsg);
-                else if (dynamic_cast<IPv6Datagram_Base *>(encapmsg))
-                    tcpdump.dumpIPv6(l2r, "", (IPv6Datagram_Base *)encapmsg);
                 else
-                ASSERT(0); // cannot get here
+#endif
+#ifdef WITH_IPv6
+                if (dynamic_cast<IPv6Datagram *>(encapmsg))
+                    tcpdump.dumpIPv6(l2r, "", (IPv6Datagram *)encapmsg);
+                else
+#endif
+                    ASSERT(0); // cannot get here
             }
         }
     }
 
-
+#ifdef WITH_IPv4
     if (tcpdump.dumpfile!=NULL && dynamic_cast<IPDatagram *>(msg))
     {
         uint8 buf[MAXBUFLENGTH];
@@ -652,11 +731,12 @@ void TCPDump::handleMessage(cMessage *msg)
         fwrite(&hdr, sizeof(uint32), 1, tcpdump.dumpfile);
         fwrite(buf, serialized_ip, 1, tcpdump.dumpfile);
     }
-
+#endif
 
     // forward
     int32 index = msg->getArrivalGate()->getIndex();
     int32 id;
+
     if (msg->getArrivalGate()->isName("ifIn"))
         id = findGate("out2",index);
     else

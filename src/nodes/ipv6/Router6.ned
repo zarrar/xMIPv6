@@ -17,17 +17,19 @@
 
 package inet.nodes.ipv6;
 
-import inet.util.NAMTraceWriter;
 import inet.networklayer.ipv6.RoutingTable6;
 import inet.networklayer.common.InterfaceTable;
-import inet.linklayer.ext.ExtInterface;
 import inet.linklayer.IWirelessNic;
 import inet.linklayer.IWiredNic;
+import inet.linklayer.IExtInterface;
 import inet.base.mobility.IMobility;
 import inet.base.NotificationBoard;
 
+
 //
 // IPv6 router.
+//
+// see ~Router for configuration options
 //
 module Router6
 {
@@ -37,22 +39,12 @@ module Router6
         @display("i=abstract/router");
         int numExtInterfaces = default(0);
         int numRadios = default(0);               // the number of radios in the router. by default no wireless
-        string mobilityType = default("NoMobility"); // how the node moves around. MUST be specified if the host contains a wireless interface. see: inet.mobility
-        string wlanNicType = default("Ieee80211NicSTA"); // used wireless interfaces. see:  inet.linklayer.ieee80211 or other modules implementing IWirelessNic
-        string ethNicType = default("EthernetInterfaceFullDuplex"); // used ethernet interfaces. see: EtherInterface (full/half duplex) or EtherInterface2 for simplified, full duplex only
-        string pppNicType = default("PPPInterface"); // used pp interfaces. see: PPPInerface and PPPInterfaceNoQueue
-        int namid = default(-1);
         xml routingTableFile;  //# TODO provide a default
     gates:
         input radioIn[numRadios] @directIn;
         inout pppg[] @labels(PPPFrame-conn);
         inout ethg[] @labels(EtherFrame-conn);
     submodules:
-        namTrace: NAMTraceWriter {
-            parameters:
-                namid = namid;
-                @display("p=375,54");
-        }
         notificationBoard: NotificationBoard {
             parameters:
                 @display("p=57,54");
@@ -67,27 +59,27 @@ module Router6
                 routingTableFile = routingTableFile;
                 @display("p=281,54");
         }
-        mobility: <mobilityType> like IMobility {
+        mobility: <default("NoMobility")> like IMobility {
             parameters:
-                @display("p=468,54");
+                @display("p=378,54");
         }
         networkLayer: NetworkLayer6 {
             parameters:
                 @display("p=242,143;q=queue");
         }
-        wlan[numRadios]: <wlanNicType> like IWirelessNic {
+        wlan[numRadios]: <default("Ieee80211NicSTA")> like IWirelessNic {
             parameters:
                 @display("p=72,242;q=queue");
         }
-        eth[sizeof(ethg)]: <ethNicType> like IWiredNic {
+        eth[sizeof(ethg)]: <default("EthernetInterfaceFullDuplex")> like IWiredNic {
             parameters:
                 @display("p=195,242,row,90;q=txQueue");
         }
-        ppp[sizeof(pppg)]: <pppNicType> like IWiredNic {
+        ppp[sizeof(pppg)]: <default("PPPInterface")> like IWiredNic {
             parameters:
                 @display("p=320,242,row,90;q=txQueue");
         }
-        ext[numExtInterfaces]: ExtInterface {
+        ext[numExtInterfaces]: <default("ExtInterface")> like IExtInterface {
             parameters:
                 @display("p=460,242,row,90;q=txQueue;i=block/ifcard");
         }

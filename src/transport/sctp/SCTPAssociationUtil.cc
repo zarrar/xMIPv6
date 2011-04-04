@@ -20,21 +20,33 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+
 #include "SCTP.h"
 #include "SCTPAssociation.h"
 #include "SCTPCommand_m.h"
-#include "IPv6ControlInfo.h"
 #include "SCTPQueue.h"
 #include "SCTPAlgorithm.h"
 #include "RoutingTable.h"
 #include "RoutingTableAccess.h"
 #include "InterfaceTable.h"
 #include "InterfaceTableAccess.h"
-#include "IPv4InterfaceData.h"
-#include "IPv6InterfaceData.h"
 #include "IPv6Address.h"
-#include "UDPControlInfo_m.h"
+#include "common.h"
 
+
+#ifdef WITH_IPv4
+#include "IPControlInfo.h"
+#include "IPv4InterfaceData.h"
+#endif
+
+#ifdef WITH_IPv6
+#include "IPv6ControlInfo.h"
+#include "IPv6InterfaceData.h"
+#endif
+
+#ifdef WITH_UDP
+#include "UDPControlInfo_m.h"
+#endif
 
 
 void SCTPAssociation::printSctpPathMap() const
@@ -233,30 +245,43 @@ void SCTPAssociation::sendToIP(SCTPMessage*       sctpmsg,
         sctpmsg->setTag(localVTag);
     }
 
-    if ((bool)sctpMain->par("udpEncapsEnabled")) {
+    if ((bool)sctpMain->par("udpEncapsEnabled"))
+    {
+#ifdef WITH_UDP
         sctpmsg->setKind(UDP_C_DATA);
         UDPControlInfo* controlInfo = new UDPControlInfo();
         controlInfo->setSrcPort(9899);
         controlInfo->setDestAddr(remoteAddr.get4());
         controlInfo->setDestPort(9899);
         sctpmsg->setControlInfo(controlInfo);
+#else
+        throw cRuntimeError("SCTP feature compiled without UDP feature.");
+#endif
     }
     else {
         if (dest.isIPv6()) {
+#ifdef WITH_IPv6
             IPv6ControlInfo* controlInfo = new IPv6ControlInfo();
             controlInfo->setProtocol(IP_PROT_SCTP);
             controlInfo->setSrcAddr(IPv6Address());
             controlInfo->setDestAddr(dest.get6());
             sctpmsg->setControlInfo(controlInfo);
             sctpMain->send(sctpmsg, "to_ipv6");
+#else
+        throw cRuntimeError("INET compiled without IPv6 features!");
+#endif
         }
         else {
+#ifdef WITH_IPv4
             IPControlInfo* controlInfo = new IPControlInfo();
             controlInfo->setProtocol(IP_PROT_SCTP);
             controlInfo->setSrcAddr(IPAddress("0.0.0.0"));
             controlInfo->setDestAddr(dest.get4());
             sctpmsg->setControlInfo(controlInfo);
             sctpMain->send(sctpmsg, "to_ip");
+#else
+        throw cRuntimeError("INET compiled without IPv4 features!");
+#endif
         }
         recordInPathVectors(sctpmsg, dest);
     }
@@ -373,11 +398,15 @@ void SCTPAssociation::sendInit()
     {
         for (int32 i=0; i<ift->getNumInterfaces(); ++i)
         {
+#ifdef WITH_IPv4
             if (ift->getInterface(i)->ipv4Data()!=NULL)
             {
                 adv.push_back(ift->getInterface(i)->ipv4Data()->getIPAddress());
             }
-            else if (ift->getInterface(i)->ipv6Data()!=NULL)
+            else
+#endif
+#ifdef WITH_IPv6
+            if (ift->getInterface(i)->ipv6Data()!=NULL)
             {
                 for (int32 j=0; j<ift->getInterface(i)->ipv6Data()->getNumAddresses(); j++)
                 {
@@ -385,6 +414,9 @@ void SCTPAssociation::sendInit()
                     adv.push_back(ift->getInterface(i)->ipv6Data()->getAddress(j));
                 }
             }
+            else
+#endif
+            ;
         }
     }
     else
@@ -412,7 +444,7 @@ void SCTPAssociation::sendInit()
     }
     else
     {
-        uint32 rlevel = getLevel(remoteAddr);
+        int rlevel = getLevel(remoteAddr);
         sctpEV3<<"level of remote address="<<rlevel<<"\n";
         for (AddressVector::iterator i=adv.begin(); i!=adv.end(); ++i)
         {

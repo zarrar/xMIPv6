@@ -21,7 +21,8 @@
 #define __INET_IPTRAFGEN_H
 
 #include <vector>
-#include <omnetpp.h>
+
+#include "INETDefs.h"
 
 #include "IPvXAddress.h"
 
@@ -33,8 +34,8 @@ class INET_API IPTrafSink : public cSimpleModule
 {
   protected:
     int numReceived;
-    simsignal_t rcvdPkBytesSignal;
-    simsignal_t endToEndDelaySignal;
+    static simsignal_t rcvdPkBytesSignal;
+    static simsignal_t endToEndDelaySignal;
 
     virtual void printPacket(cPacket *msg);
     virtual void processPacket(cPacket *msg);

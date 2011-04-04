@@ -18,14 +18,14 @@
 package inet.examples.bgpv4.BGPUpdate;
 
 import inet.util.MessageChecker;
-import inet.transport.tcp.TCP;
+import inet.transport.ITCP;
 import inet.nodes.inet.NetworkLayer;
 import inet.networklayer.ospfv2.OSPFRouting;
 import inet.networklayer.ipv4.RoutingTable;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.bgpv4.BGPRouting;
-import inet.linklayer.ppp.PPPInterfaceNoQueue;
 import inet.linklayer.ethernet.EthernetInterface;
+import inet.linklayer.IWiredNic;
 import inet.base.NotificationBoard;
 
 
@@ -36,6 +36,7 @@ module BGPRouter
 {
     parameters:
         string routingFile = default("");
+        string tcpType = default(haveClass("TCP")?"TCP":haveClass("TCP_lwip")?"TCP_lwip":haveClass("TCP_NSC")?"TCP_NSC":"TCP_None");  // tcp implementation (e.g. ~TCP, ~TCP_lwip, ~TCP_NSC) or ~TCPSpoof
     gates:
         inout pppg[] @labels(PPPFrame-conn);
         inout ethg[] @labels(EtherFrame-conn);
@@ -71,7 +72,7 @@ module BGPRouter
             parameters:
                 @display("i=block/downarrow_s;p=196,124");
         }
-        tcp: TCP {
+        tcp: <tcpType> like ITCP {
             parameters:
                 @display("p=160,202;i=block/transport");
         }
@@ -83,13 +84,13 @@ module BGPRouter
                 ifIn[sizeof(pppg)+sizeof(ethg)];
                 ifOut[sizeof(pppg)+sizeof(ethg)];
         }
-        ppp[sizeof(pppg)]: PPPInterfaceNoQueue {
+        ppp[sizeof(pppg)]: <default("PPPInterfaceNoQueue")> like IWiredNic {
             parameters:
                 @display("p=74,369,row,110;q=l2queue;i=block/ifcard");
         }
-        eth[sizeof(ethg)]: EthernetInterface {
+        eth[sizeof(ethg)]: <default("EthernetInterface")> like IWiredNic {
             parameters:
-                @display("p=97,257,row,110;q=l2queue;i=block/ifcard");
+                @display("p=196,369,row,110;q=l2queue;i=block/ifcard");
         }
     connections allowunconnected:
         bgp.toTCP --> { @display("m=s"); } --> snifferOut.in;

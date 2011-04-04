@@ -21,9 +21,17 @@
 #include "SCTPAssociation.h"
 #include "SCTPCommand_m.h"
 #include "IPControlInfo.h"
+
+#ifdef WITH_IPv6
 #include "IPv6ControlInfo.h"
+#endif
+
 #include "IPDatagram.h"
 
+#ifdef WITH_UDP
+#include "UDPControlInfo_m.h"
+#include "UDPSocket.h"
+#endif
 
 Define_Module(SCTP);
 
@@ -80,12 +88,16 @@ void SCTP::bindPortForUDP()
 {
     EV << "Binding to UDP port " << 9899 << endl;
 
+#ifdef WITH_UDP
     cMessage *msg = new cMessage("UDP_C_BIND", UDP_C_BIND);
     UDPControlInfo *ctrl = new UDPControlInfo();
     ctrl->setSrcPort(9899);
     ctrl->setSockId(UDPSocket::generateSocketId());
     msg->setControlInfo(ctrl);
     send(msg, "to_ip");
+#else
+    throw cRuntimeError("SCTP feature compiled without UDP feature.");
+#endif
 }
 
 void SCTP::initialize()
@@ -136,8 +148,6 @@ void SCTP::handleMessage(cMessage *msg)
 {
     IPvXAddress destAddr;
     IPvXAddress srcAddr;
-    IPControlInfo *controlInfo =NULL;
-    IPv6ControlInfo *controlInfoV6 =NULL;
     bool findListen = false;
     bool bitError = false;
 
@@ -178,30 +188,42 @@ void SCTP::handleMessage(cMessage *msg)
         }
         if (msg->arrivedOn("from_ip"))
         {
+#ifdef WITH_IPv4
             if (par("udpEncapsEnabled"))
             {
                 std::cout<<"Laenge SCTPMSG="<<sctpmsg->getByteLength()<<"\n";
+#ifdef WITH_UDP
                 UDPControlInfo *ctrl = check_and_cast<UDPControlInfo *>(msg->removeControlInfo());
                 srcAddr = ctrl->getSrcAddr();
                 destAddr = ctrl->getDestAddr();
                 std::cout<<"controlInfo srcAddr="<<srcAddr<<"  destAddr="<<destAddr<<"\n";
                 std::cout<<"VTag="<<sctpmsg->getTag()<<"\n";
+#else
+                throw cRuntimeError("SCTP feature compiled without UDP feature.");
+#endif
             }
             else
             {
-                controlInfo = check_and_cast<IPControlInfo *>(msg->removeControlInfo());
+            	IPControlInfo *controlInfo = check_and_cast<IPControlInfo *>(msg->removeControlInfo());
                 IPDatagram *datagram = controlInfo->removeOrigDatagram();
                 delete datagram;
                 sctpEV3<<"controlInfo srcAddr="<<controlInfo->getSrcAddr()<<"   destAddr="<<controlInfo->getDestAddr()<<"\n";
                 srcAddr = controlInfo->getSrcAddr();
                 destAddr = controlInfo->getDestAddr();
             }
+#else
+        throw cRuntimeError("INET compiled without IPv4 features!");
+#endif
         }
         else
         {
-            controlInfoV6 = check_and_cast<IPv6ControlInfo *>(msg->removeControlInfo());
+#ifdef WITH_IPv6
+        	IPv6ControlInfo *controlInfoV6 = check_and_cast<IPv6ControlInfo *>(msg->removeControlInfo());
             srcAddr = controlInfoV6->getSrcAddr();
             destAddr = controlInfoV6->getDestAddr();
+#else
+        throw cRuntimeError("INET compiled without IPv6 features!");
+#endif
         }
 
 
@@ -346,6 +368,7 @@ void SCTP::sendAbortFromMain(SCTPMessage* sctpmsg, IPvXAddress srcAddr, IPvXAddr
     msg->addChunk(abortChunk);
     if ((bool)par("udpEncapsEnabled"))
     {
+#ifdef WITH_UDP
         msg->setKind(UDP_C_DATA);
         std::cout<<"VTag="<<msg->getTag()<<"\n";
         UDPControlInfo *ctrl = new UDPControlInfo();
@@ -353,6 +376,9 @@ void SCTP::sendAbortFromMain(SCTPMessage* sctpmsg, IPvXAddress srcAddr, IPvXAddr
         ctrl->setDestAddr(destAddr.get4());
         ctrl->setDestPort(9899);
         msg->setControlInfo(ctrl);
+#else
+        throw cRuntimeError("SCTP feature compiled without UDP feature.");
+#endif
     }
     else
     {

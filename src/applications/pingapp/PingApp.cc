@@ -16,19 +16,31 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <limits.h>
-#include <stdlib.h>
 #include <iostream>
 
-#include "IPAddressResolver.h"
 #include "PingApp.h"
+
+#include "IPAddressResolver.h"
 #include "PingPayload_m.h"
+
+#ifdef WITH_IPv4
 #include "IPControlInfo.h"
+#endif
+
+#ifdef WITH_IPv6
 #include "IPv6ControlInfo.h"
+#endif
 
 using std::cout;
 
 Define_Module(PingApp);
+
+simsignal_t PingApp::endToEndDelaySignal = SIMSIGNAL_NULL;
+simsignal_t PingApp::dropSignal = SIMSIGNAL_NULL;
+simsignal_t PingApp::sentPacketSignal = SIMSIGNAL_NULL;
+simsignal_t PingApp::outOfOrderArrivalSignal = SIMSIGNAL_NULL;
+simsignal_t PingApp::pingTxSignal = SIMSIGNAL_NULL;
+simsignal_t PingApp::pingRxSignal = SIMSIGNAL_NULL;
 
 void PingApp::initialize()
 {
@@ -116,6 +128,7 @@ void PingApp::sendPing()
 void PingApp::scheduleNextPing(cMessage *timer)
 {
     simtime_t nextPing = simTime() + intervalp->doubleValue();
+
     if ((count==0 || sendSeqNo<count) && (stopTime==0 || nextPing<stopTime))
         scheduleAt(nextPing, timer);
     else
@@ -126,6 +139,7 @@ void PingApp::sendToICMP(cMessage *msg, const IPvXAddress& destAddr, const IPvXA
 {
     if (!destAddr.isIPv6())
     {
+#ifdef WITH_IPv4
         // send to IPv4
         IPControlInfo *ctrl = new IPControlInfo();
         ctrl->setSrcAddr(srcAddr.get4());
@@ -133,9 +147,13 @@ void PingApp::sendToICMP(cMessage *msg, const IPvXAddress& destAddr, const IPvXA
         ctrl->setTimeToLive(hopLimit);
         msg->setControlInfo(ctrl);
         send(msg, "pingOut");
+#else
+        throw cRuntimeError("INET compiled without IPv4 features!");
+#endif
     }
     else
     {
+#ifdef WITH_IPv6
         // send to IPv6
         IPv6ControlInfo *ctrl = new IPv6ControlInfo();
         ctrl->setSrcAddr(srcAddr.get6());
@@ -143,6 +161,9 @@ void PingApp::sendToICMP(cMessage *msg, const IPvXAddress& destAddr, const IPvXA
         ctrl->setHopLimit(hopLimit);
         msg->setControlInfo(ctrl);
         send(msg, "pingv6Out");
+#else
+        throw cRuntimeError("INET compiled without IPv6 features!");
+#endif
     }
 }
 
@@ -151,20 +172,28 @@ void PingApp::processPingResponse(PingPayload *msg)
     // get src, hopCount etc from packet, and print them
     IPvXAddress src, dest;
     int msgHopCount = -1;
-    if (dynamic_cast<IPControlInfo *>(msg->getControlInfo())!=NULL)
+
+#ifdef WITH_IPv4
+    if (dynamic_cast<IPControlInfo *>(msg->getControlInfo()) != NULL)
     {
         IPControlInfo *ctrl = (IPControlInfo *)msg->getControlInfo();
         src = ctrl->getSrcAddr();
         dest = ctrl->getDestAddr();
         msgHopCount = ctrl->getTimeToLive();
     }
-    else if (dynamic_cast<IPv6ControlInfo *>(msg->getControlInfo())!=NULL)
+    else
+#endif
+#ifdef WITH_IPv6
+    if (dynamic_cast<IPv6ControlInfo *>(msg->getControlInfo()) != NULL)
     {
         IPv6ControlInfo *ctrl = (IPv6ControlInfo *)msg->getControlInfo();
         src = ctrl->getSrcAddr();
         dest = ctrl->getDestAddr();
         msgHopCount = ctrl->getHopLimit();
     }
+    else
+#endif
+    {}
 
     simtime_t rtt = simTime() - msg->getCreationTime();
 

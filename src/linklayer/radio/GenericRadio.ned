@@ -25,7 +25,7 @@ package inet.linklayer.radio;
 // @see ~IRadio
 // @author Andras Varga
 //
-simple GenericRadio like IRadio
+simple GenericRadio extends PropagationModel
 {
     parameters:
         int channelNumber = default(0); // channel identifier
@@ -38,13 +38,17 @@ simple GenericRadio like IRadio
         int headerLengthBits @unit(b); // length of physical layer framing (preamble, etc)
         double bandwidth @unit("Hz"); // signal bandwidth, used for bit error calculation
         string modulation; // "BPSK", "16-QAM", "256-QAM" or "null"; selects bit error calculation method
-        @display("i=block/wrxtx");
-        @statistic[bitrate](title="Bitrate";record=timeavg,vector;interpolationmode=sample-hold;);
-        @statistic[channelNumber](title="Channel no";record=histogram,vector;interpolationmode=sample-hold;); //vector
-        @statistic[radioState](title="Radio state (enum)";record=histogram,vector;interpolationmode=sample-hold;); //vector
-    gates:
-        input uppergateIn @labels(PhyControlInfo/down); // from higher layer protocol (MAC)
-        output uppergateOut @labels(PhyControlInfo/up); // to decider (decider connects to higher layer protocol, i.e. the MAC)
-        input radioIn @labels(AirFrame); // to receive frames (~AirFrame) on the radio channel
-}
+        string attenuationModel = default("PathLossReceptionModel");
+        bool drawCoverage =default(true);
+        
+        double usage_radio_idle @unit(mA) = default (-1mA); // disable battery registration
+        double usage_radio_recv @unit(mA) = default (-1mA); // disable battery registration
+        double usage_radio_sleep @unit(mA) = default (-1mA); // disable battery registration 
+        double usage_radio_send @unit(mA) = default (-1mA); // disable battery registration 
 
+        @display("i=block/wrxtx");
+        @statistic[bitrate](title="Bitrate"; record=timeavg,vector; interpolationmode=sample-hold; );
+        @statistic[channelNumber](title="Channel no"; record=histogram,vector; interpolationmode=sample-hold; ); //vector
+        @statistic[radioState](title="Radio state (enum)"; record=histogram,vector; interpolationmode=sample-hold; ); //vector
+        @class(GenericRadio);
+}

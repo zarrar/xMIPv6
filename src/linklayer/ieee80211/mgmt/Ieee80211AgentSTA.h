@@ -27,7 +27,7 @@
 /**
  * Used in 802.11 infrastructure mode: in a station (STA), this module
  * controls channel scanning, association and handovers, by sending commands
- * (e.g. Ieee80211Prim_ScanRequest) to the management getModule(Ieee80211MgmtSTA).
+ * (e.g. Ieee80211Prim_ScanRequest) to the management module (Ieee80211MgmtSTA).
  *
  * See corresponding NED file for a detailed description.
  *
@@ -45,9 +45,9 @@ class INET_API Ieee80211AgentSTA : public cSimpleModule, public INotifiable
     simtime_t associationTimeout;
 
     //Statistics:
-    simsignal_t sentRequestSignal;
-    simsignal_t acceptConfirmSignal;
-    simsignal_t dropConfirmSignal;
+    static simsignal_t sentRequestSignal;
+    static simsignal_t acceptConfirmSignal;
+    static simsignal_t dropConfirmSignal;
 
   protected:
     virtual int numInitStages() const {return 2;}

@@ -18,14 +18,16 @@
 
 
 #include "AbstractRadio.h"
+
 #include "FWMath.h"
 #include "PhyControlInfo_m.h"
-#include "Ieee80211Consts.h"  //XXX for the COLLISION and BITERROR msg kind constants
-
 
 #define MK_TRANSMISSION_OVER  1
 #define MK_RECEPTION_COMPLETE 2
 
+simsignal_t AbstractRadio::bitrateSignal = SIMSIGNAL_NULL;
+simsignal_t AbstractRadio::radioStateSignal = SIMSIGNAL_NULL;
+simsignal_t AbstractRadio::channelNumberSignal = SIMSIGNAL_NULL;
 
 AbstractRadio::AbstractRadio() : rs(this->getId())
 {

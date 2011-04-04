@@ -24,7 +24,10 @@
 #define UDPVIDEOSTREAMSVR_H
 
 #include <vector>
-#include <omnetpp.h>
+
+#include "INETDefs.h"
+
+#include "IPvXAddress.h"
 #include "UDPAppBase.h"
 
 
@@ -63,8 +66,8 @@ class INET_API UDPVideoStreamSvr : public UDPAppBase
     // statistics
     unsigned int numStreams;  // number of video streams served
     unsigned long numPkSent;  // total number of packets sent
-    simsignal_t reqStreamBytesSignal;  // length of video streams served
-    simsignal_t sentPkBytesSignal;
+    static simsignal_t reqStreamBytesSignal;  // length of video streams served
+    static simsignal_t sentPkBytesSignal;
 
   protected:
     // process stream request from client

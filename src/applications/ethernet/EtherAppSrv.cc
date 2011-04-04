@@ -17,11 +17,17 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include "EtherAppSrv.h"
-#include "Ieee802Ctrl_m.h"
+
 #include "EtherApp_m.h"
+#include "Ieee802Ctrl_m.h"
 
 Define_Module (EtherAppSrv);
+
+simsignal_t EtherAppSrv::endToEndDelaySignal = SIMSIGNAL_NULL;
+simsignal_t EtherAppSrv::sentPkBytesSignal = SIMSIGNAL_NULL;
+simsignal_t EtherAppSrv::rcvdPkBytesSignal = SIMSIGNAL_NULL;
 
 void EtherAppSrv::initialize()
 {
@@ -56,21 +62,22 @@ void EtherAppSrv::handleMessage(cMessage *msg)
     long requestId = req->getRequestId();
     long replyBytes = req->getResponseBytes();
     char msgname[30];
-    strcpy(msgname,msg->getName());
+    strcpy(msgname, msg->getName());
 
     delete msg;
     delete ctrl;
 
     // send back packets asked by EtherAppCli side
     int k = 0;
-    strcat(msgname,"-resp-");
-    char *s = msgname+strlen(msgname);
-    while (replyBytes>0)
+    strcat(msgname, "-resp-");
+    char *s = msgname + strlen(msgname);
+
+    while (replyBytes > 0)
     {
         int l = replyBytes>MAX_REPLY_CHUNK_SIZE ? MAX_REPLY_CHUNK_SIZE : replyBytes;
         replyBytes -= l;
 
-        sprintf(s,"%d",k);
+        sprintf(s,"%d", k);
 
         EV << "Generating packet `" << msgname << "'\n";
 

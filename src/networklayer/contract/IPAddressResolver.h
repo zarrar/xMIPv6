@@ -19,9 +19,12 @@
 #ifndef __INET_IPADDRESSRESOLVER_H
 #define __INET_IPADDRESSRESOLVER_H
 
-#include <omnetpp.h>
+
+#include "INETDefs.h"
+
 #include "IPvXAddress.h"
 
+// Forward declarations:
 class IInterfaceTable;
 class InterfaceEntry;
 class IRoutingTable;
@@ -130,14 +133,12 @@ class INET_API IPAddressResolver
      */
     virtual IRoutingTable *routingTableOf(cModule *host);
 
-#ifndef WITHOUT_IPv6
     /**
      * The function tries to look up the RoutingTable6 module as submodule
      * <tt>"routingTable6"</tt> or <tt>"networkLayer.routingTable6"</tt> within
      * the host/router module. Throws an error if not found.
      */
     virtual RoutingTable6 *routingTable6Of(cModule *host);
-#endif
 
     /**
      * The function tries to look up the NotificationBoard module as submodule
@@ -156,12 +157,10 @@ class INET_API IPAddressResolver
      */
     virtual IRoutingTable *findRoutingTableOf(cModule *host);
 
-#ifndef WITHOUT_IPv6
     /**
      * Like interfaceTableOf(), but doesn't throw error if not found.
      */
     virtual RoutingTable6 *findRoutingTable6Of(cModule *host);
-#endif
 
     /**
      * Like notificationBoardOf(), but doesn't throw error if not found.
@@ -172,5 +171,4 @@ class INET_API IPAddressResolver
 
 
 #endif
-
 

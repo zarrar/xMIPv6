@@ -18,14 +18,23 @@
 
 #include <string.h>
 #include <assert.h>
+
 #include "SCTP.h"
 #include "SCTPAssociation.h"
 #include "SCTPCommand_m.h"
 #include "SCTPMessage_m.h"
 #include "SCTPQueue.h"
 #include "SCTPAlgorithm.h"
+#include "common.h"
+
+#ifdef WITH_IPv4
 #include "IPv4InterfaceData.h"
+#endif
+
+#ifdef WITH_IPv6
 #include "IPv6InterfaceData.h"
+#endif
+
 #include "IPControlInfo_m.h"
 
 
@@ -382,11 +391,19 @@ bool SCTPAssociation::processInitArrived(SCTPInitChunk* initchunk, int32 srcPort
                 {
                     if (ift->getInterface(i)->ipv4Data()!=NULL)
                     {
+#ifdef WITH_IPv4
                         adv.push_back(ift->getInterface(i)->ipv4Data()->getIPAddress());
+#else
+                        throw cRuntimeError("INET compiled without IPv4 features!");
+#endif
                     }
                     else if (ift->getInterface(i)->ipv6Data()!=NULL)
                     {
+#ifdef WITH_IPv6
                         adv.push_back(ift->getInterface(i)->ipv6Data()->getAddress(0));
+#else
+                        throw cRuntimeError("INET compiled without IPv6 features!");
+#endif
                     }
                 }
             }
@@ -394,7 +411,7 @@ bool SCTPAssociation::processInitArrived(SCTPInitChunk* initchunk, int32 srcPort
             {
                 adv = localAddressList;
             }
-            uint32 rlevel = getLevel(remoteAddr);
+            int rlevel = getLevel(remoteAddr);
             if (rlevel>0)
                 for (AddressVector::iterator i=adv.begin(); i!=adv.end(); ++i)
                 {
