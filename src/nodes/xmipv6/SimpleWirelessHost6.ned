@@ -20,18 +20,18 @@
 
 package inet.nodes.xmipv6;
 
-import inet.applications.pingapp.PingApp;
-import inet.applications.tcpapp.TCPApp;
-import inet.applications.udpapp.UDPApp;
-import inet.base.NotificationBoard;
-import inet.linklayer.ethernet.EthernetInterface;
-import inet.linklayer.ieee80211.Ieee80211NicSTASimplified;
-import inet.linklayer.ppp.PPPInterface;
-import inet.mobility.BasicMobility;
-import inet.networklayer.common.InterfaceTable;
-import inet.networklayer.ipv6.RoutingTable6;
-import inet.transport.tcp.TCP;
 import inet.transport.udp.UDP;
+import inet.transport.tcp.TCP;
+import inet.networklayer.ipv6.RoutingTable6;
+import inet.networklayer.common.InterfaceTable;
+import inet.linklayer.ppp.PPPInterface;
+import inet.linklayer.ieee80211.Ieee80211NicSTASimplified;
+import inet.linklayer.ethernet.EthernetInterface;
+import inet.base.mobility.IMobility;
+import inet.base.NotificationBoard;
+import inet.applications.udpapp.IUDPApp;
+import inet.applications.tcpapp.ITCPApp;
+import inet.applications.pingapp.PingApp;
 
 
 //It is an IPv6 compatible node with MIPv6 support.
@@ -49,10 +49,8 @@ module SimpleWirelessHost6
 {
     parameters:
         @node();
-        double numTcpApps;
-        double numUdpApps;
-        string tcpAppType;
-        string udpAppType;
+        int numTcpApps = default(0);
+        int numUdpApps = default(0);
         //IPForward: bool,
         string routingFile;
         string mobilityType;
@@ -76,7 +74,7 @@ module SimpleWirelessHost6
                 isRouter = false;
                 @display("p=60,230;i=block/table");
         }
-        tcpApp[numTcpApps]: <tcpAppType> like TCPApp {
+        tcpApp[numTcpApps]: <> like ITCPApp {
             parameters:
                 @display("p=163,67;i=block/app");
         }
@@ -84,7 +82,7 @@ module SimpleWirelessHost6
             parameters:
                 @display("p=163,154;i=block/wheelbarrow");
         }
-        udpApp[numUdpApps]: <udpAppType> like UDPApp {
+        udpApp[numUdpApps]: <> like IUDPApp {
             parameters:
                 @display("i=block/app;p=272,67");
         }
@@ -117,7 +115,7 @@ module SimpleWirelessHost6
             parameters:
                 @display("p=120,350;q=queue;i=block/ifcard");
         }
-        mobility: <mobilityType> like BasicMobility {
+        mobility: <mobilityType> like IMobility {
             parameters:
                 @display("p=58,301;i=block/cogwheel_s");
         }

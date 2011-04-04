@@ -20,17 +20,17 @@
 
 package inet.nodes.xmipv6;
 
-import inet.applications.pingapp.PingApp;
-import inet.applications.tcpapp.TCPApp;
-import inet.applications.udpapp.UDPApp;
-import inet.base.NotificationBoard;
-import inet.linklayer.ieee80211.Ieee80211NicSTA;
-import inet.mobility.BasicMobility;
-import inet.networklayer.common.InterfaceTable;
-import inet.networklayer.ipv6.RoutingTable6;
-import inet.networklayer.xmipv6.BindingUpdateList;
-import inet.transport.tcp.TCP;
 import inet.transport.udp.UDP;
+import inet.transport.tcp.TCP;
+import inet.networklayer.xmipv6.BindingUpdateList;
+import inet.networklayer.ipv6.RoutingTable6;
+import inet.networklayer.common.InterfaceTable;
+import inet.linklayer.ieee80211.Ieee80211NicSTA;
+import inet.base.mobility.IMobility;
+import inet.base.NotificationBoard;
+import inet.applications.udpapp.IUDPApp;
+import inet.applications.tcpapp.ITCPApp;
+import inet.applications.pingapp.PingApp;
 
 
 //
@@ -48,10 +48,8 @@ module WirelessHost6
 {
     parameters:
         @node();
-        double numTcpApps;
-        double numUdpApps;
-        string tcpAppType;
-        string udpAppType;
+        int numTcpApps = default(0);
+        int numUdpApps = default(0);
         //IPForward: bool,
         string routingFile;
         string mobilityType;
@@ -80,7 +78,7 @@ module WirelessHost6
                 isRouter = false;
                 @display("p=60,230;i=block/table2");
         }
-        tcpApp[numTcpApps]: <tcpAppType> like TCPApp {
+        tcpApp[numTcpApps]: <> like ITCPApp {
             parameters:
                 @display("p=195,75;i=block/app");
         }
@@ -88,7 +86,7 @@ module WirelessHost6
             parameters:
                 @display("p=195,170;i=block/wheelbarrow");
         }
-        udpApp[numUdpApps]: <udpAppType> like UDPApp {
+        udpApp[numUdpApps]: <> like IUDPApp {
             parameters:
                 @display("i=block/app;p=312,75");
         }
@@ -113,7 +111,7 @@ module WirelessHost6
             parameters:
                 @display("p=248,358;q=queue;i=block/ifcard");
         }
-        mobility: <mobilityType> like BasicMobility {
+        mobility: <mobilityType> like IMobility {
             parameters:
                 @display("p=66,357;i=block/cogwheel_s");
         }

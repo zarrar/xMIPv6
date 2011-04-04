@@ -27,17 +27,17 @@
 
 package inet.nodes.xmipv6;
 
-import inet.applications.pingapp.PingApp;
-import inet.applications.tcpapp.TCPApp;
-import inet.applications.udpapp.UDPApp;
-import inet.base.NotificationBoard;
-import inet.linklayer.ethernet.EthernetInterface;
-import inet.linklayer.ppp.PPPInterface;
-import inet.networklayer.common.InterfaceTable;
-import inet.networklayer.ipv6.RoutingTable6;
-import inet.networklayer.xmipv6.BindingUpdateList;
-import inet.transport.tcp.TCP;
 import inet.transport.udp.UDP;
+import inet.transport.tcp.TCP;
+import inet.networklayer.xmipv6.BindingUpdateList;
+import inet.networklayer.ipv6.RoutingTable6;
+import inet.networklayer.common.InterfaceTable;
+import inet.linklayer.ppp.PPPInterface;
+import inet.linklayer.ethernet.EthernetInterface;
+import inet.base.NotificationBoard;
+import inet.applications.udpapp.IUDPApp;
+import inet.applications.tcpapp.ITCPApp;
+import inet.applications.pingapp.PingApp;
 
 
 //
@@ -47,10 +47,8 @@ module MobileNode6
 {
     parameters:
         @node();
-        double numTcpApps;
-        double numUdpApps;
-        string tcpAppType;
-        string udpAppType;
+        int numTcpApps = default(0);
+        int numUdpApps = default(0);
     gates:
         input in[];
         output out[];
@@ -75,7 +73,7 @@ module MobileNode6
                 //isProxy = false;
                 @display("p=60,230;i=block/table");
         }
-        tcpApp[numTcpApps]: <tcpAppType> like TCPApp {
+        tcpApp[numTcpApps]: <> like ITCPApp {
             parameters:
                 @display("p=163,67;i=block/app");
         }
@@ -83,7 +81,7 @@ module MobileNode6
             parameters:
                 @display("p=163,154;i=block/wheelbarrow");
         }
-        udpApp[numUdpApps]: <udpAppType> like UDPApp {
+        udpApp[numUdpApps]: <> like IUDPApp {
             parameters:
                 @display("i=block/app;p=272,67");
         }

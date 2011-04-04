@@ -23,16 +23,16 @@
 
 package inet.nodes.xmipv6;
 
-import inet.applications.pingapp.PingApp;
-import inet.applications.tcpapp.TCPApp;
-import inet.applications.udpapp.UDPApp;
-import inet.base.NotificationBoard;
-import inet.linklayer.ethernet.EthernetInterface;
-import inet.networklayer.common.InterfaceTable;
-import inet.networklayer.ipv6.RoutingTable6;
-import inet.networklayer.xmipv6.BindingCache;
-import inet.transport.tcp.TCP;
 import inet.transport.udp.UDP;
+import inet.transport.tcp.TCP;
+import inet.networklayer.xmipv6.BindingCache;
+import inet.networklayer.ipv6.RoutingTable6;
+import inet.networklayer.common.InterfaceTable;
+import inet.linklayer.ethernet.EthernetInterface;
+import inet.base.NotificationBoard;
+import inet.applications.udpapp.IUDPApp;
+import inet.applications.tcpapp.ITCPApp;
+import inet.applications.pingapp.PingApp;
 
 
 //
@@ -42,10 +42,8 @@ module CorrespondentNode6
 {
     parameters:
         @node();
-        double numTcpApps;
-        double numUdpApps;
-        string tcpAppType;
-        string udpAppType;
+        int numTcpApps = default(0);
+        int numUdpApps = default(0);
         @display("bgb=385,410;i=device/pc2");
     gates:
            //in: in[];
@@ -70,7 +68,7 @@ module CorrespondentNode6
                 isRouter = false;
                 @display("p=60,230;i=block/table2");
         }
-        tcpApp[numTcpApps]: <tcpAppType> like TCPApp {
+        tcpApp[numTcpApps]: <> like ITCPApp {
             parameters:
                 @display("p=179,75;i=block/app");
         }
@@ -78,7 +76,7 @@ module CorrespondentNode6
             parameters:
                 @display("p=187,170;i=block/wheelbarrow");
         }
-        udpApp[numUdpApps]: <udpAppType> like UDPApp {
+        udpApp[numUdpApps]: <> like IUDPApp {
             parameters:
                 @display("i=block/app;p=312,75");
         }
