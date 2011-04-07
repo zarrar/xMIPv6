@@ -21,7 +21,8 @@
 package inet.nodes.xmipv6;
 
 import inet.transport.udp.UDP;
-import inet.transport.tcp.TCP;
+import inet.transport.tcp_inet.TCP;
+import inet.nodes.ipv6.NetworkLayer6;
 import inet.networklayer.ipv6.RoutingTable6;
 import inet.networklayer.common.InterfaceTable;
 import inet.linklayer.ppp.PPPInterface;
@@ -29,9 +30,9 @@ import inet.linklayer.ieee80211.Ieee80211NicSTASimplified;
 import inet.linklayer.ethernet.EthernetInterface;
 import inet.base.mobility.IMobility;
 import inet.base.NotificationBoard;
-import inet.applications.udpapp.IUDPApp;
-import inet.applications.tcpapp.ITCPApp;
 import inet.applications.pingapp.PingApp;
+import inet.applications.IUDPApp;
+import inet.applications.ITCPApp;
 
 
 //It is an IPv6 compatible node with MIPv6 support.
@@ -94,10 +95,11 @@ module SimpleWirelessHost6
             parameters:
                 @display("i=block/app;p=343,200");
         }
-        networkLayer: MobileIPLayer6 {
+        networkLayer: NetworkLayer6 {
             parameters:
-                isMN = true; //is Mobile Node
-                isHA = false; //is Home Agent
+                xMIPv6Support = true;
+                mipv6support.isMobileNode = true; //is Mobile Node
+                mipv6support.isHomeAgent = false; //is Home Agent
                 @display("p=248,247;i=block/fork;q=queue");
             gates:
                 ifIn[(sizeof(out)+sizeof(ethOut))+1];
@@ -105,15 +107,15 @@ module SimpleWirelessHost6
         }
         ppp[sizeof(out)]: PPPInterface {
             parameters:
-                @display("p=205,350,row,90;q=txQueue;i=block/ifcard");
+                @display("p=202,332,row,90;q=txQueue;i=block/ifcard");
         }
         eth[sizeof(ethOut)]: EthernetInterface {
             parameters:
-                @display("p=240,350,row,90;q=txQueue;i=block/ifcard");
+                @display("p=287,350,row,90;q=txQueue;i=block/ifcard");
         }
         wlan: Ieee80211NicSTASimplified {
             parameters:
-                @display("p=120,350;q=queue;i=block/ifcard");
+                @display("p=111,350;q=queue;i=block/ifcard");
         }
         mobility: <mobilityType> like IMobility {
             parameters:
@@ -126,7 +128,7 @@ module SimpleWirelessHost6
         }
 
         tcp.ipOut --> networkLayer.tcpIn;
-        tcp.ipIn <-- networkLayer.TCPOut;
+        tcp.ipIn <-- networkLayer.tcpOut;
 
         for i=0..numUdpApps-1 {
             udpApp[i].udpOut --> udp.appIn++;

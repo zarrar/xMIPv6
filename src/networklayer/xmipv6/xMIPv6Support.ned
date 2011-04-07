@@ -22,18 +22,37 @@
 
 package inet.networklayer.xmipv6;
 
+import inet.networklayer.IxMIPv6Support;
+
 
 //
 // Implements xMIPv6 (where x = F, H, F-H).
 //
-simple xMIPv6
+module xMIPv6Support like IxMIPv6Support
 {
     parameters:
         bool isHomeAgent;
         bool isMobileNode;
-        @display("i=block/classifier2");
+        @display("i=block/classifier2;bgb=163,154");
     gates:
         input fromIPv6;
         output toIPv6;
+    submodules:
+        xMobileIPv6: xMIPv6 {
+            isHomeAgent = isHomeAgent;
+            isMobileNode = isMobileNode;
+            @display("p=104,79");
+        }
+        buList: BindingUpdateList {
+            parameters:
+                @display("p=46,35;i=old/harddisk");
+        }
+        bindingCache: BindingCache {
+            parameters:
+                @display("p=46,110;i=old/harddisk");
+        }
+    connections:
+        fromIPv6 --> xMobileIPv6.fromIPv6;
+        toIPv6 <-- xMobileIPv6.toIPv6;
 }
 

@@ -20,19 +20,30 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-package inet.networklayer.xmipv6;
-
+package inet.networklayer;
 
 //
-// Implements xMIPv6 (where x = F, H, F-H).
+// Module interface for xMIPv6 (where x = F, H, F-H).
 //
-simple xMIPv6
+moduleinterface IxMIPv6Support
 {
     parameters:
         bool isHomeAgent;
         bool isMobileNode;
         @display("i=block/classifier2");
     gates:
+        input fromIPv6;
+        output toIPv6;
+}
+
+simple xMIPv6Support_None like IxMIPv6Support
+{
+    parameters:
+        bool isHomeAgent = default(false);
+        bool isMobileNode = default(false);
+        @display("i=old/x_noentry");
+        @class("UnimplementedModule");
+        gates:
         input fromIPv6;
         output toIPv6;
 }

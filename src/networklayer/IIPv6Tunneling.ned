@@ -1,6 +1,7 @@
-// Copyright (C) 2007 Faqir Zarrar Yousaf
-// Communication Networks Institute, University of Dortmund
-// faqir.yousaf@uni-dortmund.de
+//
+// Copyright (C) 2007
+// Christian Bauer
+// Institute of Communications and Navigation, German Aerospace Center (DLR)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -17,19 +18,31 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
+package inet.networklayer;
+
 //
-// IPv6 router Configured to operate as a Home Agent in a network supporting MIPv6.
+// \IPv6 Tunnel Manager
 //
-
-package inet.nodes.xmipv6;
-
-import inet.nodes.ipv6.Router6;
-
-
-module HomeAgent6 extends Router6
+// @see IPv6, IPv6NeighbourDiscovery, ICMPv6
+//
+moduleinterface IIPv6Tunneling
 {
-    networkLayer.xMIPv6Support = true;
-    networkLayer.mipv6support.isMobileNode = false; //is Mobile Node
-    networkLayer.mipv6support.isHomeAgent = true; //is Home Agent
+        @display("i=block/tunnel");
+    gates:
+        input upperLayerIn;
+        output upperLayerOut;
+        input linkLayerIn;
+        output linkLayerOut;
+}
+
+simple IPv6Tunneling_None like IIPv6Tunneling
+{
+        @display("i=old/x_noentry");
+        @class("UnimplementedModule");
+    gates:
+        input upperLayerIn;
+        output upperLayerOut;
+        input linkLayerIn;
+        output linkLayerOut;
 }
 

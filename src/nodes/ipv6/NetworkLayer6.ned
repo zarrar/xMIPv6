@@ -19,12 +19,14 @@
 //
 package inet.nodes.ipv6;
 
-import inet.networklayer.ipv6.IPv6Tunneling;
 import inet.networklayer.ipv6.IPv6ErrorHandling;
 import inet.networklayer.ipv6.IPv6;
 import inet.networklayer.icmpv6.IPv6NeighbourDiscovery;
 import inet.networklayer.icmpv6.ICMPv6;
+import inet.networklayer.IxMIPv6Support;
+import inet.networklayer.IIPv6Tunneling;
 import inet.base.IHook;
+
 
 //
 // Represents an IPv6 network layer (L3).
@@ -35,7 +37,8 @@ import inet.base.IHook;
 module NetworkLayer6
 {
     parameters:
-        @display("i=block/fork");
+        bool xMIPv6Support = default(false);
+        @display("i=block/layer");
     gates:
         input ifIn[] @labels(IPv6Datagram);
         output ifOut[] @labels(IPv6Datagram);
@@ -55,7 +58,7 @@ module NetworkLayer6
         ipv6: IPv6 {
             parameters:
                 protocolMapping = "6:0,17:1,46:2,89:3,132:4"; // TODO register 132 as sctp in ipv6 code
-                @display("p=84,129");
+                @display("p=124,129");
             gates:
                 transportIn[5];
                 transportOut[5];
@@ -72,7 +75,7 @@ module NetworkLayer6
         }
         neighbourDiscovery: IPv6NeighbourDiscovery {
             parameters:
-                @display("p=239,154");
+                @display("p=257,149");
         }
         // a placeholder in the traffic coming from the network interfaces 
         inputHook[sizeof(ifIn)]: <default("Nop")> like IHook {
@@ -80,11 +83,15 @@ module NetworkLayer6
         }
         // a placeholder if traffic going to the network interfaces
         outputHook[sizeof(ifOut)]: <default("Nop")> like IHook {
-            @display("p=227,247");
+            @display("p=189,232");
         }
-        iptunneling: IPv6Tunneling {
+        iptunneling: <default(haveClass("IPv6Tunneling")?"IPv6Tunneling":"IPv6Tunneling_None")> like IIPv6Tunneling {
             parameters:
-                @display("p=204,254;i=block/network");
+                @display("p=44,168");
+        }
+        mipv6support: <default(xMIPv6Support?"xMIPv6Support":"xMIPv6Support_None")> like IxMIPv6Support {
+            parameters:
+                @display("p=44,79");
         }
     connections allowunconnected:  // FIXME remove 'nocheck'!
         // IPv6 to transport Layer
@@ -123,6 +130,10 @@ module NetworkLayer6
         // IPv6 to Neighbour Discovery
         ipv6.ndOut --> neighbourDiscovery.ipv6In;
         ipv6.ndIn <-- neighbourDiscovery.ipv6Out;
+
+        //IPv6 to Mobile IPv6
+        ipv6.xMIPv6Out --> mipv6support.fromIPv6;
+        ipv6.xMIPv6In <-- mipv6support.toIPv6;
 
         // IPv6 to L2
         for i=0..sizeof(ifIn)-1 {

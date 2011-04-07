@@ -28,22 +28,23 @@
 package inet.nodes.xmipv6;
 
 import inet.transport.udp.UDP;
-import inet.transport.tcp.TCP;
+import inet.transport.tcp_inet.TCP;
+import inet.nodes.ipv6.NetworkLayer6;
 import inet.networklayer.xmipv6.BindingUpdateList;
 import inet.networklayer.ipv6.RoutingTable6;
 import inet.networklayer.common.InterfaceTable;
 import inet.linklayer.ppp.PPPInterface;
 import inet.linklayer.ethernet.EthernetInterface;
 import inet.base.NotificationBoard;
-import inet.applications.udpapp.IUDPApp;
-import inet.applications.tcpapp.ITCPApp;
 import inet.applications.pingapp.PingApp;
+import inet.applications.IUDPApp;
+import inet.applications.ITCPApp;
 
 
 //
 // IPv6 host with TCP, UDP layers and applications and supports MIPv6.
 //
-module MobileNode6
+module MobileNode6___UNUSED
 {
     parameters:
         @node();
@@ -93,22 +94,23 @@ module MobileNode6
             parameters:
                 @display("i=block/app;p=343,200");
         }
-        networkLayer: MobileIPLayer6 {
+        networkLayer: NetworkLayer6 {
             parameters:
-                isMN = true; //is Mobile Node
-                isHA = false; //is Home Agent
-                @display("p=248,247;i=block/fork;q=queue");
+                xMIPv6Support = true;
+                mipv6support.isMobileNode = true; //is Mobile Node
+                mipv6support.isHomeAgent = false; //is Home Agent
+                @display("p=248,247;q=queue");
             gates:
                 ifIn[sizeof(out)+sizeof(ethOut)];
                 ifOut[sizeof(out)+sizeof(ethOut)];
         }
         ppp[sizeof(out)]: PPPInterface {
             parameters:
-                @display("p=205,350,row,90;q=txQueue;i=block/ifcard");
+                @display("p=156,350,row,90;q=txQueue;i=block/ifcard");
         }
         eth[sizeof(ethOut)]: EthernetInterface {
             parameters:
-                @display("p=240,350,row,90;q=txQueue;i=block/ifcard");
+                @display("p=278,350,row,90;q=txQueue;i=block/ifcard");
         }
     connections allowunconnected:
         for i=0..numTcpApps-1 {
@@ -117,7 +119,7 @@ module MobileNode6
         }
 
         tcp.ipv6Out --> networkLayer.tcpIn;
-        tcp.ipv6In <-- networkLayer.TCPOut;
+        tcp.ipv6In <-- networkLayer.tcpOut;
 
         for i=0..numUdpApps-1 {
             udpApp[i].udpOut --> udp.appIn++;

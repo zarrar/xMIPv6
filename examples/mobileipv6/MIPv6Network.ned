@@ -21,16 +21,15 @@
 //
 
 
-package inet.examples.ipv6.mobileipv6;
+package inet.examples.mobileipv6;
 
-import inet.linklayer.ethernet.EtherHub;
-import inet.networklayer.autorouting.FlatNetworkConfigurator6;
-import inet.nodes.ipv6.Router6;
-import inet.nodes.wireless.WirelessAPWithEth;
-import inet.nodes.xmipv6.CorrespondentNode6;
-import inet.nodes.xmipv6.HomeAgent6;
+import inet.world.ChannelControlExtended;
 import inet.nodes.xmipv6.WirelessHost6;
-import inet.world.ChannelControl;
+import inet.nodes.xmipv6.HomeAgent6;
+import inet.nodes.xmipv6.CorrespondentNode6;
+import inet.nodes.ipv6.Router6;
+import inet.networklayer.autorouting.ipv6.FlatNetworkConfigurator6;
+import inet.linklayer.ethernet.EtherHub;
 
 
 channel fiberline extends ned.DatarateChannel
@@ -61,7 +60,7 @@ network mIPv6Network
             parameters:
                 @display("p=763,53");
         }
-        channelcontrol: ChannelControl {
+        channelcontrol: ChannelControlExtended {
             parameters:
                 playgroundSizeX = playgroundSizeX;
                 playgroundSizeY = playgroundSizeY;
@@ -84,8 +83,7 @@ network mIPv6Network
             parameters:
                 @display("p=220,404");
         }
-        CN[total_cn]: CorrespondentNode6 {
-        }
+        CN[total_cn]: CorrespondentNode6;
         AP_Home: WirelessAPWithEth {
             parameters:
                 @display("p=249,172;i=device/accesspoint_s");
@@ -108,12 +106,12 @@ network mIPv6Network
                                                        //R_2.ethOut++ --> ethernetline --> R_3.ethIn++;
                                                        //R_2.ethIn++ <-- ethernetline <-- R_3.ethOut++;
 
-        Home_Agent.ethOut++ --> ethernetline --> R_2.ethg$i++;
-        Home_Agent.ethIn++ <-- ethernetline <-- R_2.ethg$o++;
+        Home_Agent.ethg$o++ --> ethernetline --> R_2.ethg$i++;
+        Home_Agent.ethg$i++ <-- ethernetline <-- R_2.ethg$o++;
 
         for i=0..total_cn-1 {
-            CN[i].ethOut++ --> ethernetline --> hub.ethg$i++;
-            CN[i].ethIn++ <-- ethernetline <-- hub.ethg$o++;
+            CN[i].ethg$o++ --> ethernetline --> hub.ethg$i++;
+            CN[i].ethg$i++ <-- ethernetline <-- hub.ethg$o++;
         }
 
         hub.ethg++ <--> ethernetline <--> R_2.ethg++;
@@ -121,8 +119,8 @@ network mIPv6Network
                                                     //R_1.ethOut++ --> ethernetline --> CN.ethIn++;
                                                     //R_1.ethIn++ <-- ethernetline <-- CN.ethOut++;
 
-        AP_Home.ethg$o++ --> ethernetline --> Home_Agent.ethIn++;
-        AP_Home.ethg$i++ <-- ethernetline <-- Home_Agent.ethOut++;
+        AP_Home.ethg$o++ --> ethernetline --> Home_Agent.ethg$i++;
+        AP_Home.ethg$i++ <-- ethernetline <-- Home_Agent.ethg$o++;
 
         AP_1.ethg++ <--> ethernetline <--> R_1.ethg++;
 

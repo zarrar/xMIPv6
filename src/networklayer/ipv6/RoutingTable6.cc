@@ -18,11 +18,17 @@
 
 
 #include <algorithm>
+
 #include "opp_utils.h"
+
 #include "RoutingTable6.h"
+
 #include "IPv6InterfaceData.h"
 #include "InterfaceTableAccess.h"
+
+#ifdef WITH_xMIPv6
 #include "IPv6TunnelingAccess.h"
+#endif /* WITH_xMIPv6 */
 
 Define_Module(RoutingTable6);
 
@@ -97,6 +103,7 @@ void RoutingTable6::initialize(int stage)
         isrouter = par("isRouter");
         WATCH(isrouter);
 
+#ifdef WITH_xMIPv6
         // the following MIPv6 related flags will be overridden by the MIPv6 module (if existing)
         ishome_agent = false;
         WATCH(ishome_agent);
@@ -105,6 +112,7 @@ void RoutingTable6::initialize(int stage)
         WATCH(ismobile_node);
 
         mipv6Support = false; // 4.9.07 - CB
+#endif /* WITH_xMIPv6 */
 
         // add IPv6InterfaceData to interfaces
         for (int i=0; i<ift->getNumInterfaces(); i++)
@@ -173,8 +181,11 @@ void RoutingTable6::parseXMLConfigFile()
 
                 configureInterfaceFromXML(ie, ifTag);
             }
+
+#ifdef WITH_xMIPv6
             else if (opp_strcmp(ifTag->getTagName(),"tunnel")==0)
                 configureTunnelFromXML(ifTag);
+#endif /* WITH_xMIPv6 */
         }
     }
 }
@@ -258,8 +269,14 @@ void RoutingTable6::assignRequiredNodeAddresses(InterfaceEntry *ie)
         return;
     }
     //o  Its required Link-Local Address for each interface.
+
+#ifndef WITH_xMIPv6
+    //IPv6Address linkLocalAddr = IPv6Address().formLinkLocalAddress(ie->getInterfaceToken());
+    //ie->ipv6Data()->assignAddress(linkLocalAddr, true, 0, 0);
+#else /* WITH_xMIPv6 */
     IPv6Address linkLocalAddr = IPv6Address().formLinkLocalAddress(ie->getInterfaceToken());
     ie->ipv6Data()->assignAddress(linkLocalAddr, true, 0, 0);
+#endif /* WITH_xMIPv6 */
 
     /*o  Any additional Unicast and Anycast Addresses that have been configured
     for the node's interfaces (manually or automatically).*/
@@ -368,6 +385,7 @@ void RoutingTable6::configureInterfaceFromXML(InterfaceEntry *ie, cXMLElement *c
     }
 }
 
+#ifdef WITH_xMIPv6
 void RoutingTable6::configureTunnelFromXML(cXMLElement* cfg)
 {
     IPv6Tunneling* tunneling = IPv6TunnelingAccess().get();
@@ -395,6 +413,7 @@ void RoutingTable6::configureTunnelFromXML(cXMLElement* cfg)
         tunneling->createTunnel(IPv6Tunneling::NORMAL, entry, exit, trigger);
     }
 }
+#endif /* WITH_xMIPv6 */
 
 InterfaceEntry *RoutingTable6::getInterfaceByAddress(const IPv6Address& addr)
 {
@@ -650,7 +669,10 @@ void RoutingTable6::addDefaultRoute(const IPv6Address& nextHop, unsigned int ifI
     route->setInterfaceId(ifID);
     route->setNextHop(nextHop);
     route->setMetric(10);//FIXME:should be filled from interface metric
+
+#ifdef WITH_xMIPv6
     route->setExpiryTime(routerLifetime); // lifetime useful after transitioning to new AR // 27.07.08 - CB
+#endif /* WITH_xMIPv6 */
 
     // then add it
     addRoute(route);
@@ -710,6 +732,7 @@ IPv6Route *RoutingTable6::getRoute(int i)
     return routeList[i];
 }
 
+#ifdef WITH_xMIPv6
 //#####Added by Zarrar Yousaf##################################################################
 
 const IPv6Address& RoutingTable6::getDestinationAddress()
@@ -826,4 +849,5 @@ bool RoutingTable6::isOnLinkAddress(const IPv6Address& address)
 
     return false;
 }
+#endif /* WITH_xMIPv6 */
 

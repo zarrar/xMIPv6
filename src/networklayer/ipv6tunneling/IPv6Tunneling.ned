@@ -18,15 +18,19 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-package inet.networklayer.ipv6;
+package inet.networklayer.ipv6tunneling;
+
+import inet.networklayer.IIPv6Tunneling;
+
 
 //
 // \IPv6 Tunnel Manager
 //
 // @see IPv6, IPv6NeighbourDiscovery, ICMPv6
 //
-simple IPv6Tunneling
+simple IPv6Tunneling like IIPv6Tunneling
 {
+        @display("i=block/tunnel");
     gates:
         input upperLayerIn;
         output upperLayerOut;

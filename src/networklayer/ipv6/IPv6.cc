@@ -25,12 +25,20 @@
 #include "RoutingTable6Access.h"
 #include "ICMPv6Access.h"
 #include "IPv6NeighbourDiscoveryAccess.h"
+
+#ifdef WITH_xMIPv6
 #include "IPv6TunnelingAccess.h"
+#endif /* WITH_xMIPv6 */
+
 #include "IPv6ControlInfo.h"
 #include "IPv6NDMessage_m.h"
 #include "Ieee802Ctrl_m.h"
 #include "ICMPv6Message_m.h"
+
+#ifdef WITH_xMIPv6
 #include "MobilityHeader_m.h"
+#endif /* WITH_xMIPv6 */
+
 #include "IPv6ExtensionHeaders.h"
 #include "IPv6InterfaceData.h"
 
@@ -47,7 +55,10 @@ void IPv6::initialize()
     rt = RoutingTable6Access().get();
     nd = IPv6NeighbourDiscoveryAccess().get();
     icmp = ICMPv6Access().get();
+
+#ifdef WITH_xMIPv6
     tunneling = IPv6TunnelingAccess().get();
+#endif /* WITH_xMIPv6 */
 
     mapping.parseProtocolMapping(par("protocolMapping"));
 
@@ -77,6 +88,7 @@ void IPv6::updateDisplayString()
 
 void IPv6::endService(cPacket *msg)
 {
+#ifdef WITH_xMIPv6
     // 28.09.07 - CB
     // support for rescheduling datagrams which are supposed to be sent over
     // a tentative address.
@@ -99,14 +111,25 @@ void IPv6::endService(cPacket *msg)
         }
     }
     else
+#endif /* WITH_xMIPv6 */
+
     if (msg->getArrivalGate()->isName("transportIn")
-       || (msg->getArrivalGate()->isName("upperTunnelingIn")) // for tunneling support-CB
-       || (msg->getArrivalGate()->isName("ndIn") && dynamic_cast<IPv6NDMessage*>(msg))
-       || (msg->getArrivalGate()->isName("icmpIn") && dynamic_cast<ICMPv6Message*>(msg)) //Added this for ICMP msgs from ICMP module-WEI
-       || (msg->getArrivalGate()->isName("xMIPv6In") && dynamic_cast<MobilityHeader*>(msg)) // Zarrar
+#ifdef WITH_xMIPv6
+            || (msg->getArrivalGate()->isName("upperTunnelingIn")) // for tunneling support-CB
+#endif /* WITH_xMIPv6 */
+            || (msg->getArrivalGate()->isName("ndIn") && dynamic_cast<IPv6NDMessage*>(msg))
+            || (msg->getArrivalGate()->isName("icmpIn") && dynamic_cast<ICMPv6Message*>(msg)) //Added this for ICMP msgs from ICMP module-WEI
+#ifdef WITH_xMIPv6
+            || (msg->getArrivalGate()->isName("xMIPv6In") && dynamic_cast<MobilityHeader*>(msg)) // Zarrar
+#endif /* WITH_xMIPv6 */
        )
     {
+#ifndef WITH_xMIPv6
+        // packet from upper layers or ND: encapsulate and send out
+#else /* WITH_xMIPv6 */
         // packet from upper layers, tunnel link-layer output or ND: encapsulate and send out
+#endif /* WITH_xMIPv6 */
+
         handleMessageFromHL( msg );
     }
     else
@@ -169,12 +192,14 @@ void IPv6::handleMessageFromHL(cPacket *msg)
     InterfaceEntry *destIE; // to be filled in by encapsulate()
     IPv6Datagram *datagram = encapsulate(msg, destIE);
 
+#ifdef WITH_xMIPv6
     if (datagram == NULL)
     {
         EV << "Encapsulation failed - dropping packet." << endl;
         delete msg;
         return;
     }
+#endif /* WITH_xMIPv6 */
 
     // possibly fragment (in IPv6, only the source node does that), then route it
     fragmentAndRoute(datagram, destIE);
@@ -205,7 +230,11 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
     // TBD add option handling code here
     IPv6Address destAddress = datagram->getDestAddress();
 
+#ifndef WITH_xMIPv6
+    EV << "Routing datagram `" << datagram->getName() << "' with dest=" << destAddress << ": ";
+#else /* WITH_xMIPv6 */
     EV << "Routing datagram '" << datagram->getName() << "' with dest=" << destAddress << ":\n";
+#endif /* WITH_xMIPv6 */
 
     // local delivery of unicast packets
     if (rt->isLocalAddress(destAddress))
@@ -249,6 +278,38 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
     }
 
     // routing
+#ifndef WITH_xMIPv6
+    // first try destination cache
+    int interfaceId;
+    IPv6Address nextHop = rt->lookupDestCache(destAddress, interfaceId);
+    if (interfaceId==-1)
+    {
+        // address not in destination cache: do longest prefix match in routing table
+        const IPv6Route *route = rt->doLongestPrefixMatch(destAddress);
+        if (!route)
+        {
+            if (rt->isRouter())
+            {
+                EV << "unroutable, sending ICMPv6_DESTINATION_UNREACHABLE\n";
+                numUnroutable++;
+                icmp->sendErrorMessage(datagram, ICMPv6_DESTINATION_UNREACHABLE, 0); // FIXME check ICMP 'code'
+            }
+            else // host
+            {
+                EV << "no match in routing table, passing datagram to Neighbour Discovery module for default router selection\n";
+                send(datagram, "ndOut");
+            }
+            return;
+        }
+        interfaceId = route->getInterfaceId();
+        nextHop = route->getNextHop();
+        if (nextHop.isUnspecified())
+            nextHop = destAddress;  // next hop is the host itself
+
+        // add result into destination cache
+        rt->updateDestCache(destAddress, nextHop, interfaceId);
+    }
+#else /* WITH_xMIPv6 */
     int interfaceId = -1;
     IPv6Address nextHop;
 
@@ -280,10 +341,9 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
     {
         // a virtual tunnel interface provides a path to the destination: do tunneling
         EV << "tunneling: src addr=" << datagram->getSrcAddress() << ", dest addr=" << destAddress << std::endl;
-
         //EV << "sending datagram to encapsulation..." << endl;
         send(datagram, "lowerTunnelingOut");
-            return;
+        return;
     }
 
     if (interfaceId == -1)
@@ -291,13 +351,19 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
             // no interface found; sent to ND or to ICMP for error processing
             //opp_error("No interface found!");//return;
             return; // don't raise error if sent to ND or ICMP!
+#endif /* WITH_xMIPv6 */
 
     InterfaceEntry *ie = ift->getInterfaceById(interfaceId);
     ASSERT(ie!=NULL);
     EV << "next hop for " << destAddress << " is " << nextHop << ", interface " << ie->getName() << "\n";
+
+#ifndef WITH_xMIPv6
+    ASSERT(!nextHop.isUnspecified());
+#else /* WITH_xMIPv6 */
     ASSERT(!nextHop.isUnspecified() && ie!=NULL);
+#endif /* WITH_xMIPv6 */
 
-
+#ifdef WITH_xMIPv6
      if ( rt->isMobileNode() )
      {
           // if the source address is the HoA and we have a CoA then drop the packet
@@ -310,7 +376,7 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
              return;
          }
      }
-
+#endif /* WITH_xMIPv6 */
 
     MACAddress macAddr = nd->resolveNeighbour(nextHop, interfaceId);
     if (macAddr.isUnspecified())
@@ -328,6 +394,7 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
         ASSERT(!srcAddr.isUnspecified()); // FIXME what if we don't have an address yet?
         datagram->setSrcAddress(srcAddr);
 
+#ifdef WITH_xMIPv6
         // if the datagram has a tentative address as source we have to reschedule it
         // as it can not be sent before the address' tentative status is cleared - CB
         if ( ie->ipv6Data()->isTentativeAddress(srcAddr) )
@@ -340,6 +407,8 @@ void IPv6::routePacket(IPv6Datagram *datagram, InterfaceEntry *destIE, bool from
             queue.insert(sDgram);
             return;
         }
+#endif /* WITH_xMIPv6 */
+
     }
 
     // send out datagram
@@ -497,6 +566,7 @@ void IPv6::localDeliver(IPv6Datagram *datagram)
         EV << "This fragment completes the datagram.\n";
     }
 */
+#ifdef WITH_xMIPv6
     // #### 29.08.07 - CB
     // check for extension headers
     if ( ! processExtensionHeaders(datagram) )
@@ -505,6 +575,7 @@ void IPv6::localDeliver(IPv6Datagram *datagram)
         // -> interrupt local delivery process
         return;
     // #### end CB
+#endif /* WITH_xMIPv6 */
 
     // decapsulate and send on appropriate output gate
     int protocol = datagram->getTransportProtocol();
@@ -515,6 +586,7 @@ void IPv6::localDeliver(IPv6Datagram *datagram)
         EV << "Neigbour Discovery packet: passing it to ND module\n";
         send(packet, "ndOut");
     }
+#ifdef WITH_xMIPv6
     else if (protocol==IP_PROT_IPv6EXT_MOB && dynamic_cast<MobilityHeader*>(packet))
     {
         // added check for MIPv6 support to prevent nodes w/o the
@@ -537,6 +609,7 @@ void IPv6::localDeliver(IPv6Datagram *datagram)
             //delete packet; // 13.9.07 - CB, update 21.9.07 - CB
         }
     }
+#endif /* WITH_xMIPv6 */
     else if (protocol==IP_PROT_IPv6_ICMP && dynamic_cast<ICMPv6Message*>(packet))
     {
         EV << "ICMPv6 packet: passing it to ICMPv6 module\n";
@@ -545,11 +618,23 @@ void IPv6::localDeliver(IPv6Datagram *datagram)
     else if (protocol==IP_PROT_IP || protocol==IP_PROT_IPv6)
     {
         EV << "Tunnelled IP datagram\n";
+
+#ifndef WITH_xMIPv6
+        // FIXME handle tunnelling
+        error("tunnelling not yet implemented");
+#else /* WITH_xMIPv6 */
         send(packet, "upperTunnelingOut");
+#endif /* WITH_xMIPv6 */
     }
     else
     {
         int gateindex = mapping.getOutputGateForProtocol(protocol);
+
+#ifndef WITH_xMIPv6
+        EV << "Protocol " << protocol << ", passing up on gate " << gateindex << "\n";
+        //TODO: Indication of forward progress
+        send(packet, "transportOut", gateindex);
+#else /* WITH_xMIPv6 */
         // 21.9.07 - CB
         cGate* outGate = gate("transportOut", gateindex);
         if (! outGate->isConnected() )
@@ -563,6 +648,8 @@ void IPv6::localDeliver(IPv6Datagram *datagram)
             //TODO: Indication of forward progress
             send(packet, outGate);
         }
+#endif /* WITH_xMIPv6 */
+
     }
 }
 
@@ -638,10 +725,17 @@ IPv6Datagram *IPv6::encapsulate(cPacket *transportPacket, InterfaceEntry *&destI
         // if interface parameter does not match existing interface, do not send datagram
         if (rt->getInterfaceByAddress(src)==NULL)
         {
+
+#ifndef WITH_xMIPv6
+            throw cRuntimeError(this, "Wrong source address %s in (%s)%s: no interface with such address",
+                      src.str().c_str(), transportPacket->getClassName(), transportPacket->getFullName());
+#else /* WITH_xMIPv6 */
             // throw cRuntimeError(this, "Wrong source address %s in (%s)%s: no interface with such address",
             //          src.str().c_str(), transportPacket->getClassName(), transportPacket->getFullName());
             delete datagram;
             return NULL;
+#endif /* WITH_xMIPv6 */
+
         }
         datagram->setSrcAddress(src);
     }
@@ -691,6 +785,7 @@ void IPv6::sendDatagramToOutput(IPv6Datagram *datagram, InterfaceEntry *ie, cons
     send(datagram, "queueOut", ie->getNetworkLayerGateIndex());
 }
 
+#ifdef WITH_xMIPv6
 bool IPv6::determineOutputInterface(const IPv6Address& destAddress, IPv6Address& nextHop, int& interfaceId, IPv6Datagram* datagram)
 {
     // try destination cache
@@ -790,4 +885,5 @@ bool IPv6::processExtensionHeaders(IPv6Datagram* datagram)
     // working on this datagram
     return true;
 }
+#endif /* WITH_xMIPv6 */
 

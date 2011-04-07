@@ -52,6 +52,7 @@ module StandardHost6
         int numRadios = default(0);               // the number of radios in the standard host. by default no wireless
         bool IPForward = default(false);             // whether to support forwarding of IP packets (i.e. routing)
         xml routingTableFile;  //# TODO a reasonable default should be provided
+        string mobilityType = default("NoMobility");
     gates:
         input radioIn[numRadios] @directIn;
         inout pppg[] @labels(PPPFrame-conn);
@@ -71,7 +72,7 @@ module StandardHost6
                 routingTableFile = routingTableFile;
                 @display("p=57,214");
         }
-        mobility: <default("NoMobility")> like IMobility {
+        mobility: <mobilityType> like IMobility {
             parameters:
                 @display("p=57,301");
         }
